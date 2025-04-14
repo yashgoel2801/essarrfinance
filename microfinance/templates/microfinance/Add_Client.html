@@ -1,0 +1,57 @@
+{%extends 'base_layout.html'%} {%block content%}
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+    
+    .phone-field-ext,
+    #id_Phone_no1_1,
+    #id_Phone_no2_1,
+    #id_Reference_No_1 {
+        display: none;
+    }
+    
+    input {
+        margin: 0 70% 0 0;
+    }
+    
+    .messages,
+    .messages2 {
+        background-color: red;
+        color: white;
+    }
+</style>
+
+
+<div>
+    {%for c in Client%}
+    <div class="w3-card-4" style="width:100;">
+
+        <div class="w3-container" style="width: 30%;padding:5px;margin:0;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);">
+
+            <img src="{{c.Image.url}}" style="width:90px;height:90px; border-radius:10px;">
+            <div style="float: left;"> Client Name:
+                <a href="{% url 'microfinance:clientdetail' pk=c.pk%}">{{c.Name}}</a><br> Client Phone: {{c.Phone_no1}}
+            </div>
+        </div>
+    </div>
+    {%endfor%} {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <br> {%for e in err %}
+    <span class="messages2">{%if e == 'Phone_no1' %}Phone no already exists{%endif%} <br>{%if e == 'Photo_Id_No' and not messages %}Photo Id no already exists{%endif%}</span> {%endfor%}
+    <br>
+    <br>
+    <form method="POST" enctype="multipart/form-data">
+        {%csrf_token%} {{form.as_p}}
+        <input type="submit" value="Add">
+    </form>
+    {%endblock%}

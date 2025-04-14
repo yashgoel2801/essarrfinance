@@ -1,0 +1,36 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+</style>
+<div>
+
+    <form action="/add_officer/" method="POST">
+        {%csrf_token%}
+        <tr>
+            <th><label for="id_Officer_Name">Officer Name:</label></th>
+            <td><input type="text" name="Officer_Name" maxlength="100" required id="id_Officer_Name"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Designation">Designation:</label></th>
+            <td><input type="text" name="Designation" maxlength="100" required id="id_Designation"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Salary">Salary:</label></th>
+            <td><input type="number" name="Salary" step="any" required id="id_Salary"></td>
+        </tr>
+        <input type="submit" value="ADD">
+    </form>
+
+</div>
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+{%endblock%}

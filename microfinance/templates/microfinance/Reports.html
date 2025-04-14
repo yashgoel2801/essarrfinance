@@ -1,0 +1,178 @@
+{%extends 'base_layout.html'%}{%load static%} {%static "images" as baseUrl%} {%block content%}
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/ui/1.11.3/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.4/themes/ui-lightness/jquery-ui.css">
+
+<style>
+    .w3-container {
+        background-color: wheat;
+        height: 10%;
+    }
+    
+    div {
+        background-color: transparent;
+    }
+    
+    .w3-container ul {
+        display: inline;
+        padding: 4px;
+        box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .1)
+    }
+    
+    .bar {
+        width: 80vw;
+    }
+    
+    input {
+        border: 0;
+    }
+    
+    label {
+        color: gray;
+    }
+    
+    .w3-ul {
+        background-color: transparent;
+    }
+    
+    input[type=submit] {
+        float: none;
+        font-size: 0.9em !important;
+    }
+    
+    input[type=date] {
+        width: 16.5% !important;
+        font-size: 0.9em !important;
+        background-color: silver;
+        border-radius: 3px;
+        padding: 2px;
+    }
+    
+    select {
+        width: 15% !important;
+        font-size: 0.9em !important;
+    }
+    
+    .w3-large {
+        font-size: 18px !important;
+    }
+</style>
+
+
+<ul class="w3-ul w3-card-4">
+    <li class="bar">
+        <div class="w3-bar-item">
+            <span class="w3-large">officerWise Report</span>
+            <form action="{% url 'microfinance:report1'%}" method="POST">
+                {% csrf_token %} Officer:
+                <select name="name" style="margin-right:0px;"> {%for user in users%}{% if user.pk != 0%}
+                    <option value={{user.pk}}>{{user}}</option>{%endif%}
+                {%endfor%}
+                
+                <option value="0">All</option>
+             </select> Frequency:
+                <select name="loan" style="margin-right:0px;"> 
+                    <option value="0">All</option>
+                    <option value="1">Daily</option>
+                    <option value="2">Weekly</option>
+                    <option value="3">Monthly</option>
+                 </select> Status:
+                <select name="status" style="margin-right:0px;">                     
+                    <option value="False">Active Cases</option>
+                    <option value="True">Closed Cases</option></select>
+                <input style="color:teal;border-radius:4px" type="submit" value="Search"></form>
+        </div>
+    </li>
+    <!-- <li class="bar">
+
+        <div class="w3-bar-item">
+            <span class="w3-large">Total Amount Financed And Collection </span>
+            <form action="{% url 'microfinance:report2'%}" method="POST">
+                {% csrf_token %} From <input type="date" placeholder="From:" name="from"> To
+                <input type="date" placeholder="to:" name="to">
+
+                <input style="color:teal;border-radius:4px" type="submit" value="Search">
+            </form>
+        </div>
+    </li> -->
+    <li class="bar">
+
+        <div class="w3-bar-item">
+            <span class="w3-large">Officerwise collection report</span>
+            <form action="{% url 'microfinance:report'%}" method="POST">
+                {% csrf_token %} Officer:
+                <select name="name"> {%for user in users%}{% if user.pk != 0%}
+                        <option value={{user.pk}}>{{user}}</option>{%endif%}
+                        {%endfor%}     <option value="0">All</option></select>
+                </select>
+                Frequency:
+                <select name="loan">
+                    <option value="0">All</option>
+                    <option value="1">Daily</option>
+                    <option value="2">Weekly</option>
+                    <option value="3">Monthly</option>
+                 </select> From <input type="date" placeholder="From:" name="from"> To
+                <input type="date" placeholder="to:" name="to">
+                <input style="color:teal;border-radius:4px" type="submit" value="Search">
+            </form>
+        </div>
+    </li>
+    <li class="bar">
+
+        <div class="w3-bar-item">
+            <span class="w3-large">Total Amount collection report</span>
+            <form action="{% url 'microfinance:report5'%}" method="POST">
+                {% csrf_token %} On Date: <input type="date" placeholder="From:" name="Date">
+
+                <input style="color:teal;border-radius:4px" type="submit" value="Search">
+            </form>
+        </div>
+    </li>
+    <li class="bar">
+
+        <div class="w3-bar-item">
+            <span class="w3-large">Daily Clients Chart</span>
+
+            <form action="{% url 'microfinance:report6'%}" method="POST">
+                {% csrf_token %}
+                <select name="name"> {%for user in users%}{% if user.pk != 0%}
+                    <option value={{user.pk}}>{{user}}</option>{%endif%}
+                    {%endfor%}<option value="0">All</option></select>
+                </select>
+                <input style="color:teal;border-radius:4px" type="submit" value="Search">
+            </form>
+        </div>
+    </li>
+    <li class="bar">
+
+        <div class="w3-bar-item">
+            <span class="w3-large">Week chart</span>
+
+            <form action="{% url 'microfinance:report7'%}" method="POST">
+                {% csrf_token %}
+                <select name="Weekday">
+                    <option value="2">Mon</option>
+                    <option value="3">Tue</option>
+                    <option value="4">Wed</option>
+                    <option value="5">Thu</option>
+                    <option value="6">Fri</option>
+                    <option value="7">Sat</option>
+                    <option value="1">Sun</option>
+                    <option value="0">All</option>
+                    </select>
+                </select>
+                <select name="name"> {%for user in users%}{% if user.pk != 0%}
+                    <option value={{user.pk}}>{{user}}</option>{%endif%}
+                    {%endfor%}<option value="0">All</option></select>
+                </select>
+                <input style="color:teal;border-radius:4px" type="submit" value="Search">
+            </form>
+        </div>
+    </li>
+
+</ul>
+</div>
+
+
+{%endblock%}

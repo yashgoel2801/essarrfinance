@@ -1,0 +1,165 @@
+<style>
+    *,
+    a {
+        font-size: 13px !important;
+        color: black;
+    }
+    
+    div {
+        background-color: transparent;
+    }
+    
+    table {
+        margin-top: 0;
+        border-spacing: 0;
+        top: 0;
+        width: 21cm;
+        text-align: center;
+    }
+    
+    td,
+    th {
+        cell-spacing: ;
+        border: 1px solid grey;
+    }
+    
+    .phnno,
+    .loanamnt {
+        text-align: center;
+    }
+    
+    thead {
+        text-align: center;
+        text-transform: capitalize;
+    }
+    
+    th,
+    td {
+        text-align: center !important;
+        padding: 8px 0;
+        text-align: justify;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f2f2f2
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    #table-wrapper {
+        position: relative;
+    }
+    
+    #table-scroll {
+        height: 10px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    #table-wrapper {
+        position: relative;
+        top: 0;
+    }
+    
+    #table-scroll {
+        height: 150px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    input[type=submit] {
+        width: 20%;
+    }
+    
+    body {
+        counter-reset: Serial;
+        /* Set the Serial counter to 0 */
+    }
+    
+    table {
+        border-collapse: separate;
+    }
+    
+    tr td:first-child:before {
+        counter-increment: Serial;
+        /* Increment the Serial counter */
+        content: counter(Serial);
+        /* Display the counter */
+    }
+    
+    td:nth-child(7),
+    th:nth-child(7),
+    td:nth-child(8),
+    th:nth-child(8),
+    td:nth-child(9),
+    th:nth-child(9),
+    td:nth-child(10),
+    th:nth-child(10),
+    td:nth-child(11),
+    th:nth-child(11),
+    td:nth-child(12),
+    th:nth-child(12),
+    td:nth-child(13),
+    th:nth-child(13) {
+        padding: 8px 0;
+        margin: auto 0;
+        width: 2cm;
+    }
+</style>
+<div class="loanees">
+
+    <h4>Officer : {%if Staff == 0 %}All{%else%}{{loanee.first.Loan_Collector.Officer_Name}}{%endif%}</h4>
+    <div id="table-wrapper">
+        <table id="table_row_total">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>L. ID</th>
+                    <th>A/c No.</th>
+                    <th>Name </th>
+                    <th>Phn no</th>
+                    <th>Inst. Amnt.</th>
+                    <th colspan="2">Mon</th>
+                    <th colspan="2">Tue</th>
+                    <th colspan="2">Wed</th>
+                    <th colspan="2">Thu</th>
+                    <th colspan="2">Fri</th>
+                    <th colspan="2">Sat</th>
+                    <th colspan="2">Sun</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {%for c in loanee%}
+                <tr>
+                    <td></td>
+                    <td>{{c.pk}}</td>
+                    <td>{{c.AccNo}}</td>
+                    <td>
+                        <a href="{% url 'microfinance:clientdetail' pk=c.Account.Client.pk%}">{{c.Account.Client.Name}} </a>
+                    </td>
+                    <td>{{c.Account.Client.Phone_no1}}</td>
+                    <td>{{c.installments_set.first.Installment_Due}}
+                    </td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+
+                </tr>
+
+                {% endfor %}
+                <tr>
+                    <th colspan="20">Total Amnt To Be Collected : {{Total_Amount_To_Be_Collected|floatformat:1}}</th>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>

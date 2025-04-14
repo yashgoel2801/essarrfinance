@@ -1,0 +1,69 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+</style>
+<div>
+    <form method="POST" enctype="multipart/form-data">
+        {%csrf_token%}
+        <tr>
+            <th><label for="id_Guarantor_Name">Guarantor Name:</label></th>
+            <td><input type="text" name="Guarantor_Name" value="not specified" maxlength="100" required id="id_Guarantor_Name"></td>
+        </tr>
+        <p><label for="id_Image">Guarantor Image:</label> <input type="file" name="Image" accept="image/*" id="id_Image"></p><br>
+        <tr>
+            <th><label for="id_Guarantor_Father_Name">Guarantor Father Name:</label></th>
+            <td><input type="text" name="Guarantor_Father_Name" value="not specified" maxlength="100" required id="id_Guarantor_Father_Name"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Mother_Name">Guarantor Mother Name:</label></th>
+            <td><input type="text" name="Guarantor_Mother_Name" value="not specified" maxlength="100" required id="id_Guarantor_Mother_Name"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Local_Address">Guarantor Local Address:</label></th>
+            <td><input type="text" name="Guarantor_Local_Address" value="not specified" maxlength="200" required id="id_Guarantor_Local_Address"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Permanent_Address">Guarantor Permanent Address:</label></th>
+            <td><input type="text" name="Guarantor_Permanent_Address" value="not specified" maxlength="200" required id="id_Guarantor_Permanent_Address"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Occupation">Guarantor Occupation:</label></th>
+            <td><input type="text" name="Guarantor_Occupation" value="not specified" maxlength="100" required id="id_Guarantor_Occupation"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Designation">Guarantor Designation:</label></th>
+            <td><input type="text" name="Guarantor_Designation" value="not specified" maxlength="100" required id="id_Guarantor_Designation"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Office_Address">Guarantor Office Address:</label></th>
+            <td><input type="text" name="Guarantor_Office_Address" value="not specified" maxlength="200" required id="id_Guarantor_Office_Address"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Phone_no_0">Guarantor Phone no:</label></th>
+            <td><input type="text" name="Guarantor_Phone_no_0" size="13" required id="id_Guarantor_Phone_no_0"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Phone_no2_0">Guarantor Phone no2:</label></th>
+            <td><input type="text" name="Guarantor_Phone_no2_0" size="13" id="id_Guarantor_Phone_no2_0"></td>
+        </tr>
+        <tr>
+            <th><label for="id_Guarantor_Security_Docs">Guarantor Security Docs:</label></th><br>
+            <td><textarea name="Guarantor_Security_Docs" cols="30" rows="5" required id="id_Guarantor_Security_Docs">
+not specified</textarea></td>
+        </tr><br>
+        <input type="submit" value="ADD">
+    </form>
+
+</div>
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+{%endblock%}

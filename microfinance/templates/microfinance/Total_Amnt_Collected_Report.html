@@ -1,0 +1,167 @@
+{%extends 'base_layout.html'%} {%block content%}{% load keyvalue %}
+
+
+<style>
+    div {
+        background-color: transparent;
+    }
+    
+    table {
+        border-collapse: collapse;
+        margin-top: 0;
+        top: 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .phnno,
+    .loanamnt {
+        text-align: center;
+    }
+    
+    thead {
+        text-align: center;
+        text-transform: capitalize;
+    }
+    
+    th,
+    td {
+        text-align: center !important;
+        padding: 8px;
+        text-align: justify;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f2f2f2
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    #table-wrapper {
+        position: relative;
+    }
+    
+    #table-scroll {
+        height: 10px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    #table-wrapper {
+        position: relative;
+        top: 0;
+    }
+    
+    #table-scroll {
+        height: 150px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    input[type=submit] {
+        width: 20%;
+    }
+    
+    body {
+        counter-reset: Serial;
+        /* Set the Serial counter to 0 */
+    }
+    
+    table {
+        border-collapse: separate;
+    }
+    
+    tr td:first-child:before {
+        counter-increment: Serial;
+        /* Increment the Serial counter */
+        content: counter(Serial);
+        /* Display the counter */
+    }
+</style>
+<div class="loanees">
+
+    <h3 style="font-family: Arial, Helvetica, sans-serif;">
+        <br> Total Collection on Date : {{Date}} : <b style="font-weight: 600; font-size:22px">{{Total_coll}}</b>
+        <Br>Total File Charge Collection: <b style="font-weight: 600; font-size:22px">{{file_charge}}</b>
+        <Br>Total Penalty Collection: <b style="font-weight: 600; font-size:22px">{{tot_pen}}</b>
+
+
+
+    </h3>
+    <div id="table-wrapper">
+        <table id="table_row_total">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>ID</th>
+                    <th>Name </th>
+                    <th>Amount Paid</th>
+                    <th>Loan Officer</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {%for loanee in Inst%}
+                <tr>
+                    <td></td>
+                    <td>{{loanee.Loan.pk}}</td>
+                    <td>
+                        <a href="{% url 'microfinance:clientdetail' pk=loanee.Loan.Account.Client.pk%}">{{loanee.Loan.Account.Client.Name}} </a>
+                    </td>
+                    <td>{{loanee.Installment_Paid}}</td>
+                    <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
+
+
+
+                </tr>
+                {% endfor %}</tbody>
+        </table>
+        <table id="table_row_total">     <tr><th colspan="5">Penalty</th></tr> <tr>
+            <th>S.No</th>
+            <th>LID</th>
+            <th>Name </th>
+            <th>Penalty Paid</th>
+            <th>Loan Officer</th>
+
+        </tr>{%for loanee in pen%}
+        <tr>
+            <td></td>
+            <td>{{loanee.Loan.pk}}</td>
+            <td>
+                <a href="{% url 'microfinance:clientdetail' pk=loanee.Loan.Account.Client.pk%}">{{loanee.Loan.Account.Client.Name}} </a>
+            </td>
+            <td>{{loanee.Penalty_Paid}}</td>
+            <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
+
+
+
+        </tr>
+        {% endfor %}</table>
+        <table id="table_row_total">     <tr><th colspan="5">File Charge</th></tr> <tr>
+            <th>S.No</th>
+            <th>LID</th>
+            <th>Name </th>
+            <th>File Charge</th>
+            <th>Loan Officer</th>
+
+        </tr>{%for loanee in Loan%}
+        <tr>
+            <td></td>
+            <td>{{loanee.pk}}</td>
+            <td>
+                <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}} </a>
+            </td>
+            <td>{{filec|keyvalue:loanee.pk}}</td>
+            <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
+
+
+
+        </tr>
+        {% endfor %}</table>
+
+    </div>
+</div>
+{% endblock %}

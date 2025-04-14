@@ -1,0 +1,45 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+    
+    label {
+        margin-right: 90%;
+    }
+    
+    input {
+        margin: 8px 0;
+    }
+    
+    .errorlist {
+        display: none;
+    }
+</style>
+
+<div>
+    <h3>Edit Installment Details:</h3><br>
+
+    <form method="POST">
+        {%csrf_token%} {{form}}
+        <input type="submit" onclick="payexpense(event)" name="changeLoan">
+    </form>
+    <br>
+    <br>
+
+
+</div>
+<script type="text/javascript ">
+    function payexpense(e) {
+        if (!confirm('Do you confirm')) {
+            e.preventDefault();
+        }
+    }
+</script>
+
+
+{% endblock %}

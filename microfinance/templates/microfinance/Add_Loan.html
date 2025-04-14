@@ -1,0 +1,37 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+</style>
+<div>
+    <form method="POST" autocomplete="off">
+        {% csrf_token %} {{form.as_table}}
+        <input type="submit">
+
+    </form>
+
+</div>
+
+
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+
+    jQuery(function() {
+        $("form").submit(function() {
+            // submit more than once return false
+            $(this).submit(function() {
+                return false;
+            });
+            // submit once return true
+            return true;
+        });
+    });
+</script>
+{%endblock%}

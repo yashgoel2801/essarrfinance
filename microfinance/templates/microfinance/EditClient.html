@@ -1,0 +1,48 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+    
+    label {
+        margin-right: 99%;
+    }
+    
+    input {
+        margin: 8px 0;
+    }
+    
+    .errorlist,
+    #id_Phone_no2_1,
+    #id_Reference_No_1,
+    .phone-field-ext {
+        display: none;
+    }
+</style>
+
+<div>
+    <h3>Edit Client Details:</h3>
+
+    <form method="POST" enctype="multipart/form-data">
+        {%csrf_token%}{{form.as_p}}
+        <input type="submit" onclick="payexpense(event)">
+    </form>
+    <br>
+    <br>
+
+
+</div>
+<script type="text/javascript ">
+    function payexpense(e) {
+        if (!confirm('Do you confirm')) {
+            e.preventDefault();
+        }
+    }
+</script>
+
+
+{% endblock %}

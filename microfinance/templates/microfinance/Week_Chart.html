@@ -1,0 +1,325 @@
+{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}
+<style>
+    body {
+        width: 21cm !important;
+    }
+    
+    ul {
+        display: none !important;
+    }
+    
+    .weeks {
+        width: 97%;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .weeks div:nth-last-child(1) {
+        flex: 2;
+        background-color: white;
+        padding: 10px 10px 10px 30px;
+    }
+    
+    .weeks div table {
+        width: 100%;
+    }
+    
+    .weeks div td,
+    th {
+        padding: 2px;
+        text-align: left;
+    }
+    
+    .weeks div td:nth-child(1),
+    .weeks div td:nth-child(2),
+    .weeks div th:nth-child(1),
+    .weeks div th:nth-child(2) {
+        width: 4%;
+    }
+    
+    .weeks div td:nth-child(3),
+    .weeks div td:nth-child(4),
+    .weeks div td:nth-child(5),
+    .weeks div td:nth-child(6),
+    .weeks div th:nth-child(3),
+    .weeks div th:nth-child(4),
+    .weeks div th:nth-child(5),
+    .weeks div th:nth-child(6),
+    .weeks div th:nth-child(7),
+    .weeks div td:nth-child(7) {
+        width: 12%;
+    }
+    
+    .weeks div {
+        height: 80%;
+    }
+    
+    caption {
+        background-color: yellow;
+        font-size: 18px;
+        text-transform: uppercase;
+        font-weight: 900;
+    }
+</style>
+<style>
+    table {
+        page-break-inside: auto
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto
+    }
+</style>
+<h4>Officer : {%if Staff == 0 %}All{%else%}{{Loan.first.Loan_Collector.Officer_Name}}{%endif%}</h4>
+<div class="weeks">
+
+    <div>
+        <table>
+            <caption>Monday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 0 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:0|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:0|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>Tuesday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 1 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:1|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:1|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>Wednesday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 2 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:2|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:2|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>Thursday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 3 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:3|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:3|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>Friday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 4 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:4|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:4|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>saturday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 5 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:5|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:5|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="weeks" style="page-break-before: always;">
+    <div>
+        <table>
+            <caption>sunday</caption>
+            <th>A/c No.</th>
+            <th>L Id</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Inst.</th>
+            <th>Total Amt Pending</th>
+            <th>Date Paid</th>
+            <th>Amnt Paid</th>
+            {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 6 %}
+            <tr>
+
+                <td>{{l.AccNo}}</td>
+                <td>{{l.pk}}</td>
+                <td><img src="{{l.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td><a href="{% url 'microfinance:clientdetail' pk=l.Account.Client.pk%}">{{l.Account.Client.Name}}</a></td>
+                <td>{{l.Account.Client.Phone_no1}}</td>
+                <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
+                <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
+                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
+                <td>{{l.installments_set|lastamntpaid}}</td>
+            </tr>{%endif%} {%endfor%}
+            <tr style="background-color: aqua;">
+
+                <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:6|floatformat:1}}</td>
+
+                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:6|floatformat:1}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{%endblock%}

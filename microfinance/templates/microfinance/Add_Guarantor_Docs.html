@@ -1,0 +1,31 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+</style>
+<div>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <tr>
+            <th><label for="id_Image">Image:</label></th>
+            <td><input type="file" name="Image" accept="image/*" id="id_Image"></td>
+        </tr>
+
+        <input type="submit" value="ADD MORE" name="k">
+        <input type="submit" value="Save & Exit" name="l">
+    </form>
+
+</div>
+
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+
+{%endblock%}

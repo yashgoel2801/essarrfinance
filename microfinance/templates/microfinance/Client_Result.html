@@ -1,0 +1,103 @@
+{% extends "base_layout.html" %} {% block content%}
+<style>
+    .table {
+        border-collapse: collapse;
+        margin: 20px 10px;
+        width: 95%;
+        line-height: 1.5;
+        border-radius: 8px 8px 0 0!important;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .table thead tr {
+        background-color: #009879;
+        color: white;
+        text-align: left;
+        font-weight: bold;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid #dddddd;
+    }
+    
+    .table tbody td a {
+        text-decoration: none;
+    }
+    
+    .table tbody tr:nth-of-type(even) {
+        background-color: #E7E7E7 !important;
+    }
+    
+    .table tbody tr:last-of-type {
+        border-bottom: 2px solid #009879;
+    }
+    
+    .table th,
+    .table td {
+        padding: 8px 8px;
+    }
+    
+    .table td,
+    .table th,
+    .table-all td,
+    .table-all th {
+        display: table-cell;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid grey;
+    }
+    
+    tbody {
+        display: table-row-group;
+        vertical-align: middle;
+        border-color: black;
+    }
+    
+    .forms form input {
+        width: 35%;
+    }
+</style>
+<div class="container" style="position: relative;">
+
+    <h2>Client list</h2>
+    <div class="forms" style="display: flex;">
+        <form class="form-inline" action="" method="GET" style="width: 60%;">
+            {{ form }}
+            <button class="btn" type="submit">Search</button>
+            </fieldset>
+        </form>
+        <form method="POST" action="{% url 'microfinance:searchloan'%}" style="width: 60%;">
+            {%csrf_token%} Search By loan Id:<br>
+            <input type="number" name="loan_id" id="">
+            <input type="submit" value="search">
+        </form>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Father's Name</th>
+                <th>Phone No</th>
+            </tr>
+        </thead>
+
+
+        <tbody>
+            {% for object in object_list %}
+
+            <tr>
+                <td>
+                    <a href="{% url 'microfinance:clientdetail' pk=object.pk%}">{{object.Name}}</a></td>
+                <td>{{object.Father_Name}}</td>
+                <td>{{object.Phone_no1}}</td>
+
+            </tr>
+            {% endfor %}</tbody>
+    </table>
+
+    {% if is_paginated %} {% include "paginator.html" %} {% endif %}
+
+</div>
+
+{% endblock %}

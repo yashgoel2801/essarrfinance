@@ -1,0 +1,40 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    #id_username,
+    #id_password {
+        width: 40%;
+        margin: 8px auto;
+        display: block;
+        border-radius: 2px;
+        border-style: initial;
+        border: 1px solid gray;
+    }
+    
+    div {
+        text-align: center;
+        margin: 50px 30%;
+        padding: 50px 0;
+    }
+    
+    form {
+        width: 100%;
+    }
+</style>
+
+<div>
+
+    <form class="form" action="/accounts/login/" method="POST">
+        {%csrf_token%}
+        <h2>ESSARR FINANCE</h2>
+        <h3>LOGIN:</h3>
+        {{form}}
+        <br>
+
+        <input type="submit" value="login" style="width: 40%;">
+    </form>
+
+
+</div>
+
+{%endblock%}

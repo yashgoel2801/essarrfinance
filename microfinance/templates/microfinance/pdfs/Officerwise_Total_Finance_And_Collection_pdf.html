@@ -1,0 +1,127 @@
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    .phnno,
+    .loanamnt {
+        text-align: center;
+    }
+    
+    div {
+        background-color: transparent;
+    }
+    
+    th,
+    td {
+        text-align: left;
+        padding: 8px;
+        text-align: justify;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f2f2f2
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    #table-wrapper {
+        position: relative;
+    }
+</style>
+
+
+<div class="loanees ">
+
+    <div>
+        Officer: {%if Staff == 0 %}All{%else%}{{loans.last.Loan_Collector.Officer_Name}}{%endif%} &nbsp;&nbsp;Frequency:{% if Freq == 1 %} Daily {% elif Freq == 0 %}All{% elif Freq == 2 %} Weekly {% else %}Monthly{%endif%}<br> Total Amount Collected :
+        {{totalinst}}
+        <br> Total Intrest Collected : {{intrestrec}}
+    </div>
+    <style>
+        div #table-wrapper {
+            overflow: auto;
+            white-space: nowrap;
+        }
+    </style>
+    <div id="table-wrapper ">
+        <table id="table_row_total">
+            <thead>
+                <tr>
+                    <th>L. ID - Name </th>
+                    <th>No Of Inst</th>
+                    {%for date in dates%}
+                    <th>{{date|date:"M d "}}</th>{%endfor%}
+                    <Th>Total Amt Collected</Th>
+                    <th>Amount Pending</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {%for loanee in loans%}
+                <tr>
+                    <td>{{loanee.pk}} - {{loanee.Account.Client.Name}} </td>
+                    <td style="display: none;" id="freq">{{loanee.Frequency}}</td>
+                    <td id="noofinst">{{loanee.No_Of_Installments}}
+                    </td>
+                    <td id="total " style="display: none; ">{{loanee.Total}}</td>
+                    {%for d in dates%}
+                    <td id="add ">{% for i in insts %}{%if i.Loan == loanee and i.Date_Paid == d and i.Installment_Paid > 0 %} {{i.Installment_Paid|floatformat:1}}{%elif i.Loan == loanee and i.Date_Due == d and i.Installment_Due != 0 and i.Date_Paid == none%}0{%endif%}{%endfor%}
+                    </td>{%endfor%}
+                    <td>{%for i,j in Dic2.items%}{%if i == loanee.pk%}{{j|floatformat:1}}{%endif%} {%endfor%}</td>
+                    <td id="Amntpen">{%for i,j in Dic.items%}{%if i == loanee.pk%}{{j|floatformat:1}}{%endif%} {%endfor%} </td>
+                </tr>{%endfor%} </tbody>
+        </table>
+
+    </div>
+</div>
+
+</div>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    jQuery('document').ready(function() {
+
+        $table1 = jQuery('#table_row_total');
+        $table1.find('tbody tr').each(function() {
+
+            jQuery(this).find("td[id='Amntpen']").each(function() {
+
+                var x = Number(jQuery(this).text());
+                if (x < 0) {
+                    jQuery(this).append(' cr');
+                }
+            });
+
+            freq = jQuery(this).find("td[id='freq']").text()
+            if (freq == 2) {
+                var noofinstall = Number(jQuery(this).find("td[id='noofinst']").text());
+                var rem;
+                if (noofinstall % 7 != 0) {
+                    noofinstall = 1 + noofinstall / 7;
+                    jQuery(this).find("td[id='noofinst']").empty();
+                    jQuery(this).find("td[id='noofinst']").append(noofinstall.toFixed(0) + ' W');
+                } else {
+                    noofinstall = noofinstall / 7;
+                    jQuery(this).find("td[id='noofinst']").empty();
+                    jQuery(this).find("td[id='noofinst']").append(noofinstall + ' W');
+                }
+            }
+            if (freq == 1) {
+                jQuery(this).find("td[id='noofinst']").append(' D');
+            }
+            if (freq == 3) {
+                jQuery(this).find("td[id='noofinst']").append(' M');
+            }
+
+        });
+    });
+</script>

@@ -1,0 +1,132 @@
+{%extends 'base_layout.html'%} {%block content%}
+
+<style>
+    div {
+        position: relative;
+        top: 10px;
+        z-index: 10;
+        display: block;
+    }
+    
+    label {
+        margin-right: 90%;
+    }
+    
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+        line-height: 1.5;
+        border-radius: 8px 8px 0 0!important;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .table thead tr {
+        background-color: #009879;
+        color: white;
+        text-align: left;
+        font-weight: bold;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid #dddddd;
+    }
+    
+    .table tbody td a {
+        text-decoration: none;
+    }
+    
+    .table tbody tr:nth-of-type(even) {
+        background-color: #E7E7E7 !important;
+    }
+    
+    .table tbody tr:last-of-type {
+        border-bottom: 2px solid #009879;
+    }
+    
+    .table th,
+    .table td {
+        padding: 8px 8px;
+    }
+    
+    .table td,
+    .table th,
+    .table-all td,
+    .table-all th {
+        display: table-cell;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid grey;
+    }
+    
+    thead,
+    tbody tr {
+        width: 100%;
+        height: auto;
+        justify-content: space-evenly;
+    }
+    
+    .errorlist {
+        display: none;
+    }
+    
+    input {
+        margin: 8px 0;
+    }
+</style>
+
+<div> {%if form%}
+    <h3>Add New Expense:</h3>
+
+    <form method="POST" autocomplete="off">
+        {% csrf_token %} {{form}}<br>
+        <input type="submit" onclick="payexpense(event)">
+
+    </form>
+    {%endif%} <br>
+    <br>
+    <br>
+
+    <table class="table">
+
+        <thead>
+            <th>Date</th>
+            <th>To</th>
+            <th>From</th>
+            <th>Amount</th>
+            <th>Remark</th>
+        </thead>
+
+        <tbody class="scroll">
+            {%for e in expense%}
+
+            <tr>
+                <td>{{e.Date}}</td>
+                <td>{{e.To}}</td>
+                <td>{{e.From}}</td>
+                <td>{{e.Amount}}</td>
+                <td>{{e.Remark}}</td>
+            </tr>
+            {%endfor%}
+        </tbody>
+
+    </table>
+
+
+
+
+</div>
+<script type="text/javascript">
+    function payexpense(e) {
+        if (!confirm('Do you confirm')) {
+            e.preventDefault();
+        }
+    }
+</script>
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+
+{%endblock%}

@@ -1,0 +1,119 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    th,
+    td {
+        text-align: left;
+        padding: 5px;
+        text-align: justify;
+    }
+    
+    .loanees {
+        background-color: transparent;
+        margin: 0;
+        padding: 0;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f2f2f2
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .w3-container {
+        padding: 0px;
+    }
+</style>
+
+
+
+
+<div class="loanees">
+    <h4>
+        <div class="w3-container" style="display: flex; justify-content:space-evenly">
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total amount Financed:</h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{totalloan}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total amount Collected:</h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{totalinst|floatformat:2}}</h4>
+                </div>
+            </div>
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total amount To be Collected:</h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{totalamnt|floatformat:2}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Intrest to be collected </h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{intrest|floatformat:2}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total File Charge collected </h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{totalfc|floatformat:2}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Penalty To be Collected </h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{totalpenalty}}</h4>
+                </div>
+            </div>
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Penalty Collected </h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{Total_pencol}}</h4>
+                </div>
+            </div>
+
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Intrest collected </h4>
+                </header>
+                <div class="w3-container">
+                    <h4>{{intrestrec|floatformat:2}}</h4>
+                </div>
+            </div>
+
+        </div>
+
+
+    </h4>
+
+</div>

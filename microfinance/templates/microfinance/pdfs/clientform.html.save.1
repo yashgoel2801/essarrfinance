@@ -1,0 +1,137 @@
+
+<html>
+<style>
+    body {
+        letter-spacing: 0.3mm;
+        font-size: 18px;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    h1,h2 {
+        text-align: center;
+    }
+    h4 {
+        text-align: center;
+    }
+</style>
+
+<body>
+
+    <div class="container" style="position:relative;width:8.27in;height:11.69in;">
+
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h1>Swadeshi India Nidhi Ltd.</h1>
+            <hr>
+            <h2>
+                Client Details For Client Id {{Client.pk}}</h2>
+            <hr>
+            <img src="{{Client.Image.url}}" style="width:30mm;height:35mm;position:absolute;right:10%;"> ID: {{Client.pk}}
+            <br> Name : {{Client.Name}}
+            <br> Father's Name: {{Client.Father_Name}}
+            <br> Mother's Name: {{Client.Mother_Name}}
+            <br> Addres : {{Client.Local_Address}}
+            <br> Permanent Address: {{Client.Permanent_Address}}
+            <br> Occupatio : {{Client.Occupation}}
+            <br> Designation: {{Client.Designation}}
+            <br> Phone No. 1 : {{Client.Phone_no1}}
+            <br> Phone No. 2: {{Client.Phone_no2}}
+            <br> Reference Name :{{Client.Reference_Name}} <br> Reference No. : {{Client.Reference_No}} <br> Verified By : {{Client.Verified_By}}
+            <br> Date Added :{{Client.Date_Added}}
+            <br>{{Client.Photo_Id}} :{{Client.Photo_Id_No}}
+            <br> Major Medical Issue :{{Client.Major_Medical_Issues}}
+        </div>
+        <Div style="position:absolute;right:10%; bottom:10%;">Client Signature</Div>
+
+    </div>
+    {% for loan in Loan%}
+    <div class="container" style="position:relative;width:8.27in; height:11.69in;">
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h2>Guarantor Details for Loan Id - {{loan.pk}} :</h2>
+            <hr>
+            <img src="{{loan.Guarantor.Image.url}}" style="width:150px;height:150px; position:absolute;right:10%;">
+            <br> Gaurantor Id : {{loan.Guarantor.pk}}<br> Gaurantor Name: {{loan.Guarantor.Guarantor_Name}}
+            <br> Father's Name: {{loan.Guarantor.Guarantor_Father_Name}}
+            <br> Mother's Name: {{loan.Guarantor.Guarantor_Mother_Name}}
+            <br> Local Address:{{loan.Guarantor.Guarantor_Local_Address}}
+            <br> Permanent Address: {{loan.Guarantor.Guarantor_Permanent_Address}}
+            <br> Occupation: {{loan.Guarantor.Guarantor_Occupation}}
+            <br> Designation: {{loan.Guarantor.Guarantor_Designation}}
+            <br> Office Address: {{loan.Guarantor.Guarantor_Office_Address}}
+            <br> Phone No: {{loan.Guarantor.Guarantor_Phone_no}}
+            <br> Phone No: {{loan.Guarantor.Guarantor_Phone_no2}}</span>
+            <br> Security Docs: {{loan.Guarantor.Guarantor_Security_Docs}}</div>
+
+        <div style="position:absolute; right:10%; bottom:10%;">Gaurantor Signature</div>
+    </div>
+
+    <div class="container" style="position:relative;width:8.27in;height:11.69in;">
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h2>Loan Details For LID: {{loan.pk}}:</h2>
+            <hr>
+            <br>
+            <img src="{{Client.Image.url}}" style="width:30mm;height:35mm; position:absolute;right:10%;"> Loan ID: {{loan.pk}}<br>Client ID: {{Client.pk}}<br> Loan Amount: {{loan.Principle_Amount}}<br> Frequency: {% if loan.Frequency == 1 %} Daily {% elif loan.Frequency == 2 %} Weekly {% else %}Monthly {%endif%}<br> Date Started: {{loan.Loan_Date}}<br> First Due Date: {{loan.First_Due_Date}}
+            <br> No Of Installments: {{loan.No_Of_Installments}}<br> Intrest Rate: {{loan.Intrest_Rate}}%<br> Total Amount: {{loan.Total}}<br> Installment Amount: {{loan.installments_set.first.Installment_Due|floatformat:2}}
+        </div>
+        <div style="position:absolute;right:10%;bottom:10%">Gaurantor Signature</Div>
+        <div style="position:absolute;left:1cm;bottom:10%">Client Signature</Div>
+    </div>
+    {% endfor %}
+    <div style="width: 8.27in;"><hr>
+        
+        <h2>PROMISSORY NOTE</h2>
+        <hr style="border: 3px solid black;">
+        <h4>Amount: ₹________________ [Principal amount]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dated: ___________, 20___</h4>
+        <p>FOR VALUE RECEIVED, the undersigned _____________________________ [Name of borrower(s)], (collectively “Borrower”), hereby promises to pay to the order of _____________________________  [Name of lender(s)], (collectively “Lender”), the principal sum of ₹________ (the “Principal Amount”) including interest in accordance with the terms set forth below.</p>
+        <p><b>1. Payment.</b>  The Principal Amount together with any accrued and unpaid interest and all other charges, costs and expenses, is due and payable on: (Check one)</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;___________, 20___.</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;demand of the Lender.</p>
+        <p>All payments under this Note are applied first to any accrued interest and then to the Principal Amount.</p>
+        <p><b>2. Payment Schedule. (Check one)</b></p>
+        <p>&#9633; This Note shall be payable in installments equal to ₹________. The first payment is due on ___________, 20___ and due thereafter in equal consecutive installments every: (Check one)</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;Month</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;Weekly</p>
+
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;Daily</p>
+        <p>&#9633; This Note shall NOT be payable in installments.</p>
+        <p><b>3. Security. (Check one)</b></p>
+        <p>&#9633; This is a secured note. Borrower agrees that until the Principal Amount of this Note together with any interest is paid in full, this Note will be secured by _________________________________ [Collateral], and Borrower hereby grants to Lender a security interest in and to such property.</p>
+        <p>&#9633; This is an unsecured note.</p>
+        <p><b>4. Interest. (Check one)</b></p>
+        <p>&#9633; The Principal Amount shall bear interest at the rate of ₹________, accruing daily. Notwithstanding, the total interest charged on the Principal Amount shall not exceed the maximum amount allowed by law and Borrower shall not be obligated to pay any interest in excess of such amount.</p>
+        <p>&#9633; The Principal Amount shall NOT bear interest.</p>
+        <p><b>5. Late Fee. (Check one)</b></p>
+        <p>&#9633;If Borrower fails to make a payment due under this Note within _____ days after the due date, Borrower agrees to pay to Lender a late payment fee of: (Check one)</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;₹________.</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9633;________% of the amount then due.</p>
+        <p>&#9633; A late payment fee will NOT be charged.</p>
+        <p><b>6. Acceleration. (Check one)</b></p>
+        <p>&#9633; In the event Borrower is more than _____ days late with a payment, Lender in its sole discretion may demand that the entire balance of the unpaid principal amount of this Note and any accrued and unpaid interest be immediately due and payable in full.</p>
+        <p>&#9633; This note will NOT be accelerated if a payment is late.</p>
+        <p><b>7. Prepayment. (Check one)</b></p>
+        <p>&#9633;   Borrower has the right to prepay all or any part of the Principal Amount of this Note at any time without prepayment penalty or premium of any kind. Borrower must provide _____ days prior written notice to Lender of the prepayment and the amount of the prepayment. ( ☐  If Borrower pays all of the Principal Amount, together with any accrued interest, on or before ___________, 20___, Lender will give a discount of ₹________ of the outstanding Principal Amount due.)</p>
+        <p>&#9633;   Borrower may NOT prepay the note.</p>
+        <p><b>8. Costs and Fees</b> Upon the occurrence of a default by Borrower, Borrower shall pay to Lender all costs of collection, including reasonable attorney's fees. </p>
+        <p><b>9. Waiver</b>Borrower and all sureties, guarantors and endorsers hereof, waive presentment, protest and demand, notice of protest, demand and dishonor and nonpayment of this Note.   </p>
+        <p><b>10. Guaranty. </b>______________ located at __________, __________, __________ __________  (“Guarantor”) promises to unconditionally guarantee to Lender, the full payment and performance by Borrower of all duties and obligations arising under this Note. Guarantor agrees that this guaranty shall remain in full force and effect and be binding on Guarantor until this Note is satisfied. </p>
+        <p><b>11. Assignment</b>Borrower may not assign its rights or delegate its duties under this Note without Lender’s prior written consent. </p>
+        <p><b>12. Joint and Several Liability. </b>The obligation of each Borrower under this Note shall be joint and several.  
+        </p>
+        <p><b>13. Amendment </b>This Note may be amended or modified only by a written agreement signed by Borrower and Lender. </p>
+        <p><b>14. Notifications</b> Any notice or communication under this Note must be in writing and either personally delivered, sent by overnight courier service, certified or registered mail, postage prepaid, return receipt requested or by facsimile or electronic email transmission</p>
+        <p><b>15. Governing Law. </b>This Note shall be governed by and construed in accordance with the laws of the State of ____________.</p>
+        <p><b>16. Miscellaneous</b>This Note will inure to the benefit of and be binding on the respective successors and permitted assigns of Lender and Borrower. Lender shall not be deemed to have waived any provision of this Note or the exercise of any rights held under this Note unless such waiver is made expressly and in writing. Waiver by Lender of a breach or violation of any provision of this Note shall not constitute a waiver of any other subsequent breach or violation. In the event that any of the provisions of this Note are held to be invalid or unenforceable in whole or in part, the remaining provisions shall not be affected and shall continue to be valid and enforceable as though the invalid or unenforceable parts had not been included in this Note.</p>
+        <br>
+        <p>IN WITNESS WHEREOF, the undersigned has executed this Note as of the date first stated above.</p><br><br>
+        <h4>SIGNATURES</h4>
+        <br><br>
+        <h4>Borrower's Signature&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Borrower's Full Name</h4>
+        <br><br>   <h4>Guarantor's Signature&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Guarantor's Full Name</h4>
+        <br><br>  <h4>Lender’s Signature&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lender’s Full Name</h4>
+
+    </div>
+</body>
+
+</html>
+

@@ -1,0 +1,210 @@
+{% load keyvalue %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+</script>
+
+<style>
+    div {
+        background-color: transparent;
+    }
+    
+    * {
+        color: blue;
+    }
+    
+    a {
+        text-decoration: none;
+    }
+    
+    table {
+        border-collapse: collapse;
+        margin-top: 0;
+        top: 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .phnno,
+    .loanamnt {
+        text-align: center;
+    }
+    
+    thead {
+        text-align: center;
+        text-transform: capitalize;
+    }
+    
+    th,
+    td {
+        text-align: center !important;
+        padding: 2px;
+        text-align: justify;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f2f2f2
+    }
+    
+    th {
+        background-color: lightgrey;
+        color: blue;
+        padding: 1px;
+        font-weight: 400;
+        margin: 0;
+    }
+    
+    #table-wrapper {
+        position: relative;
+    }
+    
+    #table-scroll {
+        height: 10px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    #table-wrapper {
+        position: relative;
+        top: 0;
+    }
+    
+    #table-scroll {
+        height: 150px;
+        overflow: auto;
+        margin-top: 0;
+    }
+    
+    input[type=submit] {
+        width: 20%;
+    }
+    
+    body {
+        counter-reset: Serial;
+        /* Set the Serial counter to 0 */
+    }
+    
+    tr:not(.extra) td:first-child:before {
+        counter-increment: Serial;
+        /* Increment the Serial counter */
+        content: counter(Serial);
+        /* Display the counter */
+    }
+    
+    table {
+        border-collapse: separate;
+    }
+</style>
+
+<style>
+    table {
+        page-break-inside: auto
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto
+    }
+</style>
+
+<h3>Officer : Date : {{Today}}
+
+</h3>
+<div id="table-wrapper">
+    <table id="table_row_total">
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name </th>
+                <th class="loanamnt">Phone NO</th>
+                <th class="loanamnt" style="display:none">Total Amount</th>
+                <th class="loanamnt">Installments</th>
+                <th>No of Installments</th>
+                <th class="phnno">First Due Date</th>
+                <th>End Date</th>
+                <th>Total Amt To Be Collected</th>
+                <th>Total Amt Collected</th>
+                <th>Total Amt Pending</th>
+                <th>Total Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {%for loanee in loans%}
+            <tr>
+                <td></td>
+                <td>{{loanee.pk}}</td>
+                <td><img src="{{loanee.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
+                <td>
+                    <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}} </a>
+                </td>
+                <td class="phnno">{{loanee.Account.Client.Phone_no1.raw_phone}}</td>
+                <td id="total" style="display: none;">{{loanee.Total}}</td>
+                <td>{{loanee.installments_set.first.Installment_Due|floatformat:2}}</td>
+                <td id="noofinst"><span display>{{loanee.No_Of_Installments}}</span></td>
+                <td style="display: none;" id="freq">{{loanee.Frequency}}</td>
+                <td>{{loanee.First_Due_Date|date:"d/m/y"}}</td>
+                <td>{{loanee.installments_set.last.Date_Due|date:"d/m/y"}}</td>
+
+                <td> {{Total_amt_to_be_col_dic|keyvalue:loanee.pk}}</td>
+                <td>{{Total_amt_col_dic|keyvalue:loanee.pk}}</td>
+                <td>{{Total_Pen_dic|keyvalue:loanee.pk}}</td>
+                <td>{{Total_bal_dic|keyvalue:loanee.pk}}</td>
+                <tr class="extra">
+                    <td></td>
+                    <td colspan="3" style="table-layout: fixed; width: 6cm;><span style="font-weight: 600;">Address :</span>{{loanee.Account.Client.Local_Address}}</td>
+                    <td colspan="2"><span style="font-weight: 600;">Phn 2:</span>{{loanee.Account.Client.Phone_no2}}</td>
+                    <td colspan="2"><span style="font-weight: 600;">Ref.:</span>{{loanee.Account.Client.Reference_Name}}</td>
+                    <td colspan="2"><span style="font-weight: 600;">Ref. Phn:</span>{{loanee.Account.Client.Reference_No}}</td>
+                    <td colspan="2"><span style="font-weight: 600;">G. Name :</span>{{loanee.Guarantor.Guarantor_Name}}</td>
+                    <td colspan="2"><span style="font-weight: 600;">G. Phn:</span>{{loanee.Guarantor.Guarantor_Phone_no}}</td>
+
+                </tr>
+
+            </tr>
+            {% endfor %}</tbody>
+    </table>
+
+</div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+
+<script>
+    jQuery('document').ready(function() {
+
+        $table1 = jQuery('#table_row_total');
+        $table1.find('tbody tr').each(function() {
+
+            jQuery(this).find("td[id='amntpen']").each(function() {
+
+                var x = Number(jQuery(this).text());
+
+                if (x < 0) {
+                    jQuery(this).append(' cr');
+                }
+            });
+            freq = jQuery(this).find("td[id='freq']").text()
+
+            if (freq == 2) {
+                var noofinstall = Number(jQuery(this).find("td[id='noofinst']").text());
+                var rem;
+                if (noofinstall % 7 != 0) {
+                    noofinstall = 1 + noofinstall / 7;
+                    jQuery(this).find("td[id='noofinst']").empty();
+                    jQuery(this).find("td[id='noofinst']").append(noofinstall.toFixed(0) + ' W');
+                } else {
+                    noofinstall = noofinstall / 7;
+                    jQuery(this).find("td[id='noofinst']").empty();
+                    jQuery(this).find("td[id='noofinst']").append(noofinstall + ' W');
+                }
+            }
+            if (freq == 1) {
+                jQuery(this).find("td[id='noofinst']").append(' D');
+            }
+            if (freq == 3) {
+                jQuery(this).find("td[id='noofinst']").append(' M');
+            }
+
+        });
+    });
+</script>

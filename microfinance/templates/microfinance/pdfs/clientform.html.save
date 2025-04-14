@@ -1,0 +1,80 @@
+
+<html>
+<style>
+    body {
+        letter-spacing: 0.3mm;
+        font-size: 18px;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    h2 {
+        text-align: center;
+
+    }
+
+</style>
+
+<body>
+
+    <div class="container" style="position:relative;width:8.27in;height:11.69in;">
+
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h2>
+                Client Details For Client Id {{Client.pk}}</h2>
+            <hr>
+            <img src="{{Client.Image.url}}" style="width:30mm;height:35mm;position:absolute;right:10%;"> ID: {{Client.pk}}
+            <br> Name : {{Client.Name}}
+            <br> Father's Name: {{Client.Father_Name}}
+            <br> Mother's Name: {{Client.Mother_Name}}
+            <br> Addres : {{Client.Local_Address}}
+            <br> Permanent Address: {{Client.Permanent_Address}}
+            <br> Occupatio : {{Client.Occupation}}
+            <br> Designation: {{Client.Designation}}
+            <br> Phone No. 1 : {{Client.Phone_no1}}
+            <br> Phone No. 2: {{Client.Phone_no2}}
+            <br> Reference Name :{{Client.Reference_Name}} <br> Reference No. : {{Client.Reference_No}} <br> Verified By : {{Client.Verified_By}}
+            <br> Date Added :{{Client.Date_Added}}
+            <br>{{Client.Photo_Id}} :{{Client.Photo_Id_No}}
+            <br> Major Medical Issue :{{Client.Major_Medical_Issues}}
+        </div>
+        <Div style="position:absolute;right:10%; bottom:10%;">Client Signature</Div>
+
+    </div>
+    {% for loan in Loan%}
+    <div class="container" style="position:relative;width:8.27in; height:11.69in;">
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h2>Guarantor Details for Loan Id - {{loan.pk}} :</h2>
+            <hr>
+            <img src="{{loan.Guarantor.Image.url}}" style="width:150px;height:150px; position:absolute;right:10%;">
+            <br> Gaurantor Id : {{loan.Guarantor.pk}}<br> Gaurantor Name: {{loan.Guarantor.Guarantor_Name}}
+            <br> Father's Name: {{loan.Guarantor.Guarantor_Father_Name}}
+            <br> Mother's Name: {{loan.Guarantor.Guarantor_Mother_Name}}
+            <br> Local Address:{{loan.Guarantor.Guarantor_Local_Address}}
+            <br> Permanent Address: {{loan.Guarantor.Guarantor_Permanent_Address}}
+            <br> Occupation: {{loan.Guarantor.Guarantor_Occupation}}
+            <br> Designation: {{loan.Guarantor.Guarantor_Designation}}
+            <br> Office Address: {{loan.Guarantor.Guarantor_Office_Address}}
+            <br> Phone No: {{loan.Guarantor.Guarantor_Phone_no}}
+            <br> Phone No: {{loan.Guarantor.Guarantor_Phone_no2}}</span>
+            <br> Security Docs: {{loan.Guarantor.Guarantor_Security_Docs}}</div>
+
+        <div style="position:absolute; right:10%; bottom:10%;">Gaurantor Signature</div>
+    </div>
+
+    <div class="container" style="position:relative;width:8.27in;height:11.69in;">
+        <div style="position: absolute;left:10%;width:90%;height:100%;margin:10% 0 10% 0">
+            <h2>Loan Details For LID: {{loan.pk}}: </h2>
+            <hr>
+            <br>
+            <img src="{{Client.Image.url}}" style="width:30mm;height:35mm; position:absolute;right:10%;">Loan ID: {{loan.pk}}<br>Client ID: {{Client.pk}}<br> Loan Amount: {{loan.Principle_Amount}}<br>Frequency: {% if loan.Frequency == 1 %} Daily {% elif loan.Frequency == 2 %} Weekly {% else %}Monthly {%endif%}<br> Date Started: {{loan.Loan_Date}}<br> First Due Date: {{loan.First_Due_Date}}
+            <br> No Of Installments: {{loan.No_Of_Installments}}<br> Intrest Rate: {{loan.Intrest_Rate}}%<br> Total Amount: {{loan.Total}}<br> Installment Amount: {{loan.installments_set.first.Installment_Due|floatformat:2}}
+        </div>
+        <div style="position:absolute;right:10%;bottom:10%">Gaurantor Signature</Div>
+        <div style="position:absolute;left:1cm;bottom:10%">Client Signature</Div>
+    </div>
+    {% endfor %}
+</body>
+
+</html>

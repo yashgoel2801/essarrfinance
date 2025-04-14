@@ -1,0 +1,493 @@
+{%extends 'base_layout.html'%} {%block content%}{%load static%} {%static "images" as baseUrl%}
+<!DOCTYPE html>
+<html style="margin:0;">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body,
+        html {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+        
+        table.scroll {
+            display: block;
+        }
+        
+        table.scroll {
+            height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        td {
+            position: relative;
+            text-align: 'right';
+        }
+        
+        .card:nth-child(2) td:last-child {
+            width: 2cm;
+        }
+        
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+            max-width: 45%;
+            min-width: 45%;
+            margin: 10px;
+            font-size: 14px;
+        }
+        .extendedcard{
+            max-width: 60%;
+            min-width: 60%;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        th,
+        td {
+            padding: 2px 5px;
+            justify-content: space-evenly;
+        }
+        
+        .buttonForms {
+            display: inline;
+        }
+        
+        td a {
+            text-decoration: none;
+        }
+        
+        .redcolor td a {
+            color: #E5E7E1 !important;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            width: 100%;
+            height: auto;
+            background-color: white;
+            padding: 0
+        }
+        
+        .main2 {
+            flex-direction: row;
+        }
+        div.container{width:100%;}
+        .container table{
+            padding: 5px;
+        }
+        @media screen and (max-width: 1180px) and (min-width: 551px) {
+            .main-container {
+                flex-direction: column-reverse;
+                width: 100%;
+                margin: auto;
+            }
+            .card {
+                min-width: 80%;
+                max-width: 80%;
+            }table.scroll {
+                height: 300px;
+                overflow-y: auto;
+                overflow-x: scroll;
+            }
+        }
+        
+        @media screen and (max-width: 550px) {
+            .main-container {
+                flex-direction: column-reverse;
+                width: 100%;
+                margin: 0;
+                font-size: 12px;
+            }
+            .card {
+                max-width: 95%;
+                min-width: 95%;
+             
+                padding: 0px;
+            }
+         
+            .container {
+                padding: 5px 5px;
+            }
+            table.scroll {
+                height: 300px;
+                overflow-y: auto;
+                overflow-x: scroll;
+            }
+        }
+    </style>
+</head>
+
+<body style="width: 95% !important;">
+
+    <form method="POST" action="{% url 'microfinance:pdf4' pk=Client.pk%}">
+        {%csrf_token%}
+
+        <input type="submit" value="Print Client Details">
+    </form>
+    <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+
+    <div class="main-container">
+        <div class="card">
+            <img src="{{Client.Image.url}}" style="width:100px;height:100px; border-radius:10px">
+            <span style="position:absolute;font-size: 20px;padding:5% 0 0 20px"><b>{{Client.pk}}-{{Client.Name}}</b></span><br>
+            <form action="{% url 'microfinance:viewdocs' pk=Client.pk%}" method="POST" class="buttonForms">
+                {%csrf_token%} View Client Documents : <input type="submit" value="View Docs">
+            </form>
+            <form action="{% url 'microfinance:editclient' pk=Client.pk%}" method="GET" class="buttonForms">
+                {%csrf_token%} <input type="submit" value="Edit Client Details">
+            </form>
+            <div class="container">
+
+                <table style="background-color:white;text-align:left;width:100%;border-radius:6px" class="scroll">
+                    <tr>
+                        <th>Father's Name:</th>
+                        <td>{{Client.Father_Name}}</td>
+                    </tr>
+                    <tr>
+                        <th>Husband's Name:</th>
+                        <td>{{Client.Husband_Name}}</td>
+                    </tr>
+                    <tr>
+                        <th>Mother's Name:</th>
+                        <td>{{Client.Mother_Name}}</td>
+                    </tr>
+                    <tr>
+                        <th>Wife's Name:</th>
+                        <td>{{Client.Wife_Name}}</td>
+                    </tr>
+                    <tr>
+                        <th>Local Address:</th>
+                        <td>{{Client.Local_Address}}</td>
+                    </tr>
+                    <tr>
+                        <th>Permanent Address:</th>
+                        <td>{{Client.Permanent_Address}}</td>
+                    </tr>
+                    <tr>
+                        <th>Occupation:</th>
+                        <td>{{Client.Occupation}}</td>
+                    </tr>
+                    <tr>
+                        <th>Designation:</th>
+                        <td>{{Client.Designation}}</td>
+                    </tr>
+                    <tr>
+                        <th>Office Address:</th>
+                        <td>{{Client.Office_Address}}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone No:</th>
+                        <td>{{Client.Phone_no1}}</td>
+
+                    </tr>
+                    <tr>
+                        <th>Phone No:</th>
+                        <td>{{Client.Phone_no2}}</td>
+                    </tr>
+                    <tr>
+                        <th>{{Client.Photo_Id}}:</th>
+                        <td>{{Client.Photo_Id_No}}</td>
+                    </tr>
+                    <tr>
+                        <th>Reference Name:</th>
+                        <td>{{Client.Reference_Name}}</td>
+
+                    </tr>
+                    <tr>
+                        <th>Reference Phone No:</th>
+                        <td>{{Client.Reference_No}}</td>
+
+                    </tr>
+                    <tr>
+                        <th>Verified By:</th>
+                        <td>{{Client.Verified_By}}</td>
+                    </tr>
+                    <tr>
+                        <th>Date Added:</th>
+                        <td>{{Client.Date_Added}}</td>
+                    </tr>
+                    <tr>
+                        <th>Entered By:</th>
+                        <td>{{Client.author}}</td>
+                    </tr>
+                    <tr>
+                        <th>Medical Issues:</th>
+                        <td>{{Client.Major_Medical_Issues}}</td>
+                    </tr>
+
+
+
+
+                </table>
+            </div>
+        </div>
+        <div class="card extendedcard">
+            <div class="container">
+                <h4><b>Account No: {{Account.pk}}</b></h4>
+
+                <table style="background-color:white;text-align:left;width:100%;border-radius:6px; " class="scroll">
+                    <thead>
+                        <th>Loan ID</th>
+                        <th>A/c No.</th>
+                        <th>Date Created</th>
+                        <th>
+                            Principle Amnt.
+                        </th>
+                        <th>Installment</th>
+                        <th>Reminder</th>
+                        <th>Remark</th>
+                        <th></th>
+                        <th>Status</th>
+                    </thead>
+                    <Tbody>{% for loan in Loan%}
+
+                        <tr>
+                            <td>{{loan.pk}}</td>
+                            <td>{{loan.AccNo}}</td>
+
+                            <td>
+                                <a href="{% url 'microfinance:loandetail' pk=loan.pk%}">  {{loan.Loan_Date|date:"M d"}}</a>
+                            </td>
+
+                            <td>{{loan.Principle_Amount}}</td>
+                            <td>{{loan.installments_set.first.Installment_Due|floatformat:2}}</td>
+                           
+                                <form action="{% url 'microfinance:clientdetail' pk=Client.pk%}" method="POST">{%csrf_token%}
+                                 <td><input type="date" name="Reminder" id="" style="width: 3.5cm;" value="{{loan.reminder|date:'Y-m-d'}}"></td>
+                                 <input type="text" style="display:none" value="{{loan.pk}}" name="pk">
+                                 <td><textarea name="remark" id="" cols="15" rows="2" >{{loan.remark}}</textarea>
+                                 <td><button type="submit" class="btn" style="all:revert; outline:none;border:none;" name="save" onclick="clicked(event)"><i style="font-weight: 100;" class='fas'>&#xf0c7;</i></button>
+                                 </td>
+                                </form>
+                            
+                            {%if loan.Status == False%}
+                            <td class="greencolor">Active</td>{%elif loan.Status == True%}
+                            <td class="redcolor">Closed</td>{%endif%} {%if request.user.is_superuser%}
+                            <td>
+                                <form action="{% url 'microfinance:editloan' pk=loan.pk%}" method="POST" > {%csrf_token%}
+                                    <button type="submit" class="btn" style="padding:0 5px; all:revert; background-color:#4CAF50;outline:none;border:none;border-radius:2px;color:white;" name="edit"><i style='font-weight:100;' class='far'>&#xf044;</i></button>
+                                    <button type="submit" class="btn" style="padding:0 5px; all:revert; background-color:#4CAF50;outline:none;border:none;border-radius:2px;color:white;" name="del" onclick="clicked(event)"><i style="font-weight: 100;" class='fas'>&#xf2ed;</i></button>
+                                </form>
+                            </td>
+
+                            {%endif%}
+                        </tr>
+                        {%endfor%} </Tbody>
+                    <form method="POST">
+                        {%csrf_token%}
+                        <input type="submit" value="AddLoan">
+                    </form>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+        td.columns {
+            width: 960px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        td.columns li {
+            display: inline;
+            margin: 10px;
+            padding: 0;
+            position: relative;
+        }
+        
+        .container #gd tbody:hover>tr:not(:hover) {
+            filter: blur(4px);
+        }
+        
+        td.columns li:hover {
+            z-index: 99;
+        }
+        
+        td.columns li .info {
+            position: absolute;
+            left: -10px;
+            top: -10px;
+            padding: 30px 5px 20px;
+            width: 30vw;
+            background: whitesmoke;
+            display: none;
+            font-size: 1.2em;
+            -webkit-border-radius: 3px;
+            -moz-border-radius: 3px;
+            border-radius: 3px;
+        }
+        
+        td.columns li:hover .info {
+            display: block;
+            z-index: 10000;
+        }
+        
+        td.columns li {
+            font-size: 0.9em;
+            font-weight: normal;
+            text-transform: uppercase;
+            margin: 0;
+            padding: 10px 0;
+        }
+        
+        td.columns li:hover {
+            z-index: 10000;
+        }
+        
+        .main-container {
+            max-width: 1300px;
+        }
+        
+        td.columns li {
+            padding: 0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+    </style>
+
+    <div class="main-container main2">
+        <div class="card">
+            <h2>Gaurantor details:</h2>
+        
+                <div class="col-sm-12">
+                    <div class="panel panel-default">
+                     
+                      <table class="table table-responsive table-hover">
+                        <thead>
+                          <tr>
+                            <th>LID</th>
+                            <th>Name</th>
+                          
+            <th>Phone</th>
+                            <th></th>
+                          </tr> 
+                        </thead>
+                        <tbody>
+                            {% for loan in Loan%}
+                          <tr data-toggle="collapse" id="row1" data-target=".{{loan.pk}}" style="background-color: #f2f2f2;">
+                            <td>{{loan.pk}} - {{loan.Guarantor.pk}}</td>
+                            <td><a href="{% url 'microfinance:loandetail' pk=Loan.last.pk%}" style="color: black;"> {{loan.Guarantor.Guarantor_Name}}</a></td>  
+                            <td>{{loan.Guarantor.Guarantor_Phone_no}}</td>
+                           
+                            <td><button class="btn btn-default btn-sm">View More</button></td>
+                          </tr>
+                       
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Father's Name: </td>
+                            <td>{{loan.Guarantor.Guarantor_Father_Name}}</td>
+                            <td colspan="2" rowspan="5"> <img src="{{loan.Guarantor.Image.url}}" style="width:100px;height:100px; border-radius:10px"></td>
+                          </tr>
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Mother's Name: </td>
+                            <td>{{loan.Guarantor.Guarantor_Mother_Name}}</td>
+                            
+                          </tr>
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Local Address:</td>
+                            <td>{{loan.Guarantor.Guarantor_Local_Address}}</td>
+                            
+                          </tr>
+
+
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Office Address:</td>
+                            <td>{{loan.Guarantor.Guarantor_Office_Address}}</td>
+                            
+                          </tr>
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Phone No 2:</td>
+                            <td>{{loan.Guarantor.Guarantor_Phone_no2}}</td>
+                            
+                          </tr>
+                          <tr class="collapse {{loan.pk}}">
+                            <td>Security Docs:</td>
+                            <td>{{loan.Guarantor.Guarantor_Security_Docs}}</td>
+                            <td colspan="2"> <form action="{% url 'microfinance:viewgdocs' pk=loan.Guarantor.pk%}" method="POST">
+                                {%csrf_token%} View G.Documents:<input type="submit" value="View Docs" style="width: auto;">
+                            </form></td>
+                          </tr>
+                          
+                          {%endfor%}
+                
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+        
+    
+        </div>
+
+     
+
+
+
+
+        <div class="card">
+            <h2>Document details:</h2>
+            <div class="container" >
+                <table id="gd" style="background-color:white;text-align:center;width:100%;border-radius:6px;" class="scroll">
+                    <thead style="text-align:center;width:100%;">
+                        <th>Loan ID</th>
+                        <th style="width: 100%;">Details</th>
+
+                    </thead>
+                  
+                    <Tbody style="font-size: 1.5rem;">{% for loan in Loan%}
+
+                        <tr>
+                            <td style="padding:10px;">{{loan.pk}}</td>
+
+                            <td style="width: 100%;">
+                                
+                                  
+                                    {{ loan.security_docs |linebreaks}}
+                                
+                            </td>
+                        </tr>
+                        {%endfor%} </Tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function clicked(e) {
+        if (!confirm('Are you sure?')) {
+            e.preventDefault();
+        }
+    }
+
+    $(document).ready(function() {
+        $("tr").each(function() {
+            if ($(this).find("td").eq(8).hasClass("redcolor")) {
+                $(this).css("background-color", "white");
+                $(this).css("color", "#E5E7E1");
+                $(this).find('a').css("color", "#E5E7E1");
+
+
+            }
+            if ($(this).find("td").eq(8).hasClass("greencolor")) {
+                $(this).css("background-color", "#deffba");
+            }
+        });
+
+    });
+</script>
+
+</html>
+
+{%endblock%}

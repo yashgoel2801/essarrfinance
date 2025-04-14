@@ -1,0 +1,441 @@
+{%extends 'base_layout.html'%} {%block content%}{%load static%} {%static "images" as baseUrl%}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+{%load keyvalue%}
+<style>
+    .container {
+        display: flex;
+        flex-flow: wrap;
+        min-width: 600px;
+        background-color: transparent;
+        justify-content: space-evenly;
+        position: relative;
+        width: 100vw;
+    }
+    
+    .card {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        width: 15vw;
+        text-align: center;
+        font-family: arial;
+        justify-content: center;
+    }
+    
+    .price {
+        color: grey;
+        font-size: 22px;
+    }
+    
+    .card button {
+        border: none;
+        outline: 0;
+        padding: 12px;
+        color: white;
+        background-color: #000;
+        text-align: center;
+        cursor: pointer;
+        width: 100%;
+        font-size: 18px;
+    }
+    
+    .card button:hover {
+        opacity: 0.7;
+    }
+</style>
+</head>
+
+<body style="margin: 0;">
+    <div class="container" style="padding: 20px 0 0 0 !important;">
+
+        <div class="card">
+            <img src="{% static 'images/Clients-icon.png'%}" style="width:75px;height:75px">
+            <h2>Add Clients</h2>
+            <p>Add new client to the database.</p>
+            <p><a href="{% url 'microfinance:addclient' %}"><button>Add Client</button></a></p>
+        </div>
+        <div class="card">
+            <img src="{% static 'images/search.png'%}" style="width:75px;height:75px;">
+            <h2>Search</h2>
+            <p>Add new client details or loan to the database.</p>
+            <p><a href="{% url 'microfinance:search' %}"><button>Search</button></a></p>
+        </div>
+        {%if request.user.is_superuser%}
+        <div class="card">
+            <img src="{% static 'images/expenses.png'%}" style="width:75px;height:75px">
+            <h2>Add expenditure</h2>
+            <span id="monthname" style="display: none;" value={{month}}>{{month}}</span>
+            <p>Add new expense to the database.</p><button class="open-button" onclick="openForm2()">Add Expense</button>
+            <!-- <p><a href="{% url 'microfinance:addexpense' %}"><button>Add Expense</button></a></p> -->
+        </div>
+
+        <div class="card">
+            <img src="{% static 'images/report-icon.png'%}" style="width:75px;height:75px">
+            <h2>Reports</h2>
+            <p>View Reports</p><br>
+            <p><a href="{% url 'microfinance:reports' %}"><button>Reports</button></a></p>
+        </div>
+        <div class="card">
+            <img src="{% static 'images/sms.png'%}" style="width:75px;height:75px">
+            <h2>SEND SMS</h2>
+            <p>Send Sms</p><br>
+            <p>
+                <!--<a href="{% url 'microfinance:smsselect' %}">--><button class="open-button" onclick="openForm()">SMS</button>
+                <!--</a>-->
+            </p>
+        </div>{%endif%}
+    </div>
+
+    <style>
+        /* Button used to open the contact form - fixed at the bottom of the page */
+        /* The popup form - hidden by default */
+        
+        .form-popup {
+            display: none;
+            position: absolute;
+            bottom: 15%;
+            right: 2%;
+            border: 3px solid #f1f1f1;
+            z-index: 9;
+        }
+        
+        .form-popup2 {
+            display: none;
+            position: absolute;
+            bottom: 5%;
+            right: 40%;
+            border: 3px solid #f1f1f1;
+            z-index: 9;
+        }
+        /* Add styles to the form container */
+        
+        .form-container {
+            max-width: 300px;
+            padding: 10px;
+            background-color: white;
+        }
+        /* Full-width input fields */
+        
+        .form-container input[type=text],
+        .form-container input[type=password] {
+            width: 100%;
+            padding: 15px;
+            margin: 5px 0 22px 0;
+            border: none;
+            background: #f1f1f1;
+        }
+        /* When the inputs get focus, do something */
+        
+        .form-container input[type=text]:focus,
+        .form-container input[type=password]:focus {
+            background-color: #ddd;
+            outline: none;
+        }
+        /* Set a style for the submit/login button */
+        
+        .form-container .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 4px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0 10px 0;
+            opacity: 0.8;
+        }
+        /* Add a red background color to the cancel button */
+        
+        .form-container .cancel {
+            background-color: red;
+            padding: 4px;
+        }
+        /* Add some hover effects to buttons */
+        
+        .form-container .btn:hover,
+        .open-button:hover {
+            opacity: 1;
+        }
+    </style>
+    <div class="form-popup" id="myForm">
+        <form class="form-container" method="POST" action="{% url 'microfinance:smsselect'%}">
+            {%csrf_token%}
+            <h3>Select Date:</h3>
+
+            <input type="date" name="DatePaid"><br>
+
+            <button type="submit" class="btn" name="DateWiseSms">View List</button>
+        </form>
+        <form action="{% url 'microfinance:smsselect' %}" class="form-container" method="POST">
+            {% csrf_token %}<input type="submit" value="Custom sms" name="CustomSmsSendList" class="btn">
+            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+        </form>
+    </div>
+
+    <div class="form-popup2" id="myForm2">
+        <form class="form-container" method="POST" action="{% url 'microfinance:addexpense'%}">
+            {%csrf_token%}
+            <h4>Select a Month:</h4>
+
+            <select name="Month" style="width: 35%;" id="month"> 
+            
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+                </select>
+            <button type="submit" class="btn">View monthly Expenses</button> </form>
+        <form class="form-container" method="POST" action="{% url 'microfinance:allexpense'%}">
+            {%csrf_token%}
+            <button type="submit" class="btn">View All Expenses</button></form>
+        <button type="button" class="btn cancel" onclick="closeForm2()">Close</button>
+        </form>
+    </div>
+
+
+    <script>
+        function openForm() {
+            document.getElementById("myForm").style.display = "block";
+        }
+
+        function closeForm() {
+            document.getElementById("myForm").style.display = "none";
+        }
+
+        function openForm2() {
+            document.getElementById("myForm2").style.display = "block";
+        }
+
+        function closeForm2() {
+            document.getElementById("myForm2").style.display = "none";
+        }
+    </script>
+
+    <script language="JavaScript" type="text/javascript">
+        $(document).ready(function() {
+            var m = document.getElementById("monthname").innerText;
+            var select = document.getElementById("month");
+            var options = select.options;
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value == m) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        });
+    </script>
+    <style>
+        .table {
+            border-collapse: collapse;
+            margin: 20px 10px;
+            width: 95%;
+            line-height: 1.5;
+            border-radius: 8px 8px 0 0!important;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .table thead tr {
+            background-color: #009879;
+            color: white;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+        
+        .table tbody td a {
+            text-decoration: none;
+        }
+        
+        .table tbody tr:nth-of-type(even) {
+            background-color: #E7E7E7 !important;
+        }
+        
+        .table tbody tr:last-of-type {
+            border-bottom: 2px solid #009879;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px 8px;
+        }
+        
+        .table td,
+        .table th,
+        .table-all td,
+        .table-all th {
+            display: table-cell;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid grey;
+        }
+        
+        tbody {
+            display: table-row-group;
+            vertical-align: middle;
+            border-color: black;
+        }
+    </style>
+    <style>
+        td,
+        th {
+            padding: 10px;
+            text-align: left;
+            font-size: 15px;
+        }
+        
+        .labels tr td {
+            background-color: #dddddd;
+            text-align: center;
+            font-weight: bold;
+            color: Black;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .label tr td label {
+            display: block;
+        }
+        
+        [data-toggle="toggle"] {
+            display: none;
+        }
+    </style>
+
+
+
+    <div class="container" style="position: relative;">
+
+        <h2> reminder</h2>
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+                    <th>Loan ID</th>
+                    <th>A/c No. </th>
+                    <th>Name</th>
+                    <th>Father's Name</th>
+                    <th>Phone No</th>
+                    <th>Pending Amnt</th>
+                    <th>Installment Amnt</th>
+                    
+                    <th>remark</th>
+                    <th>Remind On</th>
+                </tr>
+                <tr>
+                    <th colspan="9">
+                        <form method="POST" style="display: block;width: 100%;">
+                            {%csrf_token%} Loan Officer : <select name="Loan_Collector" id="id_Loan_Collector" style="display: inline-block;"> {%for user in users%}{% if user.pk != 0%}
+                                    <option value={{user.pk}}>{{user}}</option>{%endif%}
+                                    {%endfor%}  <option value=0>All</option></select>
+
+                            <button type="submit">Search</button></form>
+                    </th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tbody class="labels">
+                    <tr>
+                        <td colspan="9">
+                            <label for="Daily">Daily</label>
+                            <input type="checkbox" name="Daily" id="Daily" data-toggle="toggle">
+                        </td>
+                    </tr>
+                </tbody>
+
+                <tbody class="hide">
+
+                    {% for object in filter.qs%}{% if object.Frequency == 1 %}
+
+                    <tr>
+                        <td>{{object.pk}}</td>
+                        <td>{{object.AccNo}}</td>
+                        <td>
+                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                        <td>{{object.Account.Client.Father_Name}}</td>
+                        <td>{{object.Account.Client.Phone_no1}}</td>
+                        <td>{{dic|keyvalue:object.pk}}</td>
+                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                        <td>{{object.remark}}</td>
+                        <td>{{object.reminder}}</td>
+                    </tr>
+                    {%endif%}{% endfor %}</tbody>
+                <tbody class="labels">
+                    <tr>
+                        <td colspan="9">
+                            <label for="Weekly">Weekly</label>
+                            <input type="checkbox" name="Weekly" id="Weekly" data-toggle="toggle">
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody class="hide">
+
+                    {% for object in filter.qs%}{% if object.Frequency == 2 %}
+
+                    <tr>
+                        <td>{{object.pk}}</td>
+                        <td>{{object.AccNo}}</td>
+                        <td>
+                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                        <td>{{object.Account.Client.Father_Name}}</td>
+                        <td>{{object.Account.Client.Phone_no1}}</td>
+                        <td>{{dic|keyvalue:object.pk}}</td>
+                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                        <td>{{object.remark}}</td>
+                        <td>{{object.reminder}}</td>
+                    </tr>
+                    {%endif%} {% endfor %}</tbody>
+                <tbody class="labels">
+                    <tr>
+                        <td colspan="9">
+                            <label for="Monthly">Monthly</label>
+                            <input type="checkbox" name="Monthly" id="Monthly" data-toggle="toggle">
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody class="hide">
+
+                    {% for object in filter.qs%}{% if object.Frequency == 3 %}
+
+                    <tr>
+                        <td>{{object.pk}}</td>
+                        <td>{{object.AccNo}}</td>
+                        <td>
+                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                        <td>{{object.Account.Client.Father_Name}}</td>
+                        <td>{{object.Account.Client.Phone_no1}}</td>
+                        <td>{{dic|keyvalue:object.pk}}</td>
+                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                        <td>{{object.remark}}</td>
+                        <td>{{object.reminder}}</td>
+                    </tr>
+                    {%endif%} {% endfor %}</tbody>
+            </tbody>
+        </table>
+
+
+
+    </div>
+
+ <a href="{% url 'microfinance:tempview' %}">temporary</a>
+
+    <script>
+        $(document).ready(function() {
+            $('[data-toggle="toggle"]').change(function() {
+                $(this).parents().next('.hide').toggle();
+            });
+        });
+    </script>
+    {%endblock%}

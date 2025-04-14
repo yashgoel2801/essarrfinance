@@ -1,0 +1,9 @@
+form.form {
+    margin-top: 60px;
+    width: 75vw;
+    margin-left: 40px;
+    height: 25vh;
+    border: 1px solid green;
+    padding: 20px;
+    background-color: hsla(120, 100%, 50%, 0.3);
+}
