@@ -86,14 +86,14 @@ class Clients(models.Model):
     def save(self, force_insert=False, force_update=False,*args,**kawgrs):
         self.Name = self.Name.upper()
         self.Photo_Id_No = self.Photo_Id_No.upper()
-        permissions = Permission.objects.get(codename='view_client')
-        user = User.objects.create_user(
-            username=self.Phone_no1,
-            password=self.Name[:4]+self.Photo_Id_No[-4:],
-        )
-        user.user_permissions.add(permissions)
-        user.save()
-        self.ClientUser_id = user.pk
+        # permissions = Permission.objects.get(codename='view_client')
+        # user = User.objects.create_user(
+        #     username=self.Phone_no1,
+        #     password=self.Name[:4]+self.Photo_Id_No[-4:],
+        # )
+        # user.user_permissions.add(permissions)
+        # user.save()
+        # self.ClientUser_id = user.pk
         super(Clients, self).save(force_insert, force_update,*args, **kawgrs)      
 
 
@@ -148,9 +148,9 @@ class Loans(models.Model):
     Guarantor = models.ForeignKey(Guarantors,on_delete=models.PROTECT,default = 0)
     Account = models.ForeignKey(Accounts,on_delete=models.PROTECT,default = 0)
     Status =models.BooleanField(default=False)
-    remark = models.CharField(max_length=100,default='None')
-    reminder = models.DateField(default=datetime.now(),blank=True,null=True)
-    security_docs= models.TextField(default='not specified')
+    remark = models.CharField(max_length=100,default='None',blank=True,null=True)
+    reminder = models.DateField(default=timezone.now,blank=True,null=True)
+    Security_Docs= models.TextField(default='not specified')
     def __str__(self):
        return "Loan ID: "+str(self.pk)
     def _get_total_amnt_to_collect(self):
@@ -179,7 +179,6 @@ class Installments(models.Model):
 
 class Penalty(models.Model):
     Loan=models.ForeignKey(Loans,on_delete=models.PROTECT,default=0)
-    Installment = models.ForeignKey(Installments,on_delete=models.PROTECT,default =0)
     Date_Started = models.DateField(default=None)
     Date_Ended = models.DateField(default = None,null=True)
     Amount = models.FloatField(default = 0)

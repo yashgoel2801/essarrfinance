@@ -1,112 +1,193 @@
-{%load static%} {%static "images" as baseUrl%}
+{% load static %}
 <!DOCTYPE html>
-<html>
-<link href='https://fonts.googleapis.com/css?family=Exo' rel='stylesheet'>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Essarr Finance</title>
 
-<head>
-    <style>
-        * {
-            font-family: 'Exo';
-            font-weight: 200;
-            padding: 0;
-            margin: 0;
-        }
-        
-        ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #333;
-            min-width: 100%;
-        }
-        
-        li {
-            float: left;
-        }
-        
-        li a {
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 16px;
-            text-decoration: none;
-        }
-        
-        li a:hover:not(.active) {
-            background-color: #111;
-        }
-        
-        .active {
-            background-color: #4CAF50;
-        }
-    </style>
-    <!--forms stylesheet-->
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
 
     <style>
-        input[type=text],
-        input[type=number],
-        select {
-            width: 20%;
-            margin: 8px 0;
-            display: block;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+      :root {
+        --primary-color: #4caf50;
+        --primary-hover: #45a049;
+        --dark: #333;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background-color: var(--dark);
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .navbar-brand {
+        color: white !important;
+        font-weight: 600;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .navbar-brand i {
+        font-size: 1.5rem;
+      }
+
+      .navbar .container-fluid {
+        padding: 0 1rem;
+      }
+
+      .nav-link {
+        color: rgba(255, 255, 255, 0.85) !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s ease;
+        border-radius: 4px;
+        margin: 0 0.25rem;
+      }
+
+      .nav-link:hover {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-link.active {
+        color: white !important;
+        background-color: var(--primary-color) !important;
+      }
+
+      .btn-logout {
+        background-color: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white !important;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-logout:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      main {
+        flex: 1;
+        padding: 2rem 0;
+      }
+
+      /* Form styles */
+      .form-control {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        padding: 0.75rem;
+      }
+
+      .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+      }
+
+      /* Container padding */
+      .container,
+      .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .navbar-brand {
+          font-size: 1.1rem;
         }
-        
-        input[type=submit] {
-            width: 20%;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+
+        .nav-link {
+          padding: 0.5rem 0.75rem !important;
         }
-        
-        input[type=submit]:hover {
-            background-color: #45a049;
-        }
-        
-        div {
-            border-radius: 5px;
-            background-color: #f2f2f2;
-            padding: 20px;
-        }
-        
-        .btn .btn-default {
-            font-size: 16px;
-            width: 75px!important;
-            padding: 14px 16px;
-            border-radius: unset;
-            height: 100%;
-            margin: 0;
-        }
+      }
     </style>
+  </head>
 
-</head>
+  <body>
+    {% if request.path != '/accounts/login/' %}
+    <nav class="navbar navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/Home/">
+          <i class="fas fa-landmark"></i>
+          Essarr Finance
+        </a>
 
-<body style="margin: 0;width:100%">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <i class="fas fa-bars" style="color: white"></i>
+        </button>
 
-    <ul>
-        <li><a class="active" href="/Home/">Home</a></li>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.path == '/Home/' %}active{% endif %}"
+                href="/Home/"
+              >
+                <i class="fas fa-home me-1"></i> Home
+              </a>
+            </li>
+          </ul>
 
-        <li style="float: right;height: 49px;">
-            {%if user.is_authenticated%}
-            <form class="navbar-form navbar-left" action="/accounts/logout/" method="POST" style="height:100%">
-                {%csrf_token%}
-                <input class="btn btn-default" type="submit" value="logout" style="font-size:16px;width: 75px;padding:14px 16px;border-radius:unset;height:100%;margin:0">
-            </form>
-            {%endif%}</div>
-        </li>
-    </ul>
+          {% if user.is_authenticated %}
+          <a href="/accounts/logout/" class="btn-logout">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+    {% endif %}
 
-    {%block content%} {%endblock%}
+    <main>{% block content %}{% endblock %}</main>
 
-</body>
-
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>

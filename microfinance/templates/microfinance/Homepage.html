@@ -2,233 +2,292 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 {%load keyvalue%}
 <style>
-    .container {
-        display: flex;
-        flex-flow: wrap;
-        min-width: 600px;
-        background-color: transparent;
-        justify-content: space-evenly;
+    .cards-container {
         position: relative;
-        width: 100vw;
+        padding: 2rem 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #009879 #f1f1f1;
     }
-    
+
+    .cards-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .cards-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .cards-container::-webkit-scrollbar-thumb {
+        background: #009879;
+        border-radius: 4px;
+    }
+
+    .cards-container::-webkit-scrollbar-thumb:hover {
+        background: #007b63;
+    }
+
+    .cards-wrapper {
+        display: flex;
+        gap: 1.5rem;
+        padding: 0.5rem 1.5rem;
+        min-width: min-content;
+    }
+
     .card {
+        flex: 0 0 300px;
         box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-        width: 15vw;
-        text-align: center;
-        font-family: arial;
-        justify-content: center;
-    }
-    
-    .price {
-        color: grey;
-        font-size: 22px;
-    }
-    
-    .card button {
         border: none;
-        outline: 0;
-        padding: 12px;
-        color: white;
-        background-color: #000;
-        text-align: center;
-        cursor: pointer;
-        width: 100%;
-        font-size: 18px;
+        border-radius: 15px;
+        overflow: hidden;
     }
-    
-    .card button:hover {
-        opacity: 0.7;
+
+    @media (max-width: 768px) {
+        .cards-wrapper {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .card {
+            flex: 0 0 calc(50% - 1rem);
+            min-width: 250px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card {
+            flex: 0 0 100%;
+        }
+    }
+
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+    }
+
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
 </style>
 </head>
 
 <body style="margin: 0;">
-    <div class="container" style="padding: 20px 0 0 0 !important;">
+    <div class="cards-container">
+        <div class="cards-wrapper">
+            <!-- Add Clients Card -->
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle mb-3 bg-primary-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/Clients-icon.png' %}" alt="Clients" class="img-fluid" style="width: 40px; height: 40px;">
+                    </div>
+                    <h4 class="card-title mb-3">Add Clients</h4>
+                    <p class="card-text text-muted mb-4">Add new client to the database.</p>
+                    <a href="{% url 'microfinance:addclient' %}" class="btn btn-primary w-100">
+                        <i class="fas fa-user-plus me-2"></i>Add Client
+                    </a>
+                </div>
+            </div>
 
-        <div class="card">
-            <img src="{% static 'images/Clients-icon.png'%}" style="width:75px;height:75px">
-            <h2>Add Clients</h2>
-            <p>Add new client to the database.</p>
-            <p><a href="{% url 'microfinance:addclient' %}"><button>Add Client</button></a></p>
-        </div>
-        <div class="card">
-            <img src="{% static 'images/search.png'%}" style="width:75px;height:75px;">
-            <h2>Search</h2>
-            <p>Add new client details or loan to the database.</p>
-            <p><a href="{% url 'microfinance:search' %}"><button>Search</button></a></p>
-        </div>
-        {%if request.user.is_superuser%}
-        <div class="card">
-            <img src="{% static 'images/expenses.png'%}" style="width:75px;height:75px">
-            <h2>Add expenditure</h2>
-            <span id="monthname" style="display: none;" value={{month}}>{{month}}</span>
-            <p>Add new expense to the database.</p><button class="open-button" onclick="openForm2()">Add Expense</button>
-            <!-- <p><a href="{% url 'microfinance:addexpense' %}"><button>Add Expense</button></a></p> -->
-        </div>
+            <!-- Search Card -->
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle mb-3 bg-info-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/search.png' %}" alt="Search" class="img-fluid" style="width: 40px; height: 40px;">
+                    </div>
+                    <h4 class="card-title mb-3">Search</h4>
+                    <p class="card-text text-muted mb-4">Add new client details or loan to the database.</p>
+                    <a href="{% url 'microfinance:search' %}" class="btn btn-info w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </a>
+                </div>
+            </div>
 
-        <div class="card">
-            <img src="{% static 'images/report-icon.png'%}" style="width:75px;height:75px">
-            <h2>Reports</h2>
-            <p>View Reports</p><br>
-            <p><a href="{% url 'microfinance:reports' %}"><button>Reports</button></a></p>
+            {% if request.user.is_superuser %}
+            <!-- Add Expenditure Card -->
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle mb-3 bg-success-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/expenses.png' %}" alt="Expenses" class="img-fluid" style="width: 40px; height: 40px;">
+                    </div>
+                    <h4 class="card-title mb-3">Add Expenditure</h4>
+                    <span id="monthname" class="d-none" value="{{month}}">{{month}}</span>
+                    <p class="card-text text-muted mb-4">Add new expense to the database.</p>
+                    <button class="btn btn-success w-100" onclick="openForm2()">
+                        <i class="fas fa-plus me-2"></i>Add Expense
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reports Card -->
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle mb-3 bg-warning-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/report-icon.png' %}" alt="Reports" class="img-fluid" style="width: 40px; height: 40px;">
+                    </div>
+                    <h4 class="card-title mb-3">Reports</h4>
+                    <p class="card-text text-muted mb-4">View detailed reports and analytics.</p>
+                    <a href="{% url 'microfinance:reports' %}" class="btn btn-warning w-100">
+                        <i class="fas fa-chart-bar me-2"></i>View Reports
+                    </a>
+                </div>
+            </div>
+
+            <!-- SMS Card -->
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle mb-3 bg-danger-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/sms.png' %}" alt="SMS" class="img-fluid" style="width: 40px; height: 40px;">
+                    </div>
+                    <h4 class="card-title mb-3">Send SMS</h4>
+                    <p class="card-text text-muted mb-4">Send SMS notifications to clients.</p>
+                    <button class="btn btn-danger w-100" onclick="openForm()">
+                        <i class="fas fa-sms me-2"></i>Send SMS
+                    </button>
+                </div>
+            </div>
+            {% endif %}
         </div>
-        <div class="card">
-            <img src="{% static 'images/sms.png'%}" style="width:75px;height:75px">
-            <h2>SEND SMS</h2>
-            <p>Send Sms</p><br>
-            <p>
-                <!--<a href="{% url 'microfinance:smsselect' %}">--><button class="open-button" onclick="openForm()">SMS</button>
-                <!--</a>-->
-            </p>
-        </div>{%endif%}
+    </div>
+
+    <!-- SMS Popup Form -->
+    <div class="modal fade" id="myForm" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send SMS</h5>
+                    <button type="button" class="btn-close" onclick="closeForm()"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'microfinance:smsselect' %}" class="mb-3">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Select Date</label>
+                            <input type="date" name="DatePaid" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" name="DateWiseSms">View List</button>
+                    </form>
+                    <form action="{% url 'microfinance:smsselect' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="CustomSmsSendList" class="btn btn-outline-primary w-100">Custom SMS</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Popup Form -->
+    <div class="modal fade" id="myForm2" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Expense</h5>
+                    <button type="button" class="btn-close" onclick="closeForm2()"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'microfinance:addexpense' %}" class="mb-3">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Select Month</label>
+                            <select name="Month" class="form-select" id="month">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">View Monthly Expenses</button>
+                    </form>
+                    <form method="POST" action="{% url 'microfinance:allexpense' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary w-100">View All Expenses</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <style>
-        /* Button used to open the contact form - fixed at the bottom of the page */
-        /* The popup form - hidden by default */
-        
-        .form-popup {
-            display: none;
-            position: absolute;
-            bottom: 15%;
-            right: 2%;
-            border: 3px solid #f1f1f1;
-            z-index: 9;
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
         }
-        
-        .form-popup2 {
-            display: none;
-            position: absolute;
-            bottom: 5%;
-            right: 40%;
-            border: 3px solid #f1f1f1;
-            z-index: 9;
+
+        .hover-shadow {
+            transition: all 0.3s ease;
         }
-        /* Add styles to the form container */
-        
-        .form-container {
-            max-width: 300px;
-            padding: 10px;
-            background-color: white;
+
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
-        /* Full-width input fields */
-        
-        .form-container input[type=text],
-        .form-container input[type=password] {
-            width: 100%;
-            padding: 15px;
-            margin: 5px 0 22px 0;
+
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .card {
             border: none;
-            background: #f1f1f1;
+            border-radius: 15px;
+            overflow: hidden;
         }
-        /* When the inputs get focus, do something */
-        
-        .form-container input[type=text]:focus,
-        .form-container input[type=password]:focus {
-            background-color: #ddd;
-            outline: none;
+
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
         }
-        /* Set a style for the submit/login button */
-        
-        .form-container .btn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 4px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            margin: 10px 0 10px 0;
-            opacity: 0.8;
-        }
-        /* Add a red background color to the cancel button */
-        
-        .form-container .cancel {
-            background-color: red;
-            padding: 4px;
-        }
-        /* Add some hover effects to buttons */
-        
-        .form-container .btn:hover,
-        .open-button:hover {
-            opacity: 1;
+
+        .form-control, .form-select {
+            padding: 0.75rem;
+            border-radius: 8px;
         }
     </style>
-    <div class="form-popup" id="myForm">
-        <form class="form-container" method="POST" action="{% url 'microfinance:smsselect'%}">
-            {%csrf_token%}
-            <h3>Select Date:</h3>
-
-            <input type="date" name="DatePaid"><br>
-
-            <button type="submit" class="btn" name="DateWiseSms">View List</button>
-        </form>
-        <form action="{% url 'microfinance:smsselect' %}" class="form-container" method="POST">
-            {% csrf_token %}<input type="submit" value="Custom sms" name="CustomSmsSendList" class="btn">
-            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
-        </form>
-    </div>
-
-    <div class="form-popup2" id="myForm2">
-        <form class="form-container" method="POST" action="{% url 'microfinance:addexpense'%}">
-            {%csrf_token%}
-            <h4>Select a Month:</h4>
-
-            <select name="Month" style="width: 35%;" id="month"> 
-            
-            <option value="1">Jan</option>
-            <option value="2">Feb</option>
-            <option value="3">Mar</option>
-            <option value="4">Apr</option>
-            <option value="5">May</option>
-            <option value="6">Jun</option>
-            <option value="7">Jul</option>
-            <option value="8">Aug</option>
-            <option value="9">Sep</option>
-            <option value="10">Oct</option>
-            <option value="11">Nov</option>
-            <option value="12">Dec</option>
-                </select>
-            <button type="submit" class="btn">View monthly Expenses</button> </form>
-        <form class="form-container" method="POST" action="{% url 'microfinance:allexpense'%}">
-            {%csrf_token%}
-            <button type="submit" class="btn">View All Expenses</button></form>
-        <button type="button" class="btn cancel" onclick="closeForm2()">Close</button>
-        </form>
-    </div>
-
 
     <script>
         function openForm() {
-            document.getElementById("myForm").style.display = "block";
+            var modal = new bootstrap.Modal(document.getElementById('myForm'));
+            modal.show();
         }
 
         function closeForm() {
-            document.getElementById("myForm").style.display = "none";
+            var modal = bootstrap.Modal.getInstance(document.getElementById('myForm'));
+            if (modal) modal.hide();
         }
 
         function openForm2() {
-            document.getElementById("myForm2").style.display = "block";
+            var modal = new bootstrap.Modal(document.getElementById('myForm2'));
+            modal.show();
         }
 
         function closeForm2() {
-            document.getElementById("myForm2").style.display = "none";
+            var modal = bootstrap.Modal.getInstance(document.getElementById('myForm2'));
+            if (modal) modal.hide();
         }
-    </script>
 
-    <script language="JavaScript" type="text/javascript">
-        $(document).ready(function() {
-            var m = document.getElementById("monthname").innerText;
-            var select = document.getElementById("month");
-            var options = select.options;
-            for (var i = 0; i < options.length; i++) {
-                if (options[i].value == m) {
-                    select.selectedIndex = i;
-                    break;
-                }
-            }
+        // Set current month in the expense form
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
+            document.getElementById('month').value = currentMonth;
         });
     </script>
+
     <style>
         .table {
             border-collapse: collapse;
@@ -310,126 +369,125 @@
         }
     </style>
 
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="reminder-section mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">Reminder</h2>
+                        <form method="POST" class="d-flex align-items-center gap-3">
+                            {% csrf_token %}
+                            <div class="d-flex align-items-center">
+                                <label for="id_Loan_Collector" class="me-2">Loan Officer:</label>
+                                <select name="Loan_Collector" id="id_Loan_Collector" class="form-select">
+                                    {% for user in users %}
+                                        {% if user.pk != 0 %}
+                                            <option value={{user.pk}}>{{user}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <option value=0>All</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </form>
+                    </div>
 
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Loan ID</th>
+                                    <th>A/c No.</th>
+                                    <th>Name</th>
+                                    <th>Father's Name</th>
+                                    <th>Phone No</th>
+                                    <th>Pending Amnt</th>
+                                    <th>Installment Amnt</th>
+                                    <th>remark</th>
+                                    <th>Remind On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tbody class="labels">
+                                    <tr>
+                                        <td colspan="9">
+                                            <label for="Daily">Daily</label>
+                                            <input type="checkbox" name="Daily" id="Daily" data-toggle="toggle">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody class="hide">
+                                    {% for object in filter.qs%}{% if object.Frequency == 1 %}
+                                    <tr>
+                                        <td>{{object.pk}}</td>
+                                        <td>{{object.AccNo}}</td>
+                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                                        <td>{{object.Account.Client.Father_Name}}</td>
+                                        <td>{{object.Account.Client.Phone_no1}}</td>
+                                        <td>{{dic|keyvalue:object.pk}}</td>
+                                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                                        <td>{{object.remark}}</td>
+                                        <td>{{object.reminder}}</td>
+                                    </tr>
+                                    {%endif%}{% endfor %}
+                                </tbody>
 
-    <div class="container" style="position: relative;">
+                                <tbody class="labels">
+                                    <tr>
+                                        <td colspan="9">
+                                            <label for="Weekly">Weekly</label>
+                                            <input type="checkbox" name="Weekly" id="Weekly" data-toggle="toggle">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody class="hide">
+                                    {% for object in filter.qs%}{% if object.Frequency == 2 %}
+                                    <tr>
+                                        <td>{{object.pk}}</td>
+                                        <td>{{object.AccNo}}</td>
+                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                                        <td>{{object.Account.Client.Father_Name}}</td>
+                                        <td>{{object.Account.Client.Phone_no1}}</td>
+                                        <td>{{dic|keyvalue:object.pk}}</td>
+                                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                                        <td>{{object.remark}}</td>
+                                        <td>{{object.reminder}}</td>
+                                    </tr>
+                                    {%endif%}{% endfor %}
+                                </tbody>
 
-        <h2> reminder</h2>
-
-        <table class="table">
-
-            <thead>
-
-                <tr>
-                    <th>Loan ID</th>
-                    <th>A/c No. </th>
-                    <th>Name</th>
-                    <th>Father's Name</th>
-                    <th>Phone No</th>
-                    <th>Pending Amnt</th>
-                    <th>Installment Amnt</th>
-                    
-                    <th>remark</th>
-                    <th>Remind On</th>
-                </tr>
-                <tr>
-                    <th colspan="9">
-                        <form method="POST" style="display: block;width: 100%;">
-                            {%csrf_token%} Loan Officer : <select name="Loan_Collector" id="id_Loan_Collector" style="display: inline-block;"> {%for user in users%}{% if user.pk != 0%}
-                                    <option value={{user.pk}}>{{user}}</option>{%endif%}
-                                    {%endfor%}  <option value=0>All</option></select>
-
-                            <button type="submit">Search</button></form>
-                    </th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-                <tbody class="labels">
-                    <tr>
-                        <td colspan="9">
-                            <label for="Daily">Daily</label>
-                            <input type="checkbox" name="Daily" id="Daily" data-toggle="toggle">
-                        </td>
-                    </tr>
-                </tbody>
-
-                <tbody class="hide">
-
-                    {% for object in filter.qs%}{% if object.Frequency == 1 %}
-
-                    <tr>
-                        <td>{{object.pk}}</td>
-                        <td>{{object.AccNo}}</td>
-                        <td>
-                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                        <td>{{object.Account.Client.Father_Name}}</td>
-                        <td>{{object.Account.Client.Phone_no1}}</td>
-                        <td>{{dic|keyvalue:object.pk}}</td>
-                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                        <td>{{object.remark}}</td>
-                        <td>{{object.reminder}}</td>
-                    </tr>
-                    {%endif%}{% endfor %}</tbody>
-                <tbody class="labels">
-                    <tr>
-                        <td colspan="9">
-                            <label for="Weekly">Weekly</label>
-                            <input type="checkbox" name="Weekly" id="Weekly" data-toggle="toggle">
-                        </td>
-                    </tr>
-                </tbody>
-                <tbody class="hide">
-
-                    {% for object in filter.qs%}{% if object.Frequency == 2 %}
-
-                    <tr>
-                        <td>{{object.pk}}</td>
-                        <td>{{object.AccNo}}</td>
-                        <td>
-                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                        <td>{{object.Account.Client.Father_Name}}</td>
-                        <td>{{object.Account.Client.Phone_no1}}</td>
-                        <td>{{dic|keyvalue:object.pk}}</td>
-                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                        <td>{{object.remark}}</td>
-                        <td>{{object.reminder}}</td>
-                    </tr>
-                    {%endif%} {% endfor %}</tbody>
-                <tbody class="labels">
-                    <tr>
-                        <td colspan="9">
-                            <label for="Monthly">Monthly</label>
-                            <input type="checkbox" name="Monthly" id="Monthly" data-toggle="toggle">
-                        </td>
-                    </tr>
-                </tbody>
-                <tbody class="hide">
-
-                    {% for object in filter.qs%}{% if object.Frequency == 3 %}
-
-                    <tr>
-                        <td>{{object.pk}}</td>
-                        <td>{{object.AccNo}}</td>
-                        <td>
-                            <a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                        <td>{{object.Account.Client.Father_Name}}</td>
-                        <td>{{object.Account.Client.Phone_no1}}</td>
-                        <td>{{dic|keyvalue:object.pk}}</td>
-                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                        <td>{{object.remark}}</td>
-                        <td>{{object.reminder}}</td>
-                    </tr>
-                    {%endif%} {% endfor %}</tbody>
-            </tbody>
-        </table>
-
-
-
+                                <tbody class="labels">
+                                    <tr>
+                                        <td colspan="9">
+                                            <label for="Monthly">Monthly</label>
+                                            <input type="checkbox" name="Monthly" id="Monthly" data-toggle="toggle">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody class="hide">
+                                    {% for object in filter.qs%}{% if object.Frequency == 3 %}
+                                    <tr>
+                                        <td>{{object.pk}}</td>
+                                        <td>{{object.AccNo}}</td>
+                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
+                                        <td>{{object.Account.Client.Father_Name}}</td>
+                                        <td>{{object.Account.Client.Phone_no1}}</td>
+                                        <td>{{dic|keyvalue:object.pk}}</td>
+                                        <td>{{object.installments_set.first.Installment_Due}}</td>
+                                        <td>{{object.remark}}</td>
+                                        <td>{{object.reminder}}</td>
+                                    </tr>
+                                    {%endif%}{% endfor %}
+                                </tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
- <a href="{% url 'microfinance:tempview' %}">temporary</a>
+    <a href="{% url 'microfinance:tempview' %}">temporary</a>
 
     <script>
         $(document).ready(function() {

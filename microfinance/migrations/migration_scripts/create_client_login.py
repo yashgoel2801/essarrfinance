@@ -3,7 +3,7 @@ from django.contrib.auth.models import User,Permission
 
 
 def create_users_for_clients(apps, schema_editor):
-    Client = apps.get_model('your_app_name', 'Client')  # Get the Client model
+    Client = apps.get_model('microfinance', 'Client')  # Get the Client model
     permission = Permission.objects.get(codename='client_view') 
     for client in Client.objects.all():
         username = client.Phone_no1
@@ -16,7 +16,6 @@ def create_users_for_clients(apps, schema_editor):
                 password=password,
             )
             user.user_permissions.add(permission)
-            # Link the user to the client
             client.ClientUser = user
             client.save()
 

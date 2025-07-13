@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('microfinance', '0019_alter_loans_reminder'),
+        ('microfinance', '0016_auto_20210126_0736'),
     ]
 
     operations = [
@@ -16,11 +16,6 @@ class Migration(migrations.Migration):
             model_name='loans',
             name='Frequency',
             field=models.IntegerField(choices=[(1, 'Daily'), (2, 'Weekly'), (3, 'Monthly'), (3, 'OverDraft')], default=1),
-        ),
-        migrations.AlterField(
-            model_name='loans',
-            name='reminder',
-            field=models.DateField(blank=True, default=datetime.datetime(2024, 9, 16, 20, 10, 46, 324726), null=True),
         ),
         migrations.CreateModel(
             name='Payments',

@@ -1,122 +1,217 @@
-{%extends 'base_layout.html'%} {%block content%}
-<style>
-    /* The container */
-    
-    .container {
-        display: block;
-        position: relative;
-        padding-left: 35px;
-        margin-bottom: 5px;
-        cursor: pointer;
-        font-size: 18px;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
-    /* Hide the browser's default checkbox */
-    
-    .container input {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-        height: 0;
-        width: 0;
-    }
-    /* Create a custom checkbox */
-    
-    .checkmark {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 25px;
-        width: 25px;
-        background-color: #eee;
-    }
-    /* On mouse-over, add a grey background color */
-    
-    .container:hover input~.checkmark {
-        background-color: #ccc;
-    }
-    /* When the checkbox is checked, add a blue background */
-    
-    .container input:checked~.checkmark {
-        background-color: #2196F3;
-    }
-    /* Create the checkmark/indicator (hidden when not checked) */
-    
-    .checkmark:after {
-        content: "";
-        position: absolute;
-        display: none;
-    }
-    /* Show the checkmark when checked */
-    
-    .container input:checked~.checkmark:after {
-        display: block;
-    }
-    /* Style the checkmark/indicator */
-    
-    .container .checkmark:after {
-        left: 9px;
-        top: 5px;
-        width: 5px;
-        height: 10px;
-        border: solid white;
-        border-width: 0 3px 3px 0;
-        -webkit-transform: rotate(45deg);
-        -ms-transform: rotate(45deg);
-        transform: rotate(45deg);
-    }
-    
-    .col {
-        -webkit-column-width: 300px;
-        -moz-column-width: 150px;
-        -o-column-width: 150px;
-        -ms-column-width: 150px;
-        column-width: 500px;
-        -webkit-column-rule-style: solid;
-        -moz-column-rule-style: solid;
-        -o-column-rule-style: solid;
-        -ms-column-rule-style: solid;
-        column-rule-style: solid;
-    }
-</style>
-<br><br><br>
-<form action="{% url 'microfinance:addinstallment' pk=loan.pk %}" method="Get" style="float:right;justify-content:center;padding-right:50px;">{%csrf_token%}<input type="submit" value="Add Installment" style="width: 100%;padding:0 10px"></form>
+{% extends 'base_layout.html' %} {% block content %}
+<div class="container-fluid py-4">
+  <!-- Loan Info Card -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <h6 class="text-muted">Loan ID</h6>
+          <p class="h5">{{ loan.pk }}</p>
+        </div>
+        <div class="col-md-3">
+          <h6 class="text-muted">Client Name</h6>
+          <p class="h5">{{ loan.Client.Name }}</p>
+        </div>
+        <div class="col-md-3">
+          <h6 class="text-muted">Total Amount</h6>
+          <p class="h5">₹{{ loan.Total_Amount }}</p>
+        </div>
+        <div class="col-md-3">
+          <h6 class="text-muted">Loan Collector</h6>
+          <p class="h5">{{ loan.Collector.Name }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<h3>Installments:
-</h3>
-<br>
-<div class='col'>
-    <form action="{% url 'microfinance:deleteinstallment'%}" method="POST">
-        {%csrf_token%}
+  <!-- Header with Add Button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Installments</h3>
+    <a
+      href="{% url 'microfinance:addinstallment' pk=loan.pk %}"
+      class="btn btn-primary"
+    >
+      <i class="fas fa-plus"></i> Add Installment
+    </a>
+  </div>
 
-        <label class="container">Select All
-    <input type="checkbox" id="select-all">
-    <span class="checkmark"></span>
-</label> {%for k in Installment%}
+  <!-- Installments Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form action="{% url 'microfinance:deleteinstallment' %}" method="POST">
+        {% csrf_token %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="select-all"
+                    />
+                    <label class="form-check-label" for="select-all"
+                      >Select All</label
+                    >
+                  </div>
+                </th>
+                <th>Due Date</th>
+                <th>Paid Date</th>
+                <th>Installment Due</th>
+                <th>Installment Paid</th>
+                <th>Total Amount Pending</th>
+                <th>Total Amount Balance</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for k in Installment %}
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="{{ k.pk }}"
+                      name="Check"
+                      value="{{ k.pk }}"
+                    />
+                  </div>
+                </td>
+                <td>{{ k.Date_Due|date:"M d, Y" }}</td>
+                <td>{{ k.Date_Paid|date:"M d, Y"|default:"-" }}</td>
+                <td>₹{{ k.Installment_Due }}</td>
+                <td>₹{{ k.Installment_Paid|default:"0.00" }}</td>
+                <td>₹{{ k.Total_Amount_Pending }}</td>
+                <td>₹{{ k.Total_Amount_Balance }}</td>
+                <td>
+                  <a
+                    href="{% url 'microfinance:editinstallments' pk=k.pk %}"
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    <i class="fas fa-edit"></i> Edit
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3">
+          <button
+            type="submit"
+            class="btn btn-danger"
+            onclick="return confirmDelete()"
+          >
+            <i class="fas fa-trash"></i> Delete Selected
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        <label class="container"><a href="{% url 'microfinance:editinstallments' pk=k.pk %}">{{k.Date_Due}} - {{k.Date_Paid}}</a>
-    <input type="checkbox" id="{{k.pk}}" name="Check" value="{{k.pk}}">
-    <span class="checkmark"></span>
-    </label>{%endfor%}
-        <input type="submit" value="Delete Installments" onclick="clicked(event)">
-    </form>
+  <!-- Payment Form -->
+  <div class="card mt-4 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-4">Record Payment</h5>
+      <form action="" method="POST" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <label for="date_paid" class="form-label">Date Paid</label>
+          <input
+            type="date"
+            class="form-control"
+            id="date_paid"
+            name="date_paid"
+            required
+          />
+        </div>
+        <div class="col-md-6">
+          <label for="amount_paid" class="form-label">Amount Paid</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input
+              type="number"
+              class="form-control"
+              id="amount_paid"
+              name="amount_paid"
+              step="0.01"
+              required
+            />
+          </div>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-check"></i> Record Payment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
+
+<!-- Add Font Awesome for icons -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+/>
+
+<!-- Add Bootstrap 5 CSS and JS -->
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    document.getElementById('select-all').onclick = function() {
-        var checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        for (var checkbox of checkboxes) {
-            checkbox.checked = this.checked;
-        }
+  document.getElementById("select-all").onclick = function () {
+    var checkboxes = document.querySelectorAll('input[type="checkbox"]')
+    for (var checkbox of checkboxes) {
+      checkbox.checked = this.checked
     }
+  }
 
-    function clicked(e) {
-
-        if (!confirm('Are you sure you want to delete selected installments')) {
-            e.preventDefault();
-        }
-    }
+  function confirmDelete() {
+    return confirm("Are you sure you want to delete the selected installments?")
+  }
 </script>
-{%endblock%}
+
+<style>
+  /* Custom styles */
+  .card {
+    border: none;
+    border-radius: 10px;
+  }
+
+  .table th {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .btn-outline-primary {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.875rem;
+    }
+
+    .btn-sm {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.75rem;
+    }
+  }
+</style>
+{% endblock %}

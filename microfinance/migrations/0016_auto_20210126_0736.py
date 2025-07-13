@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('microfinance', '0015_auto_20210124_1746'),
+        ('microfinance', '0001_initial'),
     ]
 
     operations = [
@@ -15,10 +15,5 @@ class Migration(migrations.Migration):
             model_name='loans',
             name='Security_Docs',
             field=models.TextField(default='not specified'),
-        ),
-        migrations.AlterField(
-            model_name='loans',
-            name='reminder',
-            field=models.DateField(blank=True, default=datetime.datetime(2021, 1, 26, 7, 36, 40, 52647), null=True),
         ),
     ]

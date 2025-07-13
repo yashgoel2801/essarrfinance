@@ -344,10 +344,7 @@
     <input type="Date" name="date_paid"> <br>{%endif%} Amount paid: <input type="number" name="amount" id="amount" value="0">
     <input type="submit" name="pay" value="PAY" onclick="clicked(event)">
 </form>
-<form method="POST">
-    {%csrf_token%} Status: <input type="checkbox" name="Status" id='Status'><br>
-    <input type="submit" name="status" onclick="clickedStatus(event)">
-</form>{%else%}
+{%else%}
 <h3>Loan Closed </h3>{%endif%}
 
 <h3>Total Penalty : {{Total_Penalty}}</h3>

@@ -26,7 +26,7 @@ class AddDocs(forms.ModelForm):
 class AddLoan(forms.ModelForm):
     class Meta:
         model=models.Loans
-        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','security_docs']
+        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','Security_Docs']
         widgets = {
             'First_Due_Date': forms.DateInput(attrs={'type': 'date'}),
             'Loan_Date': forms.DateInput(attrs={'type': 'date'})

@@ -1,0 +1,293 @@
+{% extends 'base_layout.html' %} {% load static %} {% block content %}
+
+<!-- Test Message -->
+<div class="alert alert-info mb-4">Template loaded successfully</div>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">Add New Client</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Personal Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Personal Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Father's Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Father_Name"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Husband's Name</label>
+                  <input type="text" class="form-control" name="Husband_Name" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Mother's Name</label>
+                  <input type="text" class="form-control" name="Mother_Name" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Wife's Name</label>
+                  <input type="text" class="form-control" name="Wife_Name" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Address Information</h5>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Local Address</label>
+                  <textarea
+                    class="form-control"
+                    name="Local_Address"
+                    rows="2"
+                    required
+                  ></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Permanent Address</label>
+                  <textarea
+                    class="form-control"
+                    name="Permanent_Address"
+                    rows="2"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Professional Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Professional Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Occupation</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Occupation"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Designation</label>
+                  <input type="text" class="form-control" name="Designation" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Office Address</label>
+                  <textarea
+                    class="form-control"
+                    name="Office_Address"
+                    rows="2"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Contact Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Primary Phone</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    name="Phone_no1"
+                    pattern="[0-9]{10}"
+                    required
+                  />
+                  <small class="text-muted">10-digit mobile number</small>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Secondary Phone</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    name="Phone_no2"
+                    pattern="[0-9]{10}"
+                  />
+                  <small class="text-muted">Optional alternate number</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reference Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Reference Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Reference Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Reference_Name"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Reference Number</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Reference_No"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">Additional Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Verified By</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Verified_By"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Date Added</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    name="Date_Added"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Author</label>
+                  <select class="form-select" name="Author" required>
+                    <option value="">Select Author</option>
+                    <option value="ARIF">ARIF</option>
+                    <option value="ASIF">ASIF</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Photo ID Type</label>
+                  <select class="form-select" name="Photo_Id" required>
+                    <option value="aadhar card">Aadhar Card</option>
+                    <option value="pan card">PAN Card</option>
+                    <option value="voter id">Voter ID</option>
+                    <option value="driving license">Driving License</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Photo ID Number</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Photo_Id_No"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Major Medical Issues</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="Major_Medical_Issues"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="reset" class="btn btn-light">Reset</button>
+              <button type="submit" class="btn btn-success">Add Client</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Form validation
+  ;(function () {
+    "use strict"
+    var forms = document.querySelectorAll(".needs-validation")
+    Array.from(forms).forEach(function (form) {
+      form.addEventListener(
+        "submit",
+        function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add("was-validated")
+        },
+        false
+      )
+    })
+  })()
+
+  // Set default date to today
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("dateAdded").valueAsDate = new Date()
+  })
+</script>
+
+<style>
+  .card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-header {
+    background: var(--primary-color);
+    border-radius: 8px 8px 0 0 !important;
+    padding: 1rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .text-success {
+    color: var(--primary-color) !important;
+  }
+
+  .btn-success {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .btn-success:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+
+  .form-control,
+  .form-select {
+    padding: 0.75rem;
+  }
+
+  .was-validated .form-control:invalid {
+    border-color: #dc3545;
+  }
+
+  .was-validated .form-control:valid {
+    border-color: #198754;
+  }
+</style>
+
+{% endblock %}

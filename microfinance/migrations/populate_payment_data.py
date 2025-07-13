@@ -21,7 +21,7 @@ def update_payments(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('microfinance', '0021_rename_security_docs_loans_security_docs_and_more'),
+        ('microfinance', 'alter_clients_options'),
     ]
 
     operations = [
