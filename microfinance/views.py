@@ -54,38 +54,15 @@ def Add_Client(request):
     
     Today = datetime.now()
     if request.method == 'POST':
+        print(request.POST)
         form=AddClient(request.POST,request.FILES)
-        Phone = request.POST.get('Phone_no1_0')
-        photoid = request.POST.get('Photo_Id')
-        data = request.POST.get('Photo_Id_No')
-        length = len(data)
-        a=True
         
-        if photoid == 'aadhar':
-            if length != 12:
-                messages.info(request, 'Photo Id No. is INVALID!')
-                a=False
-      
-        elif photoid == 'pan':
-            if length != 10:
-                messages.info(request, 'Photo Id No. is INVALID!')
-                a=False
-            
-        elif photoid == 'voter':
-            if length != 10:
-                messages.info(request, 'Photo Id No. is INVALID!')
-                a=False
-        elif photoid == 'passport':
-            if length != 8:
-                messages.info(request, 'Photo Id No. is INVALID!')    
-                a=False        
-
-        if form.is_valid() and a: 
+        if form.is_valid():
             instance=form.save(commit=False)
             newobj = Accounts(Client=instance)
             permissions = Permission.objects.get(codename='client_view')
-            username = Phone
-            password = instance.Name[:4]+ data[-4:]
+            username = form.cleaned_data['Phone_no1']
+            password = instance.Name[:4]+ form.cleaned_data['Photo_Id_No'][-4:]
             if not User.objects.filter(username=username).exists():
                 user = User.objects.create_user(
                     username=username,
@@ -94,18 +71,12 @@ def Add_Client(request):
                 user.user_permissions.add(permissions)
             # Link the user to the client
             instance.ClientUser = user
+            instance.author = request.user # Set the author to the current user
             instance.save()
             newobj.save()
             return redirect('microfinance:adddocs', pk=instance.pk)
-        else:
-            
-            err =form.errors 
-            form =AddClient()
-            for e in err:
-                if e =='Phone_no1' or e == 'Photo_Id_No':
-                    Client = Clients.objects.filter(Q(Phone_no1=Phone)|Q(Photo_Id_No=data))
-                    return render(request,'microfinance/Add_Client.html',{'Today':Today,'form':form,'err':err,'Client':Client})
-            return render(request,'microfinance/Add_Client.html',{'Today':Today,'form':form,'err':err})
+        print(form.errors)
+        return render(request,'microfinance/Add_Client.html',{'Today':Today,'form':form})
     
     else: 
         form =AddClient()
@@ -244,8 +215,6 @@ def Client_Detail(request,pk):
     # Check if the user is a superuser
     if not request.user.is_superuser:
         # If not a superuser, check if the logged-in user is associated with this client
-        # 'logged_in_client' is the related_name from ClientUser in the Clients model
-        # We get the first client from the RelatedManager
         user_client = request.user.logged_in_client.first()
         if user_client: # Check if a client is actually associated
             if user_client.pk != Client.pk:
@@ -263,9 +232,9 @@ def Client_Detail(request,pk):
             pk=request.POST['pk']
             rem = request.POST['Reminder']
             remark=request.POST['remark']
-            loan =Loan.get(pk=pk)
-            loan.Remark =remark
-            loan.Reminder=rem
+            loan = Loans.objects.get(pk=pk)
+            loan.remark =remark
+            loan.reminder=rem
             loan.save()
 
             return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
@@ -274,282 +243,10 @@ def Client_Detail(request,pk):
         return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
 
 
-# @login_required(login_url="/accounts/login/")
-# def Loan_Detail(request,pk):
-#     Loan=Loans.objects.get(pk=pk)
-#     Installment = Installments.objects.filter(Loan=Loan).order_by('Date_Due','Date_Paid','-Installment_To_Be_Paid')
-#     Account =Accounts.objects.get(loans=Loan)  
-#     Client =Clients.objects.get(accounts=Account)    
-#     Total = Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100
-#     Total=round(Total,1)
-#     Penalties = Penalty.objects.filter(Loan=Loan)
-#     DatePaid= request.POST.get('date_paid')    
-#     Total_Pending = 0
-#     lastinst = Installment.filter(Date_Paid__isnull=False).filter(Installment_Paid__gt=0).order_by('Date_Paid').last()  
-
-#     return Loan_DetailV2(request,pk)
-    
-
-    # if request.method == "POST":  
-    #     Total_Pending = Total   #total amount stored in starting to calculate amnt pending 
-    #     if 'status' in request.POST:    #To change the current status
-    #         stat = bool(request.POST.get('Status'))
-    #         Loan.Status =stat
-    #         Loan.save()              
-        
-        
-    #     if "pay" in request.POST:   #Code to add amount paid 
-    #         if DatePaid is None or DatePaid =='':
-    #             DatePaid=datetime.now()
-    #         else:
-    #             DatePaid =datetime.strptime(DatePaid, "%Y-%m-%d")                
-
-    #         Amount_Paid = float(request.POST.get('amount'))             #amount entered
-    #         Amount_Paid=round(Amount_Paid,1)
-    #         Total_Pending = round(Total,1)              #total amount stored in starting to calculate amnt pending 
-    #         for i in Installment:               #for loop to calc amount pending
-    #             Total_Pending = Total_Pending - i.Installment_Paid
-            
-    #         if(Amount_Paid>Total_Pending):              #if the amount entered is more than the amount pending change amount paid to amount pending
-    #             Amount_Paid = Total_Pending
-            
-    #         Inst_Obj = Installment.filter(Date_Paid__isnull=True).filter(Installment_To_Be_Paid__gt=0).order_by('Date_Due').first()         #new installment
-    #         SameDate_Obj = Installment.filter(Date_Paid=DatePaid).first()                 #installment object having same date as today
-            
-    #         if SameDate_Obj is not None:                #code to pay on same date more than once
-    #             SameDate_Obj.Installment_Paid = SameDate_Obj.Installment_Paid + Amount_Paid             #adding new amount to installment paid prev on same date
-    #             Balance = Amount_Paid - SameDate_Obj.Installment_To_Be_Paid                     #calc balance 
-                
-    #             if Amount_Paid >= SameDate_Obj.Installment_To_Be_Paid:        #checking if the total amount recieved on that day is greater than the installment to be paid if yes then checking for penalty of that day and adding end date if penalty exists   
-    #                 SameDate_Obj.Installment_To_Be_Paid = 0
-    #                 SameDate_Obj.Pending_Amount = 0
-    #                 Del =Installment.filter(Date_Due = SameDate_Obj.Date_Due).filter(Date_Paid__isnull=True).filter(Installment_Due =0).delete()       #del the new inst if created 
-    #                 try: #check this later to reduce code repeated multiple times
-    #                     Penalty_Obj = Penalty.objects.filter(Loan=Loan).filter(Date_Ended__isnull=True).get(Date_Started=SameDate_Obj.Date_Due)
-    #                 except Penalty.DoesNotExist:
-    #                     Penalty_Obj = None
-    #                 if Penalty_Obj is not None:
-    #                     Penalty_Obj.Date_Ended = SameDate_Obj.Date_Paid
-    #                     Days = (Penalty_Obj.Date_Ended - Penalty_Obj.Date_Started).days                 #no of days for which penalty is to be applied
-    #                     Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 
-    #                     Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)     #calc penalty
-    #                     Penalty_Obj.save()
-                                 
-    #             else:
-    #                 SameDate_Obj.Installment_To_Be_Paid =SameDate_Obj.Installment_To_Be_Paid - Amount_Paid
-    #                 SameDate_Obj.Pending_Amount = SameDate_Obj.Pending_Amount - Amount_Paid
-    #                 SameDate_Obj.Installment_To_Be_Paid = round(SameDate_Obj.Installment_To_Be_Paid,1)
-    #                 SameDate_Obj.Pending_Amount = round(SameDate_Obj.Pending_Amount,1)
-
-    #                 if SameDate_Obj.Pending_Amount < SameDate_Obj.Installment_Paid:
-    #                     try:     #repeated pemtaly code. if pending amnt is less than install paid calc penaly and add date ended 
-    #                         Penalty_Obj = Penalty.objects.filter(Loan=Loan).filter(Date_Ended__isnull=True).get(Date_Started=SameDate_Obj.Date_Due)
-    #                     except Penalty.DoesNotExist:
-    #                         Penalty_Obj = None
-    #                     if Penalty_Obj is not None:
-    #                         Penalty_Obj.Date_Ended = SameDate_Obj.Date_Paid
-    #                         Days = (Penalty_Obj.Date_Ended - Penalty_Obj.Date_Started).days                 #no of days for which penalty is to be applied
-    #                         Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 
-    #                         Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)     #calc penalty
-    #                         Penalty_Obj.save()
-    #                         # if SameDate_Obj.Pending_Amount<SameDate_Obj.Installment_Paid:
-    #                         #     if SameDate_Obj.Installment_Due == 0:
-    #                         #         PenaltyAmnt = SameDate_Obj.Installment_To_Be_Paid
-    #                         #     else:
-    #                         #         PenaltyAmnt = SameDate_Obj.Installment_Due
-    #                         #     Penalty_Obj  = Penalty(Loan=Loan,Installment=SameDate_Obj,Date_Started=SameDate_Obj.Date_Due,Date_Ended=SameDate_Obj.Date_Paid,Amount=PenaltyAmnt)   
-    #                         #     Days = (Penalty_Obj.Date_Ended - Penalty_Obj.Date_Started).days #check this later
-    #                         #     Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 #this too
-    #                         # else:
-    #                         #     Penalty_Obj  = Penalty(Loan=Loan,Installment=SameDate_Obj,Date_Started=SameDate_Obj.Date_Due,Amount=PenaltyAmnt)
-                        
-    #                     Next = Installment.filter(Date_Due=SameDate_Obj.Date_Due).filter(Date_Paid__isnull =True).filter(Installment_Due = 0).first()       #code for changing the pending amount and the install to be paid of the installment created earlier with same date and 0 installment due
-    #                     Next.Installment_To_Be_Paid = SameDate_Obj.Installment_To_Be_Paid
-    #                     Next.Pending_Amount = SameDate_Obj.Pending_Amount
-    #                     Next.save()
-    #             SameDate_Obj.save()
-            
-    #         #same date installment case code ended here
-            
-            
-    #         else:               #code for adding payment in a null date paid install obj
-    #             Inst_Obj.Date_Paid = DatePaid
-    #             Inst_Obj.Installment_Paid = Amount_Paid
-    #             Balance = Amount_Paid - Inst_Obj.Installment_To_Be_Paid
-    #             Balance = round(Balance,1)
-    #             if Amount_Paid >= Inst_Obj.Installment_To_Be_Paid:             
-    #                 Inst_Obj.Installment_To_Be_Paid = 0
-    #                 Inst_Obj.Pending_Amount = 0
-    #             else:       #if amount paid is less than creating a new inst obj with inst due 0 and same date due
-    #                 Inst_Obj.Installment_To_Be_Paid = round((Inst_Obj.Installment_To_Be_Paid - Amount_Paid),1)
-    #                 Inst_Obj.Pending_Amount = round(Inst_Obj.Installment_To_Be_Paid,1) 
-    #                 NewObj = Installments(Loan = Loan,Installment_Due = 0,Installment_To_Be_Paid= Inst_Obj.Pending_Amount,Pending_Amount=Inst_Obj.Pending_Amount,Date_Due= Inst_Obj.Date_Due)  
-    #                 NewObj.save()
-    #             Inst_Obj.save()
-                
-    #             if Inst_Obj.Date_Paid.date() > Inst_Obj.Date_Due:               
-    #                 if Inst_Obj.Installment_Due == 0:           #when the penalty is calculated from new inst obj with installment due 0
-    #                     PenaltyAmnt = Inst_Obj.Installment_To_Be_Paid
-    #                 else:                                       #when the penalty is calculated from inst obj with installment due >0
-    #                     PenaltyAmnt = Inst_Obj.Installment_Due
-    #                 try:           #checking if penalty exists or not . if doesnt exist then create one
-    #                     Penalty_Obj = Penalty.objects.filter(Loan=Loan).get(Date_Started=Inst_Obj.Date_Due)                       
-    #                     if Inst_Obj.Pending_Amount < Inst_Obj.Installment_Paid:             #adding end date if amnt paid>amnt pending
-    #                         Penalty_Obj.Date_Ended = Inst_Obj.Date_Paid
-    #                         Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days 
-    #                         Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 
-    #                         Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)
-    #                         Penalty_Obj.save()
-    #                 except Penalty.DoesNotExist:            #creating a new penalty with end date if amnt paid>amnt pending
-    #                     if Inst_Obj.Pending_Amount < Inst_Obj.Installment_Paid:            
-    #                         Penalty_Obj  = Penalty(Loan=Loan,Installment=Inst_Obj,Date_Started=Inst_Obj.Date_Due,Date_Ended=Inst_Obj.Date_Paid,Amount=PenaltyAmnt)
-    #                         Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days 
-    #                         Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 
-    #                         Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)
-    #                     else:               #creating a new penalty without end date
-    #                         Penalty_Obj  = Penalty(Loan=Loan,Installment=Inst_Obj,Date_Started=Inst_Obj.Date_Due,Amount=PenaltyAmnt)
-    #                     Penalty_Obj.save()
-    #         #code for adding payment in a null date paid install obj ended here
-            
-    #         #code to handle conditions when balance>0 
-    #         if SameDate_Obj is not None:
-    #             Obj = SameDate_Obj
-    #         else:
-    #             Obj = Inst_Obj
-    #         while(Balance > 0):
-    #             NextObj = Installment.filter(Date_Due__gte = Obj.Date_Due).filter(Date_Paid__isnull=True).filter(Installment_To_Be_Paid__gt=0).order_by('Date_Due','Date_Paid','-Installment_To_Be_Paid').first()
-    #             if Balance >= NextObj.Installment_To_Be_Paid:   
-                    
-    #                 Balance = Balance - round(NextObj.Installment_To_Be_Paid,1)
-    #                 NextObj.Pending_Amount = 0
-    #                 NextObj.Installment_To_Be_Paid = 0
-    #                 NextObj.Date_Paid = DatePaid 
-    #                 if NextObj.Date_Paid.date() > NextObj.Date_Due:             #checking for penalty
-    #                     if NextObj.Installment_Due == 0:                #if condition to check if penalty is to be applied on install obj with inst due >0 
-    #                         PenaltyAmnt = round(NextObj.Installment_To_Be_Paid,1)
-    #                     else:
-    #                         PenaltyAmnt = round(NextObj.Installment_Due,1)
-    #                     try:
-    #                         Penalty_Obj = Penalty.objects.filter(Loan=Loan).get(Date_Started=NextObj.Date_Due)
-    #                         Penalty_Obj.Date_Ended = DatePaid   
-    #                         Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days 
-    #                         Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100  
-    #                         Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)
-    #                         Penalty_Obj.save()                    
-    #                     except Penalty.DoesNotExist:
-    #                         Penalty_Obj =Penalty(Loan=Loan,Installment=NextObj,Date_Started=NextObj.Date_Due,Date_Ended=DatePaid,Amount=PenaltyAmnt)
-    #                         Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days 
-    #                         Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100  
-    #                         Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)  
-    #                     Penalty_Obj.save()
-    #             else:
-    #                 if DatePaid.date() > NextObj.Date_Due:
-                   
-    #                     try:
-                            
-    #                         Penalty_Obj = Penalty.objects.filter(Loan=Loan).get(Date_Started=NextObj.Date_Due)
-    #                         if Balance > 0.5*NextObj.Installment_To_Be_Paid:
-    #                             Penalty_Obj.Date_Ended = DatePaid
-    #                             Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days #check this later
-    #                             Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 #this too
-    #                             Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)
-    #                             Penalty_Obj.save()
-    #                     except Penalty.DoesNotExist:                                             
-    #                         if Balance > 0.5*NextObj.Installment_To_Be_Paid:
-                                
-    #                             if NextObj.Installment_Due == 0:
-    #                                 PenaltyAmnt = NextObj.Installment_To_Be_Paid
-    #                             else:
-    #                                 PenaltyAmnt = NextObj.Installment_Due
-    #                             Penalty_Obj  = Penalty(Loan=Loan,Installment=NextObj,Date_Started=NextObj.Date_Due,Date_Ended=DatePaid,Amount=PenaltyAmnt)
-    #                             Days = (Penalty_Obj.Date_Ended.date() - Penalty_Obj.Date_Started).days #check this later
-    #                             Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 #this too
-    #                             Penalty_Obj.Penalty_Calc = round(Penalty_Obj.Penalty_Calc,1)
-    #                             Penalty_Obj.save()
-    #                         else:
-    #                             Penalty_Obj  = Penalty(Loan=Loan,Installment=NextObj,Date_Started=NextObj.Date_Due,Amount=NextObj.Installment_Due)
-    #                         Penalty_Obj.save()
-    #                 NextObj.Pending_Amount  = NextObj.Pending_Amount - Balance
-    #                 Balance = Balance - NextObj.Installment_To_Be_Paid
-    #                 NextObj.Installment_To_Be_Paid =NextObj.Pending_Amount
-    #             NextObj.save()
-            
-                   
-    #     if "penalty" in request.POST:
-    #         Penalty_Obj =Penalties.filter(Status = False).order_by("Date_Started").first()
-    #         Penalty_Obj.Penalty_Paid = Penalty_Obj.Penalty_Paid + float(request.POST.get('Penalty_Paid')) 
-    #         Penalty_Obj.Status = bool(request.POST.get('Status'))
-    #         Penalty_Obj.Penalty_Paid_Date =datetime.now()
-    #         Penalty_Obj.save()
-    #     return redirect("microfinance:home")
-
-    # else: 
-        amnt_pen = 0
-        inst = Installments.objects.filter(Loan=Loan).filter(Q(Date_Paid__lte=timezone.now())|Q(Date_Due__lte=timezone.now())).distinct()
-        
-        for i in inst:
-            amnt_pen = amnt_pen + i.Installment_Due - i.Installment_Paid
-            
-        Total_Pending = round(Total,1)
-        for i in Installment:
-            Total_Pending = Total_Pending - i.Installment_Paid
-        Total_Penalty = 0
-        for p in Penalties:
-            if p.Status is True:
-                pass
-            else:
-                if p.Date_Ended is None:
-                    days = (datetime.now().date() - p.Date_Started).days
-                    pcal = p.Amount*days*p.Percent/100
-                    Total_Penalty = Total_Penalty + pcal - p.Penalty_Paid
-                else: 
-                    Total_Penalty = Total_Penalty + p.Penalty_Calc - p.Penalty_Paid
-        Total_Penalty =round(Total_Penalty,1)
-        return render(request,'microfinance/Loan_Detail.html',{'Total_Penalty':Total_Penalty,'Total':Total,'Installment':Installment,'Loan':Loan,'Client':Client,'Penalty':Penalties,'Total_Pending':round(Total_Pending,1),'amnt_pen':round(amnt_pen,1),'lastinst':lastinst})
 
 def Recalculate_Penalty(Loan):
     calculate_penalties(Loan)
 
-# def Recalculate_Penalty(Loan):
-#     today = datetime.now().date()
-#     Installment = Installments.objects.filter(Loan=Loan).filter(Date_Due__lte=timezone.now()).filter(Installment_Due__gt=0).order_by('Date_Due')
-#     Payment =Payments.objects.filter(Loan=Loan).filter(Payment_Type=1).order_by('Date_Paid')
-#     paymentIndx=0
-#     installmentIndx=0
-#     AmntBal=0
-#     while(installmentIndx < len(Installment) and paymentIndx < len(Payment)):
-#         if(Installment[installmentIndx].Date_Due<Payment[paymentIndx].Date_Paid):
-#             if(Installment[installmentIndx].Date_Due<=today):
-#                 AmntBal+=Installment[installmentIndx].Installment_Due
-#             if(AmntBal>0):
-#                 getOrCreatePenalties(Loan,Installment[installmentIndx].Date_Due,Installment[installmentIndx],AmntBal)
-#             else:
-#                 removePenalty(Loan,Installment[installmentIndx])
-#             installmentIndx+=1
-#         elif(Installment[installmentIndx].Date_Due>Payment[paymentIndx].Date_Paid):
-#             AmntBal-=Payment[paymentIndx].Amount_Paid
-            
-#             if(AmntBal<=0): #edge case when installmentIndx=0, can amnt bal >0 in any case
-#                 closePenalty(Loan,Installment[installmentIndx-1].Date_Due,Installment[installmentIndx-1],Payment[paymentIndx].Date_Paid)
-#             paymentIndx+=1
-#         else:
-#             if(Installment[installmentIndx].Date_Due<=today):
-#                 AmntBal+=Installment[installmentIndx].Installment_Due
-#             AmntBal-=Payment[paymentIndx].Amount_Paid
-#             if(AmntBal>0):
-#                 getOrCreatePenalties(Loan,Installment[installmentIndx].Date_Due,Installment[installmentIndx],AmntBal)
-#             else:
-#                 removePenalty(Loan,Installment[installmentIndx])
-#             installmentIndx+=1
-#             paymentIndx+=1
-#     while(installmentIndx < len(Installment)):
-#         AmntBal+=Installment[installmentIndx].Installment_Due 
-#         if(AmntBal>0):
-#             getOrCreatePenalties(Loan,Installment[installmentIndx].Date_Due,Installment[installmentIndx],AmntBal)
-#         else:
-#             removePenalty(Loan,Installment[installmentIndx])
-#         installmentIndx+=1
-    
 def removePenalty(Loan,startDate):
     try: 
         Penalty_Obj = getPenalty(Loan,startDate)
@@ -568,37 +265,13 @@ def getPenalty(Loan,startDate):
         print('Penalty not found')
         return None
 
-# def closePenalty(Loan,dueDate,inst,datePaid):
-#     Penalty_Obj=None
-#     try:
-#         Penalty_Obj = getPenalty(Loan,inst)
-#         #if penalty_calc =0 delete that penalty
-#         if(Penalty_Obj is not None):
-#             Penalty_Obj.Date_Ended = datePaid
-#             Days = (Penalty_Obj.Date_Ended - Penalty_Obj.Date_Started).days  
-#             Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Penalty_Obj.Percent*Days/100 
-#             Penalty_Obj.save()
-#     except:
-#         print('close penalty ERROR')
-
 
 
 def getOrCreatePenalties(Loan,startDate,endDate,penalty_amnt,penalty_calc):
     try:
         Penalty_Obj = getPenalty(Loan,startDate)
-        # if(Penalty_Obj is not None):
-        #         Penalty_Obj.Date_Started=startDate
-        #         Penalty_Obj.Amount=penalty_amnt
-        #         Pe
-        #         Penalty_Obj.save()
-        # else: 
         Penalty_Obj = Penalty(Loan=Loan,Date_Started=startDate,Date_Ended=endDate,Amount=penalty_amnt,Penalty_Calc=penalty_calc)
         Penalty_Obj.save()
-        # if(Penalty_Obj.Date_Ended is None):
-        #     Days = (datetime.now().date() - Penalty_Obj.Date_Started).days  
-        #     Penalty_Obj.Penalty_Calc = Penalty_Obj.Amount*Decimal(str(Penalty_Obj.Percent))*Days/100 
-        #     Penalty_Obj.save()
-        # return Penalty_Obj
     except Penalty.DoesNotExist: 
         print('get or create penalty error')
         return None
@@ -606,7 +279,7 @@ def getOrCreatePenalties(Loan,startDate,endDate,penalty_amnt,penalty_calc):
 
 
 
-def pay_installment(request,loan,payments):
+def pay_installment(request,loan,payments,DatePaid):
     Amount_Paid = float(request.POST.get('amount'))             #amount entered
     Amount_Paid=round(Amount_Paid,1)
     if DatePaid is None or DatePaid =='':
@@ -633,40 +306,22 @@ def Loan_Detail(request,pk):
     Account =Accounts.objects.get(loans=Loan)  
     Client =Clients.objects.get(accounts=Account)    
     Payment =Payments.objects.filter(Loan=Loan).filter(Payment_Type=1).order_by('Date_Paid')
-    Total = Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100
-    Total=round(Total,1)
+    Total_Amount_Paid = Payments.objects.filter(Loan=Loan, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+    Total_Loan_Amount = Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100
     Penalties = Penalty.objects.filter(Loan=Loan)
     DatePaid= request.POST.get('date_paid')    
 
     lastinst = Installment.filter(Date_Paid__isnull=False).filter(Installment_Paid__gt=0).order_by('Date_Paid').last()  
 
     if request.method == "POST":  
-        Total_Pending = Total   #total amount stored in starting to calculate amnt pending 
+        Total_Pending = Total_Loan_Amount   #total amount stored in starting to calculate amnt pending 
         if 'status' in request.POST:    #To change the current status
             status = bool(request.POST.get('Status'))
             Loan.Status =status
             Loan.save()              
         
         if "pay" in request.POST:   #Code to add amount paid 
-            pay_installment(request,Loan,Payment)
-            # Amount_Paid = float(request.POST.get('amount'))             #amount entered
-            # Amount_Paid=round(Amount_Paid,1)
-            # if DatePaid is None or DatePaid =='':
-            #     DatePaid=datetime.now()
-            # else:
-            #     DatePaid =datetime.strptime(DatePaid, "%Y-%m-%d")  
-            # paymentOnSameDay = Payment.filter(
-            #     Loan_id=Loan.id,
-            #     Payment_Type=1,
-            #     Date_Paid=DatePaid
-            # ).first()
-            # if(paymentOnSameDay is not None):
-            #     paymentOnSameDay.Amount_Paid+=Amount_Paid
-            #     paymentOnSameDay.save()
-            # else:
-            #     paymentObj = Payments(Amount_Paid=Amount_Paid,Date_Paid=DatePaid,Loan=Loan)
-            #     paymentObj.save()
-            # Recalculate_Penalty(Loan)
+            pay_installment(request,Loan,Payment,DatePaid)
 
         if "penalty" in request.POST:
             PenaltyObjects =Penalties.filter(Status = False).order_by("Date_Started")
@@ -684,23 +339,23 @@ def Loan_Detail(request,pk):
             else:
                 paymentObj = Payments(Amount_Paid=Amount_Paid,Date_Paid=DatePaid,Loan=Loan,Payment_Type=2)
                 paymentObj.save()
-            while(AmountPaid>0 and PenaltyIndx<len(PenaltyObjects)):
-                if(AmountPaid<PenaltyObjects[PenaltyIndx].Penalty_Calc):
-                    PenaltyObjects[PenaltyIndx].Penalty_Paid = AmountPaid 
+            while(Amount_Paid>0 and PenaltyIndx<len(PenaltyObjects)):
+                if(Amount_Paid<PenaltyObjects[PenaltyIndx].Penalty_Calc):
+                    PenaltyObjects[PenaltyIndx].Penalty_Paid = Amount_Paid 
                     PenaltyObjects[PenaltyIndx].Status = bool(request.POST.get('Status'))
                 else:
                     PenaltyObjects[PenaltyIndx].Penalty_Paid =PenaltyObjects[PenaltyIndx].Penalty_Calc
                     PenaltyObjects[PenaltyIndx].Status=True
                 PenaltyObjects[PenaltyIndx].Penalty_Paid_Date =datetime.now()
                 PenaltyObjects[PenaltyIndx].save()
-                AmountPaid-=PenaltyObjects[PenaltyIndx].Penalty_Calc
+                Amount_Paid-=PenaltyObjects[PenaltyIndx].Penalty_Calc
                 PenaltyIndx+=1
         return redirect("microfinance:home")
 
     else: 
         paymentIndx =0
         installmentIndx =0
-        totalPending=Total
+        totalPending=Total_Loan_Amount
         AmntBal=0
         combinedInstallmentPaymentView =[]
         today = datetime.now().date()
@@ -715,7 +370,7 @@ def Loan_Detail(request,pk):
                     "Date_Paid":"-",
                     "Amount_Due":Installment[installmentIndx].Installment_Due,
                     "Amount_Paid":"-",
-                    "Amount_Balance":AmntBal,
+                    "Amount_Balance":round(AmntBal,2),
                     "Total_Balance":totalPending,
                 })   
                 installmentIndx+=1
@@ -727,7 +382,7 @@ def Loan_Detail(request,pk):
                     "Date_Paid":Payment[paymentIndx].Date_Paid,
                     "Amount_Due":" - ",
                     "Amount_Paid":Payment[paymentIndx].Amount_Paid,
-                    "Amount_Balance":AmntBal,
+                    "Amount_Balance":round(AmntBal,2),
                     "Total_Balance":totalPending,
                 })   
                 paymentIndx+=1
@@ -741,7 +396,7 @@ def Loan_Detail(request,pk):
                     "Date_Paid":Payment[paymentIndx].Date_Paid,
                     "Amount_Due":Installment[installmentIndx].Installment_Due,
                     "Amount_Paid":Payment[paymentIndx].Amount_Paid,
-                    "Amount_Balance":AmntBal,
+                    "Amount_Balance":round(AmntBal,2),
                     "Total_Balance":totalPending,
                 })   
                 installmentIndx+=1
@@ -754,7 +409,7 @@ def Loan_Detail(request,pk):
                 "Date_Paid":"-",
                 "Amount_Due":Installment[installmentIndx].Installment_Due,
                 "Amount_Paid":"-",
-                "Amount_Balance":AmntBal,
+                "Amount_Balance":round(AmntBal,2),
                 "Total_Balance":totalPending,
             })   
             installmentIndx+=1
@@ -766,12 +421,112 @@ def Loan_Detail(request,pk):
                 "Date_Paid":Payment[paymentIndx].Date_Paid,
                 "Amount_Due":" - ",
                 "Amount_Paid":Payment[paymentIndx].Amount_Paid,
-                "Amount_Balance":AmntBal,
+                "Amount_Balance":round(AmntBal,2),
                 "Total_Balance":totalPending,
             })   
             paymentIndx+=1
         Recalculate_Penalty(Loan)
-        return render(request,'microfinance/LoanDetail.html',{'Total_Penalty':0,'Total':Total,'Installment':combinedInstallmentPaymentView,'Loan':Loan,'Client':Client,'Penalty':Penalties,'Total_Pending':round(totalPending,1),'amnt_pen':round(AmntBal ,1),'lastinst':lastinst,'Penalties':Penalties,'Payments':Payment,'Installments':Installment})
+        
+        PenaltyPayments = Payments.objects.filter(Loan=Loan, Payment_Type=2).order_by('Date_Paid')
+        combinedPenaltyPaymentView = []
+        penaltyIndx = 0
+        penaltyPaymentIndx = 0
+        
+        # Initialize running totals for penalties
+        current_penalty_outstanding = 0
+        total_penalty_calc = 0
+        total_penalty_paid = 0
+
+        # Merge Penalties and PenaltyPayments
+        while penaltyIndx < len(list(Penalties)) and penaltyPaymentIndx < len(list(PenaltyPayments)):
+            penalty = list(Penalties)[penaltyIndx]
+            penalty_payment = list(PenaltyPayments)[penaltyPaymentIndx]
+
+            # Handle cases where penalty_payment.Date_Paid might be None
+            if penalty_payment.Date_Paid is None or penalty.Date_Started <= penalty_payment.Date_Paid:
+                # Process penalty first if its start date is earlier or same as payment date
+                # or if the payment date is None
+                combinedPenaltyPaymentView.append({
+                    "Date_Started": penalty.Date_Started,
+                    "Date_Ended": penalty.Date_Ended,
+                    "Amount": penalty.Amount,
+                    "Penalty_Calc": penalty.Penalty_Calc,
+                    "Penalty_Paid": penalty.Penalty_Paid,
+                    "Status": penalty.Status,
+                    "Payment_Amount": "-",  # No payment on this row
+                    "Payment_Date": "-"
+                })
+                current_penalty_outstanding += penalty.Penalty_Calc - penalty.Penalty_Paid
+                total_penalty_calc += penalty.Penalty_Calc
+                total_penalty_paid += penalty.Penalty_Paid
+                penaltyIndx += 1
+            else:
+                # Process payment if its date is earlier
+                combinedPenaltyPaymentView.append({
+                    "Date_Started": "-",
+                    "Date_Ended": "-",
+                    "Amount": "-",
+                    "Penalty_Calc": "-",
+                    "Penalty_Paid": "-",
+                    "Status": "-",
+                    "Payment_Amount": penalty_payment.Amount_Paid,
+                    "Payment_Date": penalty_payment.Date_Paid
+                })
+                current_penalty_outstanding -= penalty_payment.Amount_Paid
+                penaltyPaymentIndx += 1
+
+        # Add any remaining penalties
+        while penaltyIndx < len(list(Penalties)):
+            penalty = list(Penalties)[penaltyIndx]
+            combinedPenaltyPaymentView.append({
+                "Date_Started": penalty.Date_Started,
+                "Date_Ended": penalty.Date_Ended,
+                "Amount": penalty.Amount,
+                "Penalty_Calc": penalty.Penalty_Calc,
+                "Penalty_Paid": penalty.Penalty_Paid,
+                "Status": penalty.Status,
+                "Payment_Amount": "-",
+                "Payment_Date": "-"
+            })
+            current_penalty_outstanding += penalty.Penalty_Calc - penalty.Penalty_Paid
+            total_penalty_calc += penalty.Penalty_Calc
+            total_penalty_paid += penalty.Penalty_Paid
+            penaltyIndx += 1
+
+        # Add any remaining penalty payments
+        while penaltyPaymentIndx < len(list(PenaltyPayments)):
+            penalty_payment = list(PenaltyPayments)[penaltyPaymentIndx]
+            combinedPenaltyPaymentView.append({
+                "Date_Started": "-",
+                "Date_Ended": "-",
+                "Amount": "-",
+                "Penalty_Calc": "-",
+                "Penalty_Paid": "-",
+                "Status": "-",
+                "Payment_Amount": penalty_payment.Amount_Paid,
+                "Payment_Date": penalty_payment.Date_Paid
+            })
+            current_penalty_outstanding -= penalty_payment.Amount_Paid
+            penaltyPaymentIndx += 1
+
+        print('Total_Loan_Amount',Total_Loan_Amount)
+        return render(request,'microfinance/LoanDetail.html',{
+            'Total_Penalty': round(total_penalty_calc, 1),
+            'Total_Loan_Amount': Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100,
+            'Installment':combinedInstallmentPaymentView,
+            'Loan':Loan,
+            'Client':Client,
+            'Penalty':Penalties,
+            'Total_Pending':round(totalPending,1),
+            'amnt_pen':round(AmntBal ,1),
+            'lastinst':lastinst,
+            'Penalties':Penalties,
+            'Payments':Payment,
+            'Installments':Installment,
+            'combinedPenaltyPaymentView':combinedPenaltyPaymentView,
+            'Total_Penalty_Paid': round(total_penalty_paid, 1),
+            'Principal_Amount': Loan.Principle_Amount,
+        })
 
 
 class ClientFilter(BaseFilter):

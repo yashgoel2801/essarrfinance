@@ -1,89 +1,40 @@
 {% extends "base_layout.html" %} {% block content %}
-<link
-  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  rel="stylesheet"
-/>
-
 <div class="container py-4">
   <h2 class="mb-4">Client list</h2>
-
   <div class="row gy-3">
     <div class="col-12 col-lg-8">
       <form class="row g-3 align-items-end" method="GET" action="">
         <div class="col-sm-6 col-md-4">
-          <label for="search_name" class="form-label"
-            >{{form.search_name.label_tag}}</label
-          >
-          <input
-            type="text"
-            name="search_name"
-            id="search_name"
-            value="{{ form.search_name.value|default_if_none:'' }}"
-            class="form-control"
-            placeholder="Enter name"
-          />
-          {% if form.name.errors %}
-          <div class="text-danger">{{ form.name.errors.0 }}</div>
-          {% endif %}
+          <label for="search_name" class="form-label">{{form.search_name.label_tag}}</label>
+          <input type="text" name="search_name" id="search_name" value="{{ form.search_name.value|default_if_none:'' }}" class="form-control" placeholder="Enter name" />
+          {% if form.name.errors %}<div class="text-danger">{{ form.name.errors.0 }}</div>{% endif %}
         </div>
         <div class="col-sm-6 col-md-4">
-          <label for="search_id" class="form-label"
-            >{{form.search_id.label_tag}}</label
-          >
-          <input
-            type="text"
-            name="search_id"
-            id="search_id"
-            value="{{ form.search_id.value|default_if_none:'' }}"
-            class="form-control"
-            placeholder="Enter client id"
-          />
-          {% if form.search_id.errors %}
-          <div class="text-danger">{{ form.search_id.errors.0 }}</div>
-          {% endif %}
+          <label for="search_id" class="form-label">{{form.search_id.label_tag}}</label>
+          <input type="text" name="search_id" id="search_id" value="{{ form.search_id.value|default_if_none:'' }}" class="form-control" placeholder="Enter client id" />
+          {% if form.search_id.errors %}<div class="text-danger">{{ form.search_id.errors.0 }}</div>{% endif %}
         </div>
-
         <div class="col-sm-6 col-md-4">
-          <label for="search_phone" class="form-label"
-            >{{form.search_phone.label_tag}}</label
-          >
-          <input
-            type="number"
-            name="search_phone"
-            id="search_phone"
-            value="{{ form.search_phone.value|default_if_none:'' }}"
-            class="form-control"
-            placeholder="Enter phone number"
-          />
-          {% if form.search_phone.errors %}
-          <div class="text-danger">{{ form.search_phone.errors.0 }}</div>
-          {% endif %}
+          <label for="search_phone" class="form-label">{{form.search_phone.label_tag}}</label>
+          <input type="number" name="search_phone" id="search_phone" value="{{ form.search_phone.value|default_if_none:'' }}" class="form-control" placeholder="Enter phone number" />
+          {% if form.search_phone.errors %}<div class="text-danger">{{ form.search_phone.errors.0 }}</div>{% endif %}
         </div>
         <div class="col-12">
           <button type="submit" class="btn btn-success">Search</button>
         </div>
       </form>
     </div>
-
-    <!-- POST form for loan ID -->
     <div class="col-12 col-lg-4">
       <form method="POST" action="{% url 'microfinance:searchloan' %}">
         {% csrf_token %}
         <label for="loan_id" class="form-label">Search By Loan Id</label>
         <div class="input-group">
-          <input
-            type="number"
-            class="form-control"
-            name="loan_id"
-            id="loan_id"
-          />
+          <input type="number" class="form-control" name="loan_id" id="loan_id" />
           <button type="submit" class="btn btn-success">Search</button>
         </div>
       </form>
     </div>
   </div>
-
-  <!-- Client Table -->
   <div class="table-responsive mt-4">
     <table class="table table-striped table-bordered shadow-sm">
       <thead class="table-success">
@@ -96,11 +47,7 @@
       <tbody>
         {% for object in object_list %}
         <tr>
-          <td>
-            <a href="{% url 'microfinance:clientdetail' pk=object.pk %}"
-              >{{ object.Name }}</a
-            >
-          </td>
+          <td><a href="{% url 'microfinance:clientdetail' pk=object.pk %}">{{ object.Name }}</a></td>
           <td>{{ object.Father_Name }}</td>
           <td>{{ object.Phone_no1 }}</td>
         </tr>
@@ -108,8 +55,6 @@
       </tbody>
     </table>
   </div>
-
   {% if is_paginated %} {% include "paginator.html" %} {% endif %}
 </div>
-
 {% endblock %}

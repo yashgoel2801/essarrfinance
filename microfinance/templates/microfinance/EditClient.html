@@ -1,41 +1,36 @@
 {%extends 'base_layout.html'%} {%block content%}
-
-<style>
-    div {
-        position: relative;
-        top: 10px;
-        z-index: 10;
-        display: block;
-    }
-    
-    label {
-        margin-right: 99%;
-    }
-    
-    input {
-        margin: 8px 0;
-    }
-    
-    .errorlist,
-    #id_Phone_no2_1,
-    #id_Reference_No_1,
-    .phone-field-ext {
-        display: none;
-    }
-</style>
-
-<div>
-    <h3>Edit Client Details:</h3>
-
-    <form method="POST" enctype="multipart/form-data">
-        {%csrf_token%}{{form.as_p}}
-        <input type="submit" onclick="payexpense(event)">
-    </form>
-    <br>
-    <br>
-
-
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-4">Edit Client Details</h3>
+          <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {% if field.field.widget.input_type == 'file' %}
+                <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" {% if field.field.required %}required{% endif %}>
+              {% else %}
+                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
+              {% endif %}
+              {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+              <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-100 mt-3" onclick="payexpense(event)">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script type="text/javascript ">
     function payexpense(e) {
         if (!confirm('Do you confirm')) {
@@ -43,6 +38,4 @@
         }
     }
 </script>
-
-
 {% endblock %}

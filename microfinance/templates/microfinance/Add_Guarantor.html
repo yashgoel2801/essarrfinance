@@ -1,69 +1,310 @@
-{%extends 'base_layout.html'%} {%block content%}
-
-<style>
-    div {
-        position: relative;
-        top: 10px;
-        z-index: 10;
-        display: block;
+{% extends 'base_layout.html' %}
+{% block content %}
+<style>    
+    .form-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 15px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Fix for phone input fields */
+    input[type="tel"], input[name*="Phone"], input[name*="phone"] {
+        border-radius: 10px !important;
+        border: 2px solid #e9ecef !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s ease !important;
+        font-size: 0.95rem !important;
+    }
+    
+    input[type="tel"]:focus, input[name*="Phone"]:focus, input[name*="phone"]:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    /* Fix for select dropdown */
+    select {
+        border-radius: 10px !important;
+        border: 2px solid #e9ecef !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s ease !important;
+        font-size: 0.95rem !important;
+    }
+    
+    select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        background: linear-gradient(45deg, #5a6fd8, #6a4190);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .text-danger {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    @media (max-width: 768px) {
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .form-card {
+            border-radius: 15px;
+            margin: 0 0.5rem;
+        }
+        
+        .form-section {
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
     }
 </style>
-<div>
-    <form method="POST" enctype="multipart/form-data">
-        {%csrf_token%}
-        <tr>
-            <th><label for="id_Guarantor_Name">Guarantor Name:</label></th>
-            <td><input type="text" name="Guarantor_Name" value="not specified" maxlength="100" required id="id_Guarantor_Name"></td>
-        </tr>
-        <p><label for="id_Image">Guarantor Image:</label> <input type="file" name="Image" accept="image/*" id="id_Image"></p><br>
-        <tr>
-            <th><label for="id_Guarantor_Father_Name">Guarantor Father Name:</label></th>
-            <td><input type="text" name="Guarantor_Father_Name" value="not specified" maxlength="100" required id="id_Guarantor_Father_Name"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Mother_Name">Guarantor Mother Name:</label></th>
-            <td><input type="text" name="Guarantor_Mother_Name" value="not specified" maxlength="100" required id="id_Guarantor_Mother_Name"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Local_Address">Guarantor Local Address:</label></th>
-            <td><input type="text" name="Guarantor_Local_Address" value="not specified" maxlength="200" required id="id_Guarantor_Local_Address"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Permanent_Address">Guarantor Permanent Address:</label></th>
-            <td><input type="text" name="Guarantor_Permanent_Address" value="not specified" maxlength="200" required id="id_Guarantor_Permanent_Address"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Occupation">Guarantor Occupation:</label></th>
-            <td><input type="text" name="Guarantor_Occupation" value="not specified" maxlength="100" required id="id_Guarantor_Occupation"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Designation">Guarantor Designation:</label></th>
-            <td><input type="text" name="Guarantor_Designation" value="not specified" maxlength="100" required id="id_Guarantor_Designation"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Office_Address">Guarantor Office Address:</label></th>
-            <td><input type="text" name="Guarantor_Office_Address" value="not specified" maxlength="200" required id="id_Guarantor_Office_Address"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Phone_no_0">Guarantor Phone no:</label></th>
-            <td><input type="text" name="Guarantor_Phone_no_0" size="13" required id="id_Guarantor_Phone_no_0"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Phone_no2_0">Guarantor Phone no2:</label></th>
-            <td><input type="text" name="Guarantor_Phone_no2_0" size="13" id="id_Guarantor_Phone_no2_0"></td>
-        </tr>
-        <tr>
-            <th><label for="id_Guarantor_Security_Docs">Guarantor Security Docs:</label></th><br>
-            <td><textarea name="Guarantor_Security_Docs" cols="30" rows="5" required id="id_Guarantor_Security_Docs">
-not specified</textarea></td>
-        </tr><br>
-        <input type="submit" value="ADD">
-    </form>
 
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card form-card">
+        <div class="card-header bg-transparent border-0 text-center py-4">
+          <h3 class="mb-0 text-primary">
+            <i class="fas fa-user-shield me-2"></i>
+            Add Guarantor
+          </h3>
+        </div>
+        
+        <div class="card-body p-4">
+          <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <!-- Personal Information Section -->
+            <div class="form-section">
+              <h5 class="section-title">
+                <i class="fas fa-id-card text-primary"></i>
+                Personal Information
+              </h5>
+              <div class="row g-3">
+                {% for field in form %}
+                  {% if field.name == 'Guarantor_Name' or field.name == 'Guarantor_Father_Name' or field.name == 'Guarantor_Mother_Name' or field.name == 'Guarantor_Image' %}
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Address Information Section -->
+            <div class="form-section">
+              <h5 class="section-title">
+                <i class="fas fa-map-marker-alt text-warning"></i>
+                Address Information
+              </h5>
+              <div class="row g-3">
+                {% for field in form %}
+                  {% if field.name == 'Guarantor_Local_Address' or field.name == 'Guarantor_Permanent_Address' or field.name == 'Guarantor_Office_Address' %}
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Professional Information Section -->
+            <div class="form-section">
+              <h5 class="section-title">
+                <i class="fas fa-briefcase text-info"></i>
+                Professional Information
+              </h5>
+              <div class="row g-3">
+                {% for field in form %}
+                  {% if field.name == 'Guarantor_Occupation' or field.name == 'Guarantor_Designation' %}
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="form-section">
+              <h5 class="section-title">
+                <i class="fas fa-phone text-primary"></i>
+                Contact Information
+              </h5>
+              <div class="row g-3">
+                {% for field in form %}
+                  {% if field.name == 'Guarantor_Phone_no' or field.name == 'Guarantor_Phone_no2' %}
+                  <div class="col-md-6 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Security Documentation Section -->
+            <div class="form-section">
+              <h5 class="section-title">
+                <i class="fas fa-shield-alt text-secondary"></i>
+                Security Documentation
+              </h5>
+              <div class="row g-3">
+                {% for field in form %}
+                  {% if field.name == 'Guarantor_Security_Docs' %}
+                  <div class="col-12 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-save me-2"></i>
+                Add Guarantor
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script>
-    if (window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
+// Add Font Awesome if not already included
+if (!document.querySelector('link[href*="font-awesome"]')) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  document.head.appendChild(link);
+}
+
+// Form validation enhancement
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const submitButton = form.querySelector('button[type="submit"]');
+  
+  form.addEventListener('submit', function(e) {
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+      submitButton.disabled = true;
     }
+    form.classList.add('was-validated');
+  });
+});
 </script>
-{%endblock%}
+{% endblock %}

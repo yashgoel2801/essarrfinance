@@ -43,7 +43,8 @@ LOAN_ON_CHOICES = (
    ('c', 'Cash Loan'),
    ('p', 'Property Loan'),
    ('v', 'Vehicle Loan'),
-   ('g','Gold Loan')
+   ('g','Gold Loan'),
+   ('e','Electronics')
  
 )
 

@@ -1,6 +1,13 @@
-{%extends 'base_layout.html'%} {%block content%} {%for g in CDocs%}
-
-<img src="{{g.Image.url}}" style="border-radius:10px"> {%endfor%}
-
-
-<br><br><br><br> {%endblock%}
+{%extends 'base_layout.html'%} {%block content%}
+<div class="container py-4">
+  <div class="row g-3">
+    {% for g in CDocs %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+      <div class="card shadow-sm">
+        <img src="{{g.Image.url}}" class="card-img-top img-fluid rounded" alt="Client Document">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{%endblock%}

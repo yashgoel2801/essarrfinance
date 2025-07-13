@@ -1,126 +1,80 @@
 {%extends 'base_layout.html'%} {%block content%}
-
-<style>
-  div {
-    position: relative;
-    top: 10px;
-    z-index: 10;
-    display: block;
-  }
-
-  label {
-    margin-right: 90%;
-  }
-
-  .table {
-    border-collapse: collapse;
-    width: 100%;
-    line-height: 1.5;
-    border-radius: 8px 8px 0 0 !important;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .table thead tr {
-    background-color: #009879;
-    color: white;
-    text-align: left;
-    font-weight: bold;
-  }
-
-  .table tbody tr {
-    border-bottom: 1px solid #dddddd;
-  }
-
-  .table tbody td a {
-    text-decoration: none;
-  }
-
-  .table tbody tr:nth-of-type(even) {
-    background-color: #e7e7e7 !important;
-  }
-
-  .table tbody tr:last-of-type {
-    border-bottom: 2px solid #009879;
-  }
-
-  .table th,
-  .table td {
-    padding: 8px 8px;
-  }
-
-  .table td,
-  .table th,
-  .table-all td,
-  .table-all th {
-    display: table-cell;
-    text-align: left;
-    vertical-align: top;
-    border-bottom: 1px solid grey;
-  }
-
-  thead,
-  tbody tr {
-    width: 100%;
-    height: auto;
-    justify-content: space-evenly;
-  }
-
-  .errorlist {
-    display: none;
-  }
-
-  input {
-    margin: 8px 0;
-  }
-</style>
-
-<div>
-  {%if form%}
-  <h3>Add New Expense:</h3>
-
-  <form method="POST" autocomplete="off">
-    {% csrf_token %} {{form}}<br />
-    <input type="submit" onclick="payexpense(event)" />
-  </form>
-  {%endif%} <br />
-  <br />
-  <br />
-
-  <table class="table">
-    <thead>
-      <th>Date</th>
-      <th>To</th>
-      <th>From</th>
-      <th>Amount</th>
-      <th>remark</th>
-    </thead>
-
-    <tbody class="scroll">
-      {%for e in expense%}
-
-      <tr>
-        <td>{{e.Date}}</td>
-        <td>{{e.To}}</td>
-        <td>{{e.From}}</td>
-        <td>{{e.Amount}}</td>
-        <td>{{e.remark}}</td>
-      </tr>
-      {%endfor%}
-    </tbody>
-  </table>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h3 class="mb-3">Add New Expense</h3>
+          <form method="POST" autocomplete="off">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+              <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary w-100">Submit</button>
+          </form>
+        </div>
+      </div>
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h4 class="mb-0">Expenses</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{% url 'microfinance:addexpense' %}" class="mb-3 d-flex align-items-end gap-2">
+            {% csrf_token %}
+            <div class="flex-grow-1">
+              <label for="month" class="form-label">Select Month</label>
+              <select name="Month" class="form-select" id="month">
+                {% for i in "0123456789AB"|make_list %}
+                {% if forloop.counter <= 12 %}
+                <option value="{{ forloop.counter }}" {% if forloop.counter == expense.first.Date.month %}selected{% endif %}>
+                  {{ forloop.counter|month_name }}
+                </option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-secondary flex-shrink-0">View Monthly Expenses</button>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>To</th>
+                  <th>From</th>
+                  <th>Amount</th>
+                  <th>Remark</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in expense %}
+                <tr>
+                  <td>{{e.Date}}</td>
+                  <td>{{e.To}}</td>
+                  <td>{{e.From}}</td>
+                  <td>{{e.Amount}}</td>
+                  <td>{{e.remark}}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center">No expenses found for this month.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<script type="text/javascript">
-  function payexpense(e) {
-    if (!confirm("Do you confirm")) {
-      e.preventDefault()
-    }
-  }
-</script>
-<script>
-  if (window.history.replaceState) {
-    window.history.replaceState(null, null, window.location.href)
-  }
-</script>
-
-{%endblock%}
+{% endblock %}

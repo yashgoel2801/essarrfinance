@@ -1,7 +1,10 @@
 from django import forms
-from . import models
+from .import models
+from phone_field.forms import PhoneWidget
 
 from django.forms import ModelForm
+from phone_field.forms import PhoneFormField
+
 
 class AddStaff(forms.ModelForm):
     class Meta:
@@ -10,11 +13,36 @@ class AddStaff(forms.ModelForm):
 
 
 class AddClient(forms.ModelForm):
+    Phone_no1 = PhoneFormField()
+    Phone_no2 = PhoneFormField(required=False)
+    Reference_No = PhoneFormField(required=False)
+
     class Meta:
         model=models.Clients
-        fields= '__all__'
+        exclude = ['ClientUser'] 
         widgets = {
-            'Date_Added': forms.DateInput(attrs={'type': 'date'})
+            'Date_Added': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Father_Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Mother_Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Husband_Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Wife_Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Local_Address': forms.TextInput(attrs={'class': 'form-control'}),
+            'Permanent_Address': forms.TextInput(attrs={'class': 'form-control'}),
+            'Occupation': forms.TextInput(attrs={'class': 'form-control'}),
+            'Office_Address': forms.TextInput(attrs={'class': 'form-control'}),
+            'Designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'Reference_Name': forms.TextInput(attrs={'class': 'form-control'}),
+            'Verified_By': forms.TextInput(attrs={'class': 'form-control'}),
+            'Photo_Id_No': forms.TextInput(attrs={'class': 'form-control'}),
+            'Major_Medical_Issues': forms.Textarea(attrs={'class': 'form-control'}),
+            'Author': forms.Select(attrs={'class': 'form-select'}),
+            'Photo_Id': forms.Select(attrs={'class': 'form-select'}),
+            'Image': forms.FileInput(attrs={'class': 'form-control'}),
+            'Phone_no1': PhoneWidget(attrs={'class': 'form-control'}),
+            'Phone_no2': PhoneWidget(attrs={'class': 'form-control'}),
+            'Reference_No': PhoneWidget(attrs={'class': 'form-control'}),
+
         }
 
 

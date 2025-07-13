@@ -1,12 +1,9 @@
 {% extends 'base_layout.html' %} {% load static %} {% block content %}
 <div class="container-fluid py-4">
   <h2 class="mb-4 text-center">Client Details</h2>
-
-  <!-- Client and Guarantor Information -->
   <div class="row gy-4">
-    <!-- Client Information -->
     <div class="col-12 col-md-6">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm h-100">
         <div class="card-header bg-primary text-white">
           <h5 class="mb-0">Client Information</h5>
         </div>
@@ -40,89 +37,89 @@
               Edit Client Details
             </button>
           </form>
-          <table class="table table-sm mt-3">
-            <tbody>
-              <tr>
-                <th>Father's Name:</th>
-                <td>{{ Client.Father_Name }}</td>
-              </tr>
-              <tr>
-                <th>Husband's Name:</th>
-                <td>{{ Client.Husband_Name }}</td>
-              </tr>
-              <tr>
-                <th>Mother's Name:</th>
-                <td>{{ Client.Mother_Name }}</td>
-              </tr>
-              <tr>
-                <th>Wife's Name:</th>
-                <td>{{ Client.Wife_Name }}</td>
-              </tr>
-              <tr>
-                <th>Local Address:</th>
-                <td>{{ Client.Local_Address }}</td>
-              </tr>
-              <tr>
-                <th>Permanent Address:</th>
-                <td>{{ Client.Permanent_Address }}</td>
-              </tr>
-              <tr>
-                <th>Occupation:</th>
-                <td>{{ Client.Occupation }}</td>
-              </tr>
-              <tr>
-                <th>Designation:</th>
-                <td>{{ Client.Designation }}</td>
-              </tr>
-              <tr>
-                <th>Office Address:</th>
-                <td>{{ Client.Office_Address }}</td>
-              </tr>
-              <tr>
-                <th>Phone No:</th>
-                <td>{{ Client.Phone_no1 }}</td>
-              </tr>
-              <tr>
-                <th>Phone No:</th>
-                <td>{{ Client.Phone_no2 }}</td>
-              </tr>
-              <tr>
-                <th>{{ Client.Photo_Id }}:</th>
-                <td>{{ Client.Photo_Id_No }}</td>
-              </tr>
-              <tr>
-                <th>Reference Name:</th>
-                <td>{{ Client.Reference_Name }}</td>
-              </tr>
-              <tr>
-                <th>Reference Phone No:</th>
-                <td>{{ Client.Reference_No }}</td>
-              </tr>
-              <tr>
-                <th>Verified By:</th>
-                <td>{{ Client.Verified_By }}</td>
-              </tr>
-              <tr>
-                <th>Date Added:</th>
-                <td>{{ Client.Date_Added }}</td>
-              </tr>
-              <tr>
-                <th>Entered By:</th>
-                <td>{{ Client.author }}</td>
-              </tr>
-              <tr>
-                <th>Medical Issues:</th>
-                <td>{{ Client.Major_Medical_Issues }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive mt-3">
+            <table class="table table-sm table-bordered">
+              <tbody>
+                <tr>
+                  <th>Father's Name:</th>
+                  <td>{{ Client.Father_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Husband's Name:</th>
+                  <td>{{ Client.Husband_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Mother's Name:</th>
+                  <td>{{ Client.Mother_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Wife's Name:</th>
+                  <td>{{ Client.Wife_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Local Address:</th>
+                  <td>{{ Client.Local_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Permanent Address:</th>
+                  <td>{{ Client.Permanent_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Occupation:</th>
+                  <td>{{ Client.Occupation }}</td>
+                </tr>
+                <tr>
+                  <th>Designation:</th>
+                  <td>{{ Client.Designation }}</td>
+                </tr>
+                <tr>
+                  <th>Office Address:</th>
+                  <td>{{ Client.Office_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No:</th>
+                  <td>{{ Client.Phone_no1 }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No:</th>
+                  <td>{{ Client.Phone_no2 }}</td>
+                </tr>
+                <tr>
+                  <th>{{ Client.Photo_Id }}:</th>
+                  <td>{{ Client.Photo_Id_No }}</td>
+                </tr>
+                <tr>
+                  <th>Reference Name:</th>
+                  <td>{{ Client.Reference_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Reference Phone No:</th>
+                  <td>{{ Client.Reference_No }}</td>
+                </tr>
+                <tr>
+                  <th>Verified By:</th>
+                  <td>{{ Client.Verified_By }}</td>
+                </tr>
+                <tr>
+                  <th>Date Added:</th>
+                  <td>{{ Client.Date_Added }}</td>
+                </tr>
+                <tr>
+                  <th>Entered By:</th>
+                  <td>{{ Client.author }}</td>
+                </tr>
+                <tr>
+                  <th>Medical Issues:</th>
+                  <td>{{ Client.Major_Medical_Issues }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- Guarantor Information -->
     <div class="col-12 col-md-6">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm h-100">
         <div class="card-header bg-secondary text-white">
           <h5 class="mb-0">Guarantor Information</h5>
         </div>
@@ -148,50 +145,52 @@
               View Guarantor Documents
             </button>
           </form>
-          <table class="table table-sm mt-3">
-            <tbody>
-              <tr>
-                <th>Father's Name:</th>
-                <td>{{ guarantor.Guarantor_Father_Name }}</td>
-              </tr>
-              <tr>
-                <th>Mother's Name:</th>
-                <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-              </tr>
-              <tr>
-                <th>Local Address:</th>
-                <td>{{ guarantor.Guarantor_Local_Address }}</td>
-              </tr>
-              <tr>
-                <th>Permanent Address:</th>
-                <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-              </tr>
-              <tr>
-                <th>Occupation:</th>
-                <td>{{ guarantor.Guarantor_Occupation }}</td>
-              </tr>
-              <tr>
-                <th>Designation:</th>
-                <td>{{ guarantor.Guarantor_Designation }}</td>
-              </tr>
-              <tr>
-                <th>Office Address:</th>
-                <td>{{ guarantor.Guarantor_Office_Address }}</td>
-              </tr>
-              <tr>
-                <th>Phone No:</th>
-                <td>{{ guarantor.Guarantor_Phone_no }}</td>
-              </tr>
-              <tr>
-                <th>Phone No 2:</th>
-                <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-              </tr>
-              <tr>
-                <th>Security Documents:</th>
-                <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive mt-3">
+            <table class="table table-sm table-bordered">
+              <tbody>
+                <tr>
+                  <th>Father's Name:</th>
+                  <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Mother's Name:</th>
+                  <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Local Address:</th>
+                  <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Permanent Address:</th>
+                  <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Occupation:</th>
+                  <td>{{ guarantor.Guarantor_Occupation }}</td>
+                </tr>
+                <tr>
+                  <th>Designation:</th>
+                  <td>{{ guarantor.Guarantor_Designation }}</td>
+                </tr>
+                <tr>
+                  <th>Office Address:</th>
+                  <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No:</th>
+                  <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No 2:</th>
+                  <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                </tr>
+                <tr>
+                  <th>Security Documents:</th>
+                  <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           {% if not forloop.last %}
           <hr />
           {% endif %} {% endfor %} {% else %}
@@ -201,8 +200,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Loan Details -->
   <div class="row mt-5">
     <div class="col-12">
       <div class="card shadow-sm">
@@ -211,7 +208,7 @@
         </div>
         <div class="card-body">
           <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+            <table class="table table-bordered table-hover align-middle">
               <thead class="table-light">
                 <tr>
                   <th>Loan ID</th>
@@ -228,7 +225,7 @@
                 {% for loan in Loan %}
                 <tr>
                   <td>
-                    <a href="{% url 'microfinance:loandetail' pk=loan.pk%}"
+                    <a href="{% url 'microfinance:loandetail' pk=loan.pk %}"
                       >{{ loan.pk }}</a
                     >
                   </td>
@@ -238,212 +235,51 @@
                   <td>
                     {{loan.installments_set.first.Installment_Due|floatformat:2}}
                   </td>
-                  {% comment %}
-                  <form
-                    action="{% url 'microfinance:clientdetail' pk=Client.pk %}"
-                    method="POST"
-                    class="d-flex align-items-center"
-                  >
-                    {% csrf_token %}
-                    <td>
-                      <div
-                        class="d-flex flex-column flex-md-row align-items-md-center gap-3"
-                      >
-                        <!-- Reminder Field -->
-                        <div class="d-flex flex-column">
-                          <label
-                            for="Reminder_{{ loan.pk }}"
-                            class="form-label mb-1 fw-bold"
-                          >
-                            Reminder
-                          </label>
-                          <input
-                            type="date"
-                            name="Reminder"
-                            id="Reminder_{{ loan.pk }}"
-                            class="form-control form-control-sm"
-                            style="width: 10rem"
-                            value="{{ loan.reminder|date:'Y-m-d' }}"
-                          />
-                        </div>
-
-                        <!-- remark Field -->
-                        <div class="d-flex flex-column">
-                          <label
-                            for="remark_{{ loan.pk }}"
-                            class="form-label mb-1 fw-bold"
-                          >
-                            remark
-                          </label>
-                          <textarea
-                            name="remark"
-                            id="remark_{{ loan.pk }}"
-                            class="form-control form-control-sm"
-                            rows="1"
-                            style="width: 14rem"
-                          >
-{{ loan.remark }}</textarea
-                          >
-                        </div>
-
-                        <!-- Hidden Loan ID -->
-                        <input type="hidden" value="{{ loan.pk }}" name="pk" />
-
-                        <!-- Save Button -->
-                        <div class="d-flex align-items-center">
-                          <button
-                            type="submit"
-                            class="btn btn-sm btn-success ms-2"
-                            name="save"
-                            title="Save"
-                          >
-                            <i class="fas fa-save"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </form>
-                  {% endcomment %}
-                  <td>
-                    <div>
-                      <p>
-                        <strong>Reminder:</strong>
-                        {{loan.reminder|date:"M d,Y"}}
-                      </p>
-                      <p><strong>remark:</strong> {{ loan.remark }}</p>
-                    </div>
-                    <!-- Edit Button to Open Modal -->
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-primary"
-                      data-bs-toggle="modal"
-                      data-bs-target="#editModal_{{ loan.pk }}"
-                    >
-                      <i class="fas fa-edit"></i> Edit
-                    </button>
-                  </td>
-                  <td>
-                    {% if loan.Status == False %}
-                    <span class="badge bg-success">Active</span>
-                    {% else %}
-                    <span class="badge bg-danger">Closed</span>
-                    {% endif %}
-                  </td>
                   <td>
                     <form
-                      action="{% url 'microfinance:editloan' pk=loan.pk %}"
+                      action="{% url 'microfinance:clientdetail' pk=Client.pk %}"
                       method="POST"
-                      class="d-inline-block"
+                      class="d-flex align-items-center gap-2"
                     >
                       {% csrf_token %}
+                      <input type="hidden" name="pk" value="{{ loan.pk }}" />
+                      <input
+                        type="text"
+                        name="remark"
+                        class="form-control form-control-sm"
+                        value="{{ loan.remark }}"
+                        placeholder="Remark"
+                      />
+                      <input
+                        type="date"
+                        name="Reminder"
+                        class="form-control form-control-sm"
+                        value="{{ loan.reminder|date:'Y-m-d' }}"
+                      />
                       <button
                         type="submit"
-                        class="btn btn-sm btn-outline-primary"
-                        name="edit"
+                        name="save"
+                        class="btn btn-sm btn-success"
                       >
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      {% csrf_token %}
-                      <button
-                        type="submit"
-                        class="btn btn-sm btn-outline-danger"
-                        name="del"
-                        onclick="clicked(event)"
-                      >
-                        <i class="fas fa-trash"></i>
+                        Save
                       </button>
                     </form>
                   </td>
+                  <td>
+                    {% if loan.Status %}
+                    <span class="badge bg-success">Closed</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">Active</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a
+                      href="{% url 'microfinance:addguarantor' pk=Client.pk %}"
+                      class="btn btn-sm btn-info"
+                      >Add Guarantor</a
+                    >
+                  </td>
                 </tr>
-                <!-- Modal for Editing Reminder and remark -->
-                <div
-                  class="modal fade"
-                  id="editModal_{{ loan.pk }}"
-                  tabindex="-1"
-                  aria-labelledby="editModalLabel_{{ loan.pk }}"
-                  aria-hidden="true"
-                >
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5
-                          class="modal-title"
-                          id="editModalLabel_{{ loan.pk }}"
-                        >
-                          Edit Reminder and remark
-                        </h5>
-                        <button
-                          type="button"
-                          class="btn-close"
-                          data-bs-dismiss="modal"
-                          aria-label="Close"
-                        ></button>
-                      </div>
-                      <form
-                        action="{% url 'microfinance:clientdetail' pk=Client.pk %}"
-                        method="POST"
-                      >
-                        {% csrf_token %}
-                        <div class="modal-body">
-                          <!-- Reminder Field -->
-                          <div class="mb-3">
-                            <label
-                              for="Reminder_{{ loan.pk }}"
-                              class="form-label"
-                              >Reminder</label
-                            >
-                            <input
-                              type="date"
-                              name="Reminder"
-                              id="Reminder_{{ loan.pk }}"
-                              class="form-control"
-                              value="{{ loan.reminder|date:'Y-m-d' }}"
-                            />
-                          </div>
-
-                          <!-- remark Field -->
-                          <div class="mb-3">
-                            <label for="remark_{{ loan.pk }}" class="form-label"
-                              >remark</label
-                            >
-                            <textarea
-                              name="remark"
-                              id="remark_{{ loan.pk }}"
-                              class="form-control"
-                              rows="3"
-                            >
-{{ loan.remark }}</textarea
-                            >
-                          </div>
-
-                          <!-- Hidden Loan ID -->
-                          <input
-                            type="hidden"
-                            value="{{ loan.pk }}"
-                            name="pk"
-                          />
-                        </div>
-                        <div class="modal-footer">
-                          <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                          >
-                            Close
-                          </button>
-                          <button
-                            type="submit"
-                            class="btn btn-success"
-                            name="save"
-                            onclick="clicked(event)"
-                          >
-                            Save Changes
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
                 {% endfor %}
               </tbody>
             </table>

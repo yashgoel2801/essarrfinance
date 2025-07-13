@@ -1,38 +1,42 @@
 {%extends 'base_layout.html'%} {%block content%}
-
-<style>
-    div {
-        position: relative;
-        top: 10px;
-        z-index: 10;
-        display: block;
-    }
-    
-    label {
-        margin-right: 90%;
-    }
-    
-    input {
-        margin: 8px 0;
-    }
-    
-    .errorlist {
-        display: none;
-    }
-</style>
-
-<div>
-    <h3>Edit Loan Details:</h3>
-
-    <form method="POST">
-        {%csrf_token%}{{form}}
-        <input type="submit" onclick="payexpense(event)" name="changeLoan">
-    </form>
-    <br>
-    <br>
-
-
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-4">Edit Loan Details</h3>
+          <form method="POST" class="needs-validation" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {% if field.field.widget.input_type == 'select' %}
+                <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-select" {% if field.field.required %}required{% endif %}>
+                  {% for value, text in field.field.choices %}
+                    <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ text }}</option>
+                  {% endfor %}
+                </select>
+              {% elif field.field.widget.input_type == 'date' %}
+                <input type="date" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
+              {% else %}
+                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
+              {% endif %}
+              {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+              <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-100 mt-3" onclick="payexpense(event)" name="changeLoan">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script type="text/javascript ">
     function payexpense(e) {
         if (!confirm('Do you confirm this will create a new loan')) {
@@ -40,6 +44,4 @@
         }
     }
 </script>
-
-
-{% endblock %}
+{%endblock%}

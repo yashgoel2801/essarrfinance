@@ -1,57 +1,567 @@
-{%extends 'base_layout.html'%} {%block content%}
+{% extends 'base_layout.html' %} {% load noofinstallment %} {% block content %}
 <style>
-    div {
-        position: relative;
-        top: 10px;
-        z-index: 10;
-        display: block;
+  .form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .client-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+  }
+
+  textarea {
+    rows: 10;
+    height: auto;
+    max-height: 100px;
+  }
+
+  .client-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: 15px;
+    border-left: 4px solid #667eea;
+  }
+
+  .section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+
+  .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+    background: linear-gradient(45deg, #218838, #1ea085);
+  }
+
+  .alert-danger {
+    border-radius: 10px;
+    border: none;
+    background: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+  }
+
+  .required-field::after {
+    content: "*";
+    color: #dc3545;
+    margin-left: 4px;
+  }
+
+  .client-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+
+  .text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+
+  .page-header {
+    color: white;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .page-header h2 {
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header p {
+    opacity: 0.8;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-section {
+      padding: 1rem;
     }
-    
-    .phone-field-ext,
-    #id_Phone_no1_1,
-    #id_Phone_no2_1,
-    #id_Reference_No_1 {
-        display: none;
+
+    .section-title {
+      font-size: 1rem;
     }
-    
-    input {
-        margin: 0 70% 0 0;
+
+    .btn-success {
+      padding: 0.75rem 1.5rem;
     }
-    
-    .messages,
-    .messages2 {
-        background-color: red;
-        color: white;
+
+    .client-image {
+      width: 60px;
+      height: 60px;
     }
+  }
+
+  @media (max-width: 576px) {
+    .gradient-bg {
+      padding: 1rem 0;
+    }
+
+    .form-card {
+      border-radius: 15px;
+      margin: 0 0.5rem;
+    }
+
+    .form-section {
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+  }
 </style>
 
-
-<div>
-    {%for c in Client%}
-    <div class="w3-card-4" style="width:100;">
-
-        <div class="w3-container" style="width: 30%;padding:5px;margin:0;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);">
-
-            <img src="{{c.Image.url}}" style="width:90px;height:90px; border-radius:10px;">
-            <div style="float: left;"> Client Name:
-                <a href="{% url 'microfinance:clientdetail' pk=c.pk%}">{{c.Name}}</a><br> Client Phone: {{c.Phone_no1}}
+<div class="gradient-bg">
+  <div class="container">
+    <!-- Existing Clients Display -->
+    {% comment %} {% if Client %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <h4 class="text-white mb-3">
+          <i class="fas fa-clock me-2"></i>Recent Clients
+        </h4>
+      </div>
+      {% for c in Client %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3">
+        <div class="card client-card shadow-sm">
+          <div class="card-body d-flex align-items-center">
+            <img
+              src="{{c.Image.url}}"
+              class="client-image me-3"
+              alt="{{c.Name}}"
+            />
+            <div class="flex-grow-1">
+              <div class="fw-bold mb-1">
+                <i class="fas fa-user me-1 text-primary"></i>
+                <a
+                  href="{% url 'microfinance:clientdetail' pk=c.pk %}"
+                  class="text-decoration-none"
+                  >{{c.Name}}</a
+                >
+              </div>
+              <div class="text-muted">
+                <i class="fas fa-phone me-1"></i>{{c.Phone_no1}}
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+      {% endfor %}
     </div>
-    {%endfor%} {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
+    {% endif %} {% endcomment %}
+
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <ul class="mb-0">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
     {% endif %}
 
-    <br> {%for e in err %}
-    <span class="messages2">{%if e == 'Phone_no1' %}Phone no already exists{%endif%} <br>{%if e == 'Photo_Id_No' and not messages %}Photo Id no already exists{%endif%}</span> {%endfor%}
-    <br>
-    <br>
-    <form method="POST" enctype="multipart/form-data">
-        {%csrf_token%} {{form.as_p}}
-        <input type="submit" value="Add">
-    </form>
-    {%endblock%}
+    <!-- Main Form -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <div class="card form-card">
+          <div class="card-header bg-transparent border-0 text-center py-4">
+            <h3 class="mb-0 text-primary">
+              <i class="fas fa-user-plus me-2"></i>
+              Add New Client
+            </h3>
+          </div>
+
+          <div class="card-body p-4">
+            <form
+              method="POST"
+              enctype="multipart/form-data"
+              class="needs-validation"
+              novalidate
+            >
+              {% csrf_token %}
+
+              <!-- Personal Information Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-id-card text-primary"></i>
+                  Personal Information
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Name.id_for_label }}"
+                      class="form-label required-field"
+                      >Full Name</label
+                    >
+                    {{ form.Name }} {% for error in form.Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Image.id_for_label }}"
+                      class="form-label"
+                      >Profile Image</label
+                    >
+                    {{ form.Image }} {% for error in form.Image.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Date_Added.id_for_label }}"
+                      class="form-label"
+                      >Date Added</label
+                    >
+                    {{ form.Date_Added }} {% for error in form.Date_Added.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Family Information Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-home text-success"></i>
+                  Family Information
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Father_Name.id_for_label }}"
+                      class="form-label"
+                      >Father's Name</label
+                    >
+                    {{ form.Father_Name }} {% for error in form.Father_Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Mother_Name.id_for_label }}"
+                      class="form-label"
+                      >Mother's Name</label
+                    >
+                    {{ form.Mother_Name }} {% for error in form.Mother_Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Husband_Name.id_for_label }}"
+                      class="form-label"
+                      >Husband's Name</label
+                    >
+                    {{ form.Husband_Name }} {% for error in form.Husband_Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Wife_Name.id_for_label }}"
+                      class="form-label"
+                      >Wife's Name</label
+                    >
+                    {{ form.Wife_Name }} {% for error in form.Wife_Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Address Information Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-map-marker-alt text-warning"></i>
+                  Address Information
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Local_Address.id_for_label }}"
+                      class="form-label"
+                      >Local Address</label
+                    >
+                    {{ form.Local_Address }} {% for error in form.Local_Address.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Permanent_Address.id_for_label }}"
+                      class="form-label"
+                      >Permanent Address</label
+                    >
+                    {{ form.Permanent_Address }} {% for error in form.Permanent_Address.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Office_Address.id_for_label }}"
+                      class="form-label"
+                      >Office Address</label
+                    >
+                    {{ form.Office_Address }} {% for error in form.Office_Address.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Professional Information Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-briefcase text-info"></i>
+                  Professional Information
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Occupation.id_for_label }}"
+                      class="form-label"
+                      >Occupation</label
+                    >
+                    {{ form.Occupation }} {% for error in form.Occupation.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Designation.id_for_label }}"
+                      class="form-label"
+                      >Designation</label
+                    >
+                    {{ form.Designation }} {% for error in form.Designation.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact Information Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-phone text-primary"></i>
+                  Contact Information
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Phone_no1.id_for_label }}"
+                      class="form-label required-field"
+                      >Primary Phone</label
+                    >
+                    {{ form.Phone_no1 }} {% if form.Phone_no1.help_text %}
+                    <div class="form-text">{{ form.Phone_no1.help_text }}</div>
+                    {% endif %} {% for error in form.Phone_no1.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Phone_no2.id_for_label }}"
+                      class="form-label"
+                      >Secondary Phone</label
+                    >
+                    {{ form.Phone_no2 }} {% if form.Phone_no2.help_text %}
+                    <div class="form-text">{{ form.Phone_no2.help_text }}</div>
+                    {% endif %} {% for error in form.Phone_no2.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Reference_Name.id_for_label }}"
+                      class="form-label"
+                      >Reference Name</label
+                    >
+                    {{ form.Reference_Name }} {% for error in form.Reference_Name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Reference_No.id_for_label }}"
+                      class="form-label"
+                      >Reference Phone</label
+                    >
+                    {{ form.Reference_No }} {% if form.Reference_No.help_text %}
+                    <div class="form-text">
+                      {{ form.Reference_No.help_text }}
+                    </div>
+                    {% endif %} {% for error in form.Reference_No.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Verification & Documentation Section -->
+              <div class="form-section">
+                <h5 class="section-title">
+                  <i class="fas fa-shield-alt text-secondary"></i>
+                  Verification & Documentation
+                </h5>
+                <div class="row g-3">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Verified_By.id_for_label }}"
+                      class="form-label"
+                      >Verified By</label
+                    >
+                    {{ form.Verified_By }} {% for error in form.Verified_By.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.author.id_for_label }}"
+                      class="form-label"
+                      >Author</label
+                    >
+                    {{ form.author }} {% for error in form.author.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Photo_Id.id_for_label }}"
+                      class="form-label"
+                      >Photo ID Type</label
+                    >
+                    {{ form.Photo_Id }} {% for error in form.Photo_Id.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="{{ form.Photo_Id_No.id_for_label }}"
+                      class="form-label"
+                      >Photo ID Number</label
+                    >
+                    {{ form.Photo_Id_No }} {% for error in form.Photo_Id_No.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-12 mb-3">
+                    <label
+                      for="{{ form.Major_Medical_Issues.id_for_label }}"
+                      class="form-label"
+                      >Major Medical Issues</label
+                    >
+                    {{ form.Major_Medical_Issues }} {% for error in form.Major_Medical_Issues.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg px-5">
+                  <i class="fas fa-save me-2"></i>
+                  Add Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Add Font Awesome if not already included
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const link = document.createElement("link")
+    link.rel = "stylesheet"
+    link.href =
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    document.head.appendChild(link)
+  }
+
+  // Form validation enhancement
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form")
+    const submitButton = form.querySelector('button[type="submit"]')
+
+    form.addEventListener("submit", function (e) {
+      if (!form.checkValidity()) {
+        e.preventDefault()
+        e.stopPropagation()
+      } else {
+        submitButton.innerHTML =
+          '<i class="fas fa-spinner fa-spin me-2"></i>Processing...'
+        submitButton.disabled = true
+      }
+      form.classList.add("was-validated")
+    })
+  })
+</script>
+{% endblock %}
