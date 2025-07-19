@@ -56,5 +56,5 @@ urlpatterns = [
 
     url(r'^report/officerwise-total-finance-and-collection/$', Officerwise_Total_Finance_And_Collection_Report,name="report"), 
 
-
+    url(r'^dashboard/$', views.dashboard, name="dashboard")
 ]

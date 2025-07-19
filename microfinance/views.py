@@ -11,7 +11,7 @@ from datetime import datetime, time, timedelta,date
 from dateutil.relativedelta import relativedelta
 from search_views.search import SearchListView,BaseFilter
 from django.utils.dateparse import parse_date
-from django.db.models import Q,Sum
+from django.db.models import Q,Sum, Count
 from django.template import loader
 from datetime import date
 from datetime import datetime
@@ -526,6 +526,7 @@ def Loan_Detail(request,pk):
             'combinedPenaltyPaymentView':combinedPenaltyPaymentView,
             'Total_Penalty_Paid': round(total_penalty_paid, 1),
             'Principal_Amount': Loan.Principle_Amount,
+            'Total_Amount_Paid': Total_Amount_Paid,
         })
 
 
@@ -1491,4 +1492,267 @@ def batch_calculate_penalties(loan_ids):
     
     return results
 
-
+@login_required(login_url="/accounts/login/")
+def dashboard(request):
+    """
+    Dashboard view with comprehensive financial insights
+    """
+    today = timezone.now().date()
+    
+    # Get active loans only
+    active_loans = Loans.objects.filter(Status=False)
+    
+    # 1. DEFAULTERS - Clients with overdue payments
+    overdue_installments = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due__lt=today,
+        Date_Paid__isnull=True,
+        Installment_Due__gt=0
+    ).select_related('Loan__Account__Client')
+    
+    defaulters_data = []
+    defaulters_set = set()
+    
+    for installment in overdue_installments:
+        client = installment.Loan.Account.Client
+        if client.pk not in defaulters_set:
+            # Calculate total overdue amount for this client
+            client_overdue = Installments.objects.filter(
+                Loan__Account__Client=client,
+                Date_Due__lt=today,
+                Date_Paid__isnull=True,
+                Installment_Due__gt=0
+            ).aggregate(total=Sum('Installment_Due'))['total'] or 0
+            
+            # Calculate days overdue
+            oldest_overdue = Installments.objects.filter(
+                Loan__Account__Client=client,
+                Date_Due__lt=today,
+                Date_Paid__isnull=True,
+                Installment_Due__gt=0
+            ).order_by('Date_Due').first()
+            
+            days_overdue = (today - oldest_overdue.Date_Due).days if oldest_overdue else 0
+            
+            # Get client's account and count loans
+            try:
+                client_account = Accounts.objects.get(Client=client)
+                loan_count = Loans.objects.filter(Account=client_account, Status=False).count()
+            except Accounts.DoesNotExist:
+                loan_count = 0
+            
+            defaulters_data.append({
+                'client': client,
+                'total_overdue': client_overdue,
+                'days_overdue': days_overdue,
+                'loans': loan_count
+            })
+            defaulters_set.add(client.pk)
+    
+    # Sort defaulters by overdue amount (highest first)
+    defaulters_data.sort(key=lambda x: x['total_overdue'], reverse=True)
+    
+    # 2. CLIENTS WITH DUE DATE TODAY
+    clients_due_today = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due=today,
+        Date_Paid__isnull=True,
+        Installment_Due__gt=0
+    ).select_related('Loan__Account__Client').values(
+        'Loan__Account__Client__pk',
+        'Loan__Account__Client__Name',
+        'Loan__Account__Client__Phone_no1',
+        'Loan__pk',
+        'Installment_Due'
+    )
+    
+    # 3. FINANCIAL METRICS
+    
+    # Total amount to be collected today
+    amount_due_today = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due=today,
+        Date_Paid__isnull=True
+    ).aggregate(total=Sum('Installment_Due'))['total'] or 0
+    
+    # Total amount collected today
+    amount_collected_today = Payments.objects.filter(
+        Loan__in=active_loans,
+        Date_Paid=today,
+        Payment_Type=1  # Installment payments
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # Total overdue amount
+    total_overdue = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due__lt=today,
+        Date_Paid__isnull=True
+    ).aggregate(total=Sum('Installment_Due'))['total'] or 0
+    
+    # Total penalties (both paid and unpaid)
+    total_penalties = Penalty.objects.filter(
+        Loan__in=active_loans
+    ).aggregate(
+        total_calculated=Sum('Penalty_Calc'),
+        total_paid=Sum('Penalty_Paid')
+    )
+    
+    penalty_calculated = total_penalties['total_calculated'] or 0
+    penalty_paid = total_penalties['total_paid'] or 0
+    penalty_outstanding = penalty_calculated - penalty_paid
+    
+    # Penalty collected today
+    penalty_collected_today = Payments.objects.filter(
+        Loan__in=active_loans,
+        Date_Paid=today,
+        Payment_Type=2  # Penalty payments
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # Total file charges
+    total_file_charges = active_loans.aggregate(
+        total=Sum('Principle_Amount')
+    )['total'] or 0
+    
+    # Calculate file charge amount (assuming File_Charge_Percent is applied to principal)
+    file_charge_amount = 0
+    for loan in active_loans:
+        file_charge_amount += (loan.Principle_Amount * loan.File_Charge_Percent / 100)
+    
+    # File charges collected today (from new loans)
+    loans_created_today = active_loans.filter(Loan_Date=today)
+    file_charges_today = sum(
+        (loan.Principle_Amount * loan.File_Charge_Percent / 100) 
+        for loan in loans_created_today
+    )
+    
+    # Loan statistics
+    loans_created_today_count = loans_created_today.count()
+    total_active_loans = active_loans.count()
+    
+    # Loans created this month
+    month_start = today.replace(day=1)
+    loans_created_this_month = active_loans.filter(
+        Loan_Date__gte=month_start
+    ).count()
+    
+    # 4. ADDITIONAL INSIGHTS
+    
+    # Collection efficiency
+    collection_efficiency = 0
+    if amount_due_today > 0:
+        collection_efficiency = (amount_collected_today / amount_due_today) * 100
+    
+    # Average loan amount
+    avg_loan_amount = active_loans.aggregate(
+        avg=Sum('Principle_Amount')
+    )['avg'] or 0
+    if total_active_loans > 0:
+        avg_loan_amount = avg_loan_amount / total_active_loans
+    
+    # Portfolio value
+    total_portfolio_value = active_loans.aggregate(
+        total=Sum('Principle_Amount')
+    )['total'] or 0
+    
+    # Outstanding amount (total expected - total received)
+    total_expected = 0
+    total_received = 0
+    
+    for loan in active_loans:
+        loan_total = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        total_expected += loan_total
+        
+        loan_received = Payments.objects.filter(
+            Loan=loan,
+            Payment_Type=1
+        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        total_received += loan_received
+    
+    total_outstanding = total_expected - total_received
+    
+    # Interest earned today
+    interest_earned_today = 0
+    for payment in Payments.objects.filter(Date_Paid=today, Payment_Type=1, Loan__in=active_loans):
+        # Approximate interest portion (this could be more sophisticated)
+        interest_portion = payment.Amount_Paid * (payment.Loan.Intrest_Rate / 100)
+        interest_earned_today += interest_portion
+    
+    # Weekly collection trends (last 7 days)
+    weekly_collections = []
+    for i in range(7):
+        date = today - timedelta(days=i)
+        daily_collection = Payments.objects.filter(
+            Date_Paid=date,
+            Payment_Type=1,
+            Loan__in=active_loans
+        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        
+        weekly_collections.append({
+            'date': date,
+            'amount': daily_collection
+        })
+    
+    weekly_collections.reverse()  # Show oldest to newest
+    
+    # Loan frequency distribution
+    frequency_distribution = active_loans.values('Frequency').annotate(
+        count=Count('pk'),
+        total_amount=Sum('Principle_Amount')
+    )
+    
+    frequency_labels = {1: 'Daily', 2: 'Weekly', 3: 'Monthly'}
+    for item in frequency_distribution:
+        item['frequency_label'] = frequency_labels.get(item['Frequency'], 'Unknown')
+    
+    # Staff performance (top collectors)
+    staff_performance = active_loans.values(
+        'Loan_Collector__Officer_Name'
+    ).annotate(
+        loans_count=Count('pk'),
+        total_amount=Sum('Principle_Amount')
+    ).order_by('-total_amount')[:5]
+    
+    # Recent activities (last 10 payments)
+    recent_payments = Payments.objects.filter(
+        Loan__in=active_loans
+    ).select_related(
+        'Loan__Account__Client'
+    ).order_by('-Date_Paid')[:10]
+    
+    context = {
+        # Main metrics
+        'amount_due_today': amount_due_today,
+        'amount_collected_today': amount_collected_today,
+        'total_overdue': total_overdue,
+        'penalty_outstanding': penalty_outstanding,
+        'penalty_collected_today': penalty_collected_today,
+        'file_charge_amount': file_charge_amount,
+        'file_charges_today': file_charges_today,
+        'loans_created_today_count': loans_created_today_count,
+        'total_active_loans': total_active_loans,
+        'loans_created_this_month': loans_created_this_month,
+        
+        # Lists
+        'defaulters_data': defaulters_data[:10],  # Top 10 defaulters
+        'clients_due_today': clients_due_today,
+        
+        # Additional insights
+        'collection_efficiency': round(collection_efficiency, 2),
+        'avg_loan_amount': round(avg_loan_amount, 2),
+        'total_portfolio_value': total_portfolio_value,
+        'total_outstanding': total_outstanding,
+        'interest_earned_today': round(interest_earned_today, 2),
+        'weekly_collections': weekly_collections,
+        'frequency_distribution': frequency_distribution,
+        'staff_performance': staff_performance,
+        'recent_payments': recent_payments,
+        
+        # Counts
+        'total_defaulters': len(defaulters_data),
+        'clients_due_today_count': len(clients_due_today),
+        
+        # Date
+        'today': today,
+    }
+    
+    return render(request, 'microfinance/dashboard.html', context)

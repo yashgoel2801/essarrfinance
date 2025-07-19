@@ -1,0 +1,434 @@
+{% extends 'base_layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">Finance Dashboard</h1>
+                    <p class="text-muted">{{ today|date:"l, F j, Y" }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="location.reload()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <a href="{% url 'microfinance:reports' %}" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Today's Collections -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-coins text-success fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Collected Today</h6>
+                            <h4 class="mb-0">₹{{ amount_collected_today|floatformat:0 }}</h4>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> {{ collection_efficiency }}% efficiency
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Due Today -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-calendar-check text-warning fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Due Today</h6>
+                            <h4 class="mb-0">₹{{ amount_due_today|floatformat:0 }}</h4>
+                            <small class="text-muted">{{ clients_due_today_count }} clients</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Amount -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-exclamation-triangle text-danger fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Overdue</h6>
+                            <h4 class="mb-0">₹{{ total_overdue|floatformat:0 }}</h4>
+                            <small class="text-danger">{{ total_defaulters }} defaulters</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Loans -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-hand-holding-usd text-info fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Active Loans</h6>
+                            <h4 class="mb-0">{{ total_active_loans }}</h4>
+                            <small class="text-success">
+                                <i class="fas fa-plus"></i> {{ loans_created_today_count }} today
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">Penalties Outstanding</h6>
+                    <h5 class="mb-0 text-warning">₹{{ penalty_outstanding|floatformat:0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">File Charges</h6>
+                    <h5 class="mb-0 text-info">₹{{ file_charge_amount|floatformat:0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">Portfolio Value</h6>
+                    <h5 class="mb-0 text-primary">₹{{ total_portfolio_value|floatformat:0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">Outstanding</h6>
+                    <h5 class="mb-0 text-secondary">₹{{ total_outstanding|floatformat:0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">Avg Loan</h6>
+                    <h5 class="mb-0 text-success">₹{{ avg_loan_amount|floatformat:0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <h6 class="text-muted mb-1">This Month</h6>
+                    <h5 class="mb-0 text-info">{{ loans_created_this_month }} loans</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Defaulters List -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Top Defaulters</h5>
+                        <small class="text-muted">Highest overdue amounts</small>
+                    </div>
+                </div>
+                <div class="card-body pt-2">
+                    {% if defaulters_data %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Client</th>
+                                        <th>Overdue Amount</th>
+                                        <th>Days</th>
+                                        <th>Loans</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for defaulter in defaulters_data %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong>{{ defaulter.client.Name }}</strong><br>
+                                                <small class="text-muted">ID: {{ defaulter.client.pk }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-danger">
+                                                ₹{{ defaulter.total_overdue|floatformat:0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                {{ defaulter.days_overdue }} days
+                                            </span>
+                                        </td>
+                                        <td>{{ defaulter.loans }}</td>
+                                        <td>
+                                            <a href="{% url 'microfinance:clientdetail' pk=defaulter.client.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                            <h6>No Defaulters!</h6>
+                            <p class="text-muted">All clients are up to date with payments.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Clients Due Today -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Due Today</h5>
+                        <small class="text-muted">{{ clients_due_today_count }} clients</small>
+                    </div>
+                </div>
+                <div class="card-body pt-2">
+                    {% if clients_due_today %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Client</th>
+                                        <th>Amount Due</th>
+                                        <th>Loan ID</th>
+                                        <th>Contact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for client in clients_due_today %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ client.Loan__Account__Client__Name }}</strong><br>
+                                            <small class="text-muted">ID: {{ client.Loan__Account__Client__pk }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-warning">
+                                                ₹{{ client.Installment_Due|floatformat:0 }}
+                                            </span>
+                                        </td>
+                                        <td>{{ client.Loan__pk }}</td>
+                                        <td>
+                                            <small>{{ client.Loan__Account__Client__Phone_no1 }}</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-check text-success fa-3x mb-3"></i>
+                            <h6>No Collections Due Today!</h6>
+                            <p class="text-muted">No payments are scheduled for today.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Collection Trend -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Weekly Collection Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loan Distribution -->
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Loan Types</h5>
+                </div>
+                <div class="card-body">
+                    {% for freq in frequency_distribution %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <strong>{{ freq.frequency_label }}</strong><br>
+                            <small class="text-muted">{{ freq.count }} loans</small>
+                        </div>
+                        <div class="text-end">
+                            <strong>₹{{ freq.total_amount|floatformat:0 }}</strong>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Recent Payments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Loan ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}">
+                                            {{ payment.Loan.Account.Client.Name }}
+                                        </a>
+                                    </td>
+                                    <td class="fw-bold text-success">₹{{ payment.Amount_Paid|floatformat:0 }}</td>
+                                    <td>
+                                        {% if payment.Payment_Type == 1 %}
+                                            <span class="badge bg-success">Installment</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Penalty</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'microfinance:loandetail' pk=payment.Loan.pk %}">
+                                            {{ payment.Loan.pk }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Weekly Collection Chart
+const ctx = document.getElementById('weeklyChart').getContext('2d');
+const weeklyChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for day in weekly_collections %}
+            '{{ day.date|date:"M j" }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Collections',
+            data: [
+                {% for day in weekly_collections %}
+                {{ day.amount }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₹' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Auto-refresh every 5 minutes
+setTimeout(() => {
+    location.reload();
+}, 300000);
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
+}
+</style>
+{% endblock %}
