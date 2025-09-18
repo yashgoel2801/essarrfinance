@@ -16,32 +16,38 @@ class AddClient(forms.ModelForm):
     Phone_no1 = PhoneFormField()
     Phone_no2 = PhoneFormField(required=False)
     Reference_No = PhoneFormField(required=False)
+    existing_client = forms.ModelChoiceField(
+        queryset=models.Clients.objects.all().order_by('Name'),
+        required=False,
+        empty_label="Select existing client to pre-populate (optional)",
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'existing-client-select'})
+    )
 
     class Meta:
         model=models.Clients
         exclude = ['ClientUser'] 
         widgets = {
             'Date_Added': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Father_Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Mother_Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Husband_Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Wife_Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Local_Address': forms.TextInput(attrs={'class': 'form-control'}),
-            'Permanent_Address': forms.TextInput(attrs={'class': 'form-control'}),
-            'Occupation': forms.TextInput(attrs={'class': 'form-control'}),
-            'Office_Address': forms.TextInput(attrs={'class': 'form-control'}),
-            'Designation': forms.TextInput(attrs={'class': 'form-control'}),
-            'Reference_Name': forms.TextInput(attrs={'class': 'form-control'}),
-            'Verified_By': forms.TextInput(attrs={'class': 'form-control'}),
-            'Photo_Id_No': forms.TextInput(attrs={'class': 'form-control'}),
-            'Major_Medical_Issues': forms.Textarea(attrs={'class': 'form-control'}),
-            'Author': forms.Select(attrs={'class': 'form-select'}),
-            'Photo_Id': forms.Select(attrs={'class': 'form-select'}),
-            'Image': forms.FileInput(attrs={'class': 'form-control'}),
-            'Phone_no1': PhoneWidget(attrs={'class': 'form-control'}),
-            'Phone_no2': PhoneWidget(attrs={'class': 'form-control'}),
-            'Reference_No': PhoneWidget(attrs={'class': 'form-control'}),
+            'Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_name'}),
+            'Father_Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_father_name'}),
+            'Mother_Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_mother_name'}),
+            'Husband_Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_husband_name'}),
+            'Wife_Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_wife_name'}),
+            'Local_Address': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_local_address'}),
+            'Permanent_Address': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_permanent_address'}),
+            'Occupation': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_occupation'}),
+            'Office_Address': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_office_address'}),
+            'Designation': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_designation'}),
+            'Reference_Name': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_reference_name'}),
+            'Verified_By': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_verified_by'}),
+            'Photo_Id_No': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_photo_id_no'}),
+            'Major_Medical_Issues': forms.Textarea(attrs={'class': 'form-control', 'id': 'id_major_medical_issues'}),
+            'author': forms.Select(attrs={'class': 'form-select', 'id': 'id_author'}),
+            'Photo_Id': forms.Select(attrs={'class': 'form-select', 'id': 'id_photo_id'}),
+            'Image': forms.FileInput(attrs={'class': 'form-control', 'id': 'id_image'}),
+            'Phone_no1': PhoneWidget(attrs={'class': 'form-control', 'id': 'id_phone_no1'}),
+            'Phone_no2': PhoneWidget(attrs={'class': 'form-control', 'id': 'id_phone_no2'}),
+            'Reference_No': PhoneWidget(attrs={'class': 'form-control', 'id': 'id_reference_no'}),
 
         }
 
@@ -54,7 +60,7 @@ class AddDocs(forms.ModelForm):
 class AddLoan(forms.ModelForm):
     class Meta:
         model=models.Loans
-        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','Security_Docs']
+        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','security_docs']
         widgets = {
             'First_Due_Date': forms.DateInput(attrs={'type': 'date'}),
             'Loan_Date': forms.DateInput(attrs={'type': 'date'})
@@ -64,6 +70,22 @@ class AddGuarantor(forms.ModelForm):
     class Meta:
         model=models.Guarantors
         fields= '__all__'
+
+class GuarantorSelectionForm(forms.Form):
+    guarantor_choice = forms.ChoiceField(
+        choices=[
+            ('new', 'Create New Guarantor'),
+            ('existing', 'Use Existing Guarantor'),
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial='new'
+    )
+    existing_guarantor = forms.ModelChoiceField(
+        queryset=models.Guarantors.objects.all().order_by('Guarantor_Name'),
+        required=False,
+        empty_label="Select existing guarantor",
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'existing-guarantor-select'})
+    )
         
 
 class AddGuarantorDocs(forms.ModelForm):
@@ -111,6 +133,19 @@ class EditLoanDetail(forms.ModelForm):
     class Meta:
         model=models.Loans
         fields=['Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','Loan_Date','First_Due_Date','Loan_Collector']
+        widgets = {
+            'Loan_Date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'First_Due_Date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Format dates for HTML5 date input (yyyy-MM-dd)
+        if self.instance and self.instance.pk:
+            if self.instance.Loan_Date:
+                self.initial['Loan_Date'] = self.instance.Loan_Date.strftime('%Y-%m-%d')
+            if self.instance.First_Due_Date:
+                self.initial['First_Due_Date'] = self.instance.First_Due_Date.strftime('%Y-%m-%d')
 
 class EditInstallmentDetail(forms.ModelForm):
     class Meta:

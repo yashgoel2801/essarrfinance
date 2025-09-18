@@ -3,21 +3,78 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
+    <!-- Header with Date Filter -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h2 mb-1">Finance Dashboard</h1>
-                    <p class="text-muted">{{ today|date:"l, F j, Y" }}</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-secondary" onclick="location.reload()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                    <a href="{% url 'microfinance:reports' %}" class="btn btn-primary">
-                        <i class="fas fa-chart-bar"></i> Reports
-                    </a>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-2 mb-md-0">
+                            <h1 class="h2 mb-1">Finance Dashboard</h1>
+                            <p class="text-muted mb-0">{{ today|date:"l, F j, Y" }}</p>
+                        </div>
+                        
+                        <!-- Date Range Filter -->
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <form method="GET" class="d-flex flex-wrap gap-2 align-items-center" id="dateFilterForm">
+                                <!-- Quick Date Buttons -->
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="date_range" id="today" value="today" {% if selected_range == 'today' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="today">Today</label>
+                                    
+                                    <input type="radio" class="btn-check" name="date_range" id="last_week" value="last_week" {% if selected_range == 'last_week' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="last_week">Last Week</label>
+                                    
+                                    <input type="radio" class="btn-check" name="date_range" id="last_month" value="last_month" {% if selected_range == 'last_month' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="last_month">Last Month</label>
+                                    
+                                    <input type="radio" class="btn-check" name="date_range" id="custom" value="custom" {% if selected_range == 'custom' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="custom">Custom</label>
+                                </div>
+                                
+                                <!-- Custom Date Range Inputs -->
+                                <div id="customDateRange" class="d-flex gap-2 align-items-center {% if selected_range != 'custom' %}d-none{% endif %}">
+                                    <input type="date" name="start_date" class="form-control form-control-sm" 
+                                           value="{% if start_date %}{{ start_date|date:'Y-m-d' }}{% endif %}" style="width: 150px;">
+                                    <span class="text-muted">to</span>
+                                    <input type="date" name="end_date" class="form-control form-control-sm" 
+                                           value="{% if end_date %}{{ end_date|date:'Y-m-d' }}{% endif %}" style="width: 150px;">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-filter me-1"></i> Apply Filter
+                                </button>
+                            </form>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                                <a href="{% url 'microfinance:reports' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-chart-bar"></i> Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected Date Range Display -->
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Showing data for: 
+                                    <strong>{{ start_date|date:"M j, Y" }} - {{ end_date|date:"M j, Y" }}</strong>
+                                    {% if selected_range != 'custom' %}
+                                        <span class="badge bg-secondary ms-2">{{ selected_range|title }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <small class="text-muted">
+                                {{ filtered_days }} day{% if filtered_days != 1 %}s{% endif %} selected
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -25,7 +82,7 @@
 
     <!-- Key Metrics Cards -->
     <div class="row g-3 mb-4">
-        <!-- Today's Collections -->
+        <!-- Period Collections -->
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
@@ -36,10 +93,10 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Collected Today</h6>
-                            <h4 class="mb-0">₹{{ amount_collected_today|floatformat:0 }}</h4>
+                            <h6 class="text-muted mb-1">Collections (Period)</h6>
+                            <h4 class="mb-0">₹{{ amount_collected_period|floatformat:0|default:"0" }}</h4>
                             <small class="text-success">
-                                <i class="fas fa-arrow-up"></i> {{ collection_efficiency }}% efficiency
+                                <i class="fas fa-arrow-up"></i> {{ period_collection_efficiency|floatformat:1|default:"0" }}% efficiency
                             </small>
                         </div>
                     </div>
@@ -47,7 +104,7 @@
             </div>
         </div>
 
-        <!-- Due Today -->
+        <!-- Due in Period -->
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
@@ -58,9 +115,9 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Due Today</h6>
-                            <h4 class="mb-0">₹{{ amount_due_today|floatformat:0 }}</h4>
-                            <small class="text-muted">{{ clients_due_today_count }} clients</small>
+                            <h6 class="text-muted mb-1">Due (Period)</h6>
+                            <h4 class="mb-0">₹{{ amount_due_period|floatformat:0|default:"0" }}</h4>
+                            <small class="text-muted">{{ clients_due_period_count|default:"0" }} client{% if clients_due_period_count != 1 %}s{% endif %}</small>
                         </div>
                     </div>
                 </div>
@@ -79,29 +136,31 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="text-muted mb-1">Total Overdue</h6>
-                            <h4 class="mb-0">₹{{ total_overdue|floatformat:0 }}</h4>
-                            <small class="text-danger">{{ total_defaulters }} defaulters</small>
+                            <h4 class="mb-0">₹{{ total_overdue|floatformat:0|default:"0" }}</h4>
+                            <small class="text-danger">{{ total_defaulters|default:"0" }} defaulter{% if total_defaulters != 1 %}s{% endif %}</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Active Loans -->
+        <!-- Period Performance -->
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
                             <div class="bg-info bg-opacity-10 p-3 rounded">
-                                <i class="fas fa-hand-holding-usd text-info fa-lg"></i>
+                                <i class="fas fa-chart-line text-info fa-lg"></i>
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Active Loans</h6>
-                            <h4 class="mb-0">{{ total_active_loans }}</h4>
-                            <small class="text-success">
-                                <i class="fas fa-plus"></i> {{ loans_created_today_count }} today
+                            <h6 class="text-muted mb-1">Net Performance</h6>
+                            <h4 class="mb-0 {% if period_net_performance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ₹{{ period_net_performance|floatformat:0|default:"0" }}
+                            </h4>
+                            <small class="{% if period_net_performance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if period_net_performance >= 0 %}Surplus{% else %}Deficit{% endif %}
                             </small>
                         </div>
                     </div>
@@ -115,8 +174,8 @@
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Penalties Outstanding</h6>
-                    <h5 class="mb-0 text-warning">₹{{ penalty_outstanding|floatformat:0 }}</h5>
+                    <h6 class="text-muted mb-1">Penalties</h6>
+                    <h5 class="mb-0 text-warning">₹{{ penalty_collected_period|floatformat:0|default:"0" }}</h5>
                 </div>
             </div>
         </div>
@@ -124,75 +183,137 @@
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1">File Charges</h6>
-                    <h5 class="mb-0 text-info">₹{{ file_charge_amount|floatformat:0 }}</h5>
+                    <h5 class="mb-0 text-info">₹{{ file_charges_period|floatformat:0|default:"0" }}</h5>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Portfolio Value</h6>
-                    <h5 class="mb-0 text-primary">₹{{ total_portfolio_value|floatformat:0 }}</h5>
+                    <h6 class="text-muted mb-1">New Loans</h6>
+                    <h5 class="mb-0 text-primary">{{ loans_created_period|default:"0" }}</h5>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Outstanding</h6>
-                    <h5 class="mb-0 text-secondary">₹{{ total_outstanding|floatformat:0 }}</h5>
+                    <h6 class="text-muted mb-1">Daily Average</h6>
+                    <h5 class="mb-0 text-secondary">₹{{ daily_average_collection|floatformat:0|default:"0" }}</h5>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Avg Loan</h6>
-                    <h5 class="mb-0 text-success">₹{{ avg_loan_amount|floatformat:0 }}</h5>
+                    <h6 class="text-muted mb-1">Interest Earned</h6>
+                    <h5 class="mb-0 text-success">₹{{ interest_earned_period|floatformat:0|default:"0" }}</h5>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">This Month</h6>
-                    <h5 class="mb-0 text-info">{{ loans_created_this_month }} loans</h5>
+                    <h6 class="text-muted mb-1">Collection Rate</h6>
+                    <h5 class="mb-0 {% if period_collection_rate >= 80 %}text-success{% elif period_collection_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ period_collection_rate|floatformat:1|default:"0" }}%
+                    </h5>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row g-4">
-        <!-- Defaulters List -->
-        <div class="col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-transparent border-0 pb-0">
+        <!-- Period Collection Trend -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Top Defaulters</h5>
-                        <small class="text-muted">Highest overdue amounts</small>
+                        <h5 class="mb-0">Collection Trend</h5>
+                        <small class="text-muted">{{ selected_range|title }} Period</small>
                     </div>
                 </div>
-                <div class="card-body pt-2">
+                <div class="card-body">
+                    <canvas id="periodChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Top Collectors</h5>
+                        <small class="text-muted">Period Performance</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if top_collectors_period %}
+                        {% for collector in top_collectors_period %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                            <div>
+                                <div class="fw-bold">{{ collector.name }}</div>
+                                <small class="text-muted">{{ collector.loans_count }} loan{% if collector.loans_count != 1 %}s{% endif %}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">₹{{ collector.collected_amount|floatformat:0 }}</div>
+                                <small class="text-success">{{ collector.efficiency|floatformat:1 }}% efficiency</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar text-muted fa-3x mb-3"></i>
+                            <h6 class="text-muted">No Collection Data</h6>
+                            <p class="text-muted mb-0">No collections found for the selected period.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- All Defaulters List -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">All Defaulters</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted">{{ total_defaulters|default:"0" }} total</small>
+                            {% if total_defaulters > 10 %}
+                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleDefaultersView()">
+                                    <span id="defaultersToggleText">Show All</span>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
                     {% if defaulters_data %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead>
+                            <table class="table table-hover">
+                                <thead class="table-light">
                                     <tr>
                                         <th>Client</th>
+                                        <th>Contact</th>
                                         <th>Overdue Amount</th>
-                                        <th>Days</th>
-                                        <th>Loans</th>
+                                        <th>Days Overdue</th>
+                                        <th>Active Loans</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for defaulter in defaulters_data %}
-                                    <tr>
+                                    <tr class="{% if forloop.counter > 10 %}defaulter-extra d-none{% endif %}">
                                         <td>
                                             <div>
-                                                <strong>{{ defaulter.client.Name }}</strong><br>
+                                                <div class="fw-bold">{{ defaulter.client.Name }}</div>
                                                 <small class="text-muted">ID: {{ defaulter.client.pk }}</small>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ defaulter.client.Phone_no1 }}</small>
                                         </td>
                                         <td>
                                             <span class="fw-bold text-danger">
@@ -200,16 +321,26 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-danger">
-                                                {{ defaulter.days_overdue }} days
+                                            <span class="badge {% if defaulter.days_overdue > 30 %}bg-danger{% elif defaulter.days_overdue > 7 %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                {{ defaulter.days_overdue }} day{% if defaulter.days_overdue != 1 %}s{% endif %}
                                             </span>
                                         </td>
-                                        <td>{{ defaulter.loans }}</td>
                                         <td>
-                                            <a href="{% url 'microfinance:clientdetail' pk=defaulter.client.pk %}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                View
-                                            </a>
+                                            <span class="badge bg-primary">{{ defaulter.loans }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'microfinance:clientdetail' pk=defaulter.client.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-user"></i> View Client
+                                                </a>
+                                                {% if defaulter.latest_loan_id %}
+                                                <a href="{% url 'microfinance:loandetail' pk=defaulter.latest_loan_id %}" 
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-file-invoice-dollar"></i> View Loan
+                                                </a>
+                                                {% endif %}
+                                            </div>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -217,147 +348,107 @@
                             </table>
                         </div>
                     {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                            <h6>No Defaulters!</h6>
-                            <p class="text-muted">All clients are up to date with payments.</p>
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                            <h4 class="text-success">Excellent!</h4>
+                            <p class="text-muted">No defaulters found. All clients are up to date with their payments.</p>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Clients Due Today -->
-        <div class="col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-transparent border-0 pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Due Today</h5>
-                        <small class="text-muted">{{ clients_due_today_count }} clients</small>
-                    </div>
-                </div>
-                <div class="card-body pt-2">
-                    {% if clients_due_today %}
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Client</th>
-                                        <th>Amount Due</th>
-                                        <th>Loan ID</th>
-                                        <th>Contact</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for client in clients_due_today %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ client.Loan__Account__Client__Name }}</strong><br>
-                                            <small class="text-muted">ID: {{ client.Loan__Account__Client__pk }}</small>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-warning">
-                                                ₹{{ client.Installment_Due|floatformat:0 }}
-                                            </span>
-                                        </td>
-                                        <td>{{ client.Loan__pk }}</td>
-                                        <td>
-                                            <small>{{ client.Loan__Account__Client__Phone_no1 }}</small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-calendar-check text-success fa-3x mb-3"></i>
-                            <h6>No Collections Due Today!</h6>
-                            <p class="text-muted">No payments are scheduled for today.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Weekly Collection Trend -->
-        <div class="col-xl-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-0">
-                    <h5 class="mb-0">Weekly Collection Trend</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="weeklyChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loan Distribution -->
+        <!-- Recent Payments -->
         <div class="col-xl-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
-                    <h5 class="mb-0">Loan Types</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Payments</h5>
+                        <small class="text-muted">{{ recent_payments_period|length|default:"0" }} payments</small>
+                    </div>
                 </div>
                 <div class="card-body">
-                    {% for freq in frequency_distribution %}
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <strong>{{ freq.frequency_label }}</strong><br>
-                            <small class="text-muted">{{ freq.count }} loans</small>
+                    {% if recent_payments_period %}
+                        <div class="payment-list" style="max-height: 400px; overflow-y: auto;">
+                            {% for payment in recent_payments_period %}
+                            <div class="payment-item d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-bold text-primary">
+                                                <a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}" 
+                                                   class="text-decoration-none">
+                                                    {{ payment.Loan.Account.Client.Name|truncatechars:20 }}
+                                                </a>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ payment.Date_Paid|date:"M j, Y" }} • 
+                                                <a href="{% url 'microfinance:loandetail' pk=payment.Loan.pk %}" 
+                                                   class="text-decoration-none">
+                                                    Loan #{{ payment.Loan.pk }}
+                                                </a>
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold text-success">₹{{ payment.Amount_Paid|floatformat:0 }}</div>
+                                            {% if payment.Payment_Type == 1 %}
+                                                <span class="badge bg-success">Installment</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Penalty</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <div class="text-end">
-                            <strong>₹{{ freq.total_amount|floatformat:0 }}</strong>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-receipt text-muted fa-3x mb-3"></i>
+                            <h6 class="text-muted">No Recent Payments</h6>
+                            <p class="text-muted mb-0">No payments found for the selected period.</p>
                         </div>
-                    </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activities -->
+        <!-- Financial Summary -->
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
-                    <h5 class="mb-0">Recent Payments</h5>
+                    <h5 class="mb-0">Financial Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Client</th>
-                                    <th>Amount</th>
-                                    <th>Type</th>
-                                    <th>Loan ID</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for payment in recent_payments %}
-                                <tr>
-                                    <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
-                                    <td>
-                                        <a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}">
-                                            {{ payment.Loan.Account.Client.Name }}
-                                        </a>
-                                    </td>
-                                    <td class="fw-bold text-success">₹{{ payment.Amount_Paid|floatformat:0 }}</td>
-                                    <td>
-                                        {% if payment.Payment_Type == 1 %}
-                                            <span class="badge bg-success">Installment</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Penalty</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'microfinance:loandetail' pk=payment.Loan.pk %}">
-                                            {{ payment.Loan.pk }}
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-primary mb-1">₹{{ total_portfolio_value|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Total Portfolio</div>
+                                <small class="text-success">{{ total_active_loans|default:"0" }} active loans</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-success mb-1">₹{{ total_collected_overall|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Total Collected</div>
+                                <small class="text-success">All time collections</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-warning mb-1">₹{{ total_outstanding|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Outstanding</div>
+                                <small class="text-warning">Remaining balance</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-info mb-1">₹{{ avg_loan_amount|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Average Loan</div>
+                                <small class="text-info">Per loan amount</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -368,54 +459,114 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Weekly Collection Chart
-const ctx = document.getElementById('weeklyChart').getContext('2d');
-const weeklyChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [
-            {% for day in weekly_collections %}
-            '{{ day.date|date:"M j" }}'{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ],
-        datasets: [{
-            label: 'Collections',
-            data: [
-                {% for day in weekly_collections %}
-                {{ day.amount }}{% if not forloop.last %},{% endif %}
+// Date Range Filter Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const dateRangeInputs = document.querySelectorAll('input[name="date_range"]');
+    const customDateRange = document.getElementById('customDateRange');
+    
+    dateRangeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.classList.remove('d-none');
+            } else {
+                customDateRange.classList.add('d-none');
+                // Auto-submit for predefined ranges
+                document.getElementById('dateFilterForm').submit();
+            }
+        });
+    });
+});
+
+// Toggle defaulters view
+function toggleDefaultersView() {
+    const extraRows = document.querySelectorAll('.defaulter-extra');
+    const toggleText = document.getElementById('defaultersToggleText');
+    const isHidden = extraRows[0]?.classList.contains('d-none');
+    
+    extraRows.forEach(row => {
+        if (isHidden) {
+            row.classList.remove('d-none');
+        } else {
+            row.classList.add('d-none');
+        }
+    });
+    
+    toggleText.textContent = isHidden ? 'Show Less' : 'Show All';
+}
+
+// Period Collection Chart
+const ctx = document.getElementById('periodChart');
+if (ctx) {
+    const periodChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [
+                {% for day in period_collections %}
+                '{{ day.date|date:"M j" }}'{% if not forloop.last %},{% endif %}
                 {% endfor %}
             ],
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
+            datasets: [{
+                label: 'Collections',
+                data: [
+                    {% for day in period_collections %}
+                    {{ day.amount|default:"0" }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Due',
+                data: [
+                    {% for day in period_collections %}
+                    {{ day.due_amount|default:"0" }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                tension: 0.4,
+                fill: false
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '₹' + value.toLocaleString();
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
+}
 
-// Auto-refresh every 5 minutes
+// Auto-refresh every 10 minutes
 setTimeout(() => {
     location.reload();
-}, 300000);
+}, 600000);
 </script>
 
 <style>
@@ -429,6 +580,76 @@ setTimeout(() => {
 
 .bg-opacity-10 {
     --bs-bg-opacity: 0.1;
+}
+
+.btn-check:checked + .btn-outline-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.table td {
+    font-size: 0.875rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.payment-item {
+    transition: background-color 0.2s ease;
+}
+
+.payment-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.payment-list {
+    scrollbar-width: thin;
+    scrollbar-color: #dee2e6 transparent;
+}
+
+.payment-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.payment-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.payment-list::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;
+    border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+    .d-flex.flex-wrap.gap-2 {
+        justify-content: center;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+    }
+    
+    #customDateRange {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #customDateRange input {
+        width: 100% !important;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.25rem;
+    }
 }
 </style>
 {% endblock %}

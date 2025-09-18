@@ -151,7 +151,7 @@ class Loans(models.Model):
     Status =models.BooleanField(default=False)
     remark = models.CharField(max_length=100,default='None',blank=True,null=True)
     reminder = models.DateField(default=timezone.now,blank=True,null=True)
-    Security_Docs= models.TextField(default='not specified')
+    security_docs= models.TextField(default='not specified')
     def __str__(self):
        return "Loan ID: "+str(self.pk)
     def _get_total_amnt_to_collect(self):
@@ -188,7 +188,7 @@ class Penalty(models.Model):
     Penalty_Paid =models.FloatField(default=0)
     Penalty_Paid_Date= models.DateField(default=None,null=True)
     Status = models.BooleanField(default=False)
-
+    Installment_Due_Date = models.DateField(null=True, blank=True) 
     def __str__(self):
        return str(self.Date_Started) +" - "+str(self.Loan.pk)  
     class Meta:

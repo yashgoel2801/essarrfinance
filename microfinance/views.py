@@ -17,6 +17,7 @@ from datetime import date
 from datetime import datetime
 from django.contrib.auth.models import Permission
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
 
 import requests
 import json
@@ -102,12 +103,12 @@ def Add_Docs(request,pk):
 def Add_Loan(request,pk, sk):
     if request.method == 'POST':
         form=AddLoan(request.POST,request.FILES)
-        instance=form.save(commit=False)
-        client =Clients.objects.get(pk=pk)
-        acc = Accounts.objects.get(Client=client)
-        instance.Account =acc
-        instance.Guarantor_id = sk
-        if form.is_valid():            
+        if form.is_valid():
+            instance=form.save(commit=False)
+            client =Clients.objects.get(pk=pk)
+            acc = Accounts.objects.get(Client=client)
+            instance.Account =acc
+            instance.Guarantor_id = sk
             instance.save()
             Installment = (instance.Principle_Amount + (instance.Principle_Amount/100*instance.Intrest_Rate))/instance.No_Of_Installments
             if instance.Frequency !=2 :
@@ -145,7 +146,10 @@ def Add_Loan(request,pk, sk):
                     Date_Due = Date_Due + relativedelta(months=1)
                     Installments_Inst = Installments(Installment_Paid = 0, Loan = instance,Date_Due = Date_Due, Installment_Due = round(Installment,1),Installment_To_Be_Paid=round(Installment,1),Pending_Amount=round(Installment,1) )
                     Installments_Inst.save()
-        return redirect('microfinance:clientdetail' ,pk=pk)
+            return redirect('microfinance:clientdetail' ,pk=pk)
+        else:
+            # Form is not valid, show errors
+            return render(request,'microfinance/Add_Loan.html',{'form':form})
     else: 
         form=AddLoan()     
     return render(request,'microfinance/Add_Loan.html',{'form':form})
@@ -238,14 +242,52 @@ def Client_Detail(request,pk):
             loan.save()
 
             return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
+        elif "delete_loan" in request.POST:
+            loan_id = request.POST.get('loan_id')
+            if loan_id:
+                try:
+                    loan = Loans.objects.get(pk=loan_id)
+                    # Delete associated installments and payments first
+                    Installments.objects.filter(Loan=loan).delete()
+                    Payments.objects.filter(Loan=loan).delete()
+                    Penalty.objects.filter(Loan=loan).delete()
+                    # Delete the loan
+                    loan.delete()
+                    messages.success(request, f'Loan {loan_id} has been successfully deleted.')
+                except Loans.DoesNotExist:
+                    messages.error(request, 'Loan not found.')
+                except Exception as e:
+                    messages.error(request, f'Error deleting loan: {str(e)}')
+            return redirect('microfinance:clientdetail', pk=pk)
         return redirect('microfinance:addguarantor', pk=pk)
     else:
         return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
 
 
 
+# def Recalculate_Penalty(Loan):
+#     calculate_penalties(Loan)
+
 def Recalculate_Penalty(Loan):
-    calculate_penalties(Loan)
+    # Convert QuerySets to the format expected by the function
+    installments = Installments.objects.filter(Loan=Loan).filter(Installment_Due__gt=0).order_by('Date_Due')
+    payments = Payments.objects.filter(Loan=Loan, Payment_Type=1).order_by('Date_Paid')
+    
+    installments_data = []
+    for inst in installments:
+        installments_data.append({
+            'Date_Due': inst.Date_Due,
+            'Installment_Due': inst.Installment_Due
+        })
+    
+    payments_data = []
+    for pay in payments:
+        payments_data.append({
+            'Date_Paid': pay.Date_Paid,
+            'Amount_Paid': pay.Amount_Paid
+        })
+    
+    _calculate_individual_penalties_corrected(Loan, installments_data, payments_data, timezone.now().date())
 
 def removePenalty(Loan,startDate):
     try: 
@@ -270,7 +312,7 @@ def getPenalty(Loan,startDate):
 def getOrCreatePenalties(Loan,startDate,endDate,penalty_amnt,penalty_calc):
     try:
         Penalty_Obj = getPenalty(Loan,startDate)
-        Penalty_Obj = Penalty(Loan=Loan,Date_Started=startDate,Date_Ended=endDate,Amount=penalty_amnt,Penalty_Calc=penalty_calc)
+        Penalty_Obj = Penalty(Loan=Loan,Date_Started=startDate,Date_Ended=endDate,Amount=penalty_amnt,Penalty_Calc=penalty_calc,Installment_Due_Date=startDate)
         Penalty_Obj.save()
     except Penalty.DoesNotExist: 
         print('get or create penalty error')
@@ -301,20 +343,41 @@ def pay_installment(request,loan,payments,DatePaid):
 
 @login_required(login_url="/accounts/login/")
 def Loan_Detail(request,pk):
+    print("=" * 50)
+    print("LOAN_DETAIL VIEW CALLED!")
+    print(f"Loan ID: {pk}")
+    print("=" * 50)
     Loan=Loans.objects.get(pk=pk)
     Installment = Installments.objects.filter(Loan=Loan).filter(Installment_Due__gt=0).order_by('Date_Due')
+    print(f"=== INSTALLMENT DEBUG ===")
+    print(f"Found {Installment.count()} installments for loan {Loan.pk}")
+    today = timezone.now().date()
+    print(f"Today's date: {today}")
+    for inst in Installment:
+        print(f"Installment: Date_Due={inst.Date_Due}, Amount={inst.Installment_Due}, Paid={inst.Installment_Paid}, Is Overdue: {inst.Date_Due < today}")
+    print(f"=== END INSTALLMENT DEBUG ===")
     Account =Accounts.objects.get(loans=Loan)  
     Client =Clients.objects.get(accounts=Account)    
     Payment =Payments.objects.filter(Loan=Loan).filter(Payment_Type=1).order_by('Date_Paid')
     Total_Amount_Paid = Payments.objects.filter(Loan=Loan, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
     Total_Loan_Amount = Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100
     Penalties = Penalty.objects.filter(Loan=Loan)
+    print(f"=== PENALTY DEBUG ===")
+    print(f"Found {Penalties.count()} penalties for loan {Loan.pk}")
+    for penalty in Penalties:
+        print(f"Penalty: Date_Started={penalty.Date_Started}, Date_Ended={penalty.Date_Ended}, Amount={penalty.Amount}, Status={penalty.Status}")
+    print(f"=== END PENALTY DEBUG ===")
     DatePaid= request.POST.get('date_paid')    
 
     lastinst = Installment.filter(Date_Paid__isnull=False).filter(Installment_Paid__gt=0).order_by('Date_Paid').last()  
 
     if request.method == "POST":  
-        Total_Pending = Total_Loan_Amount   #total amount stored in starting to calculate amnt pending 
+        Total_Pending = Total_Loan_Amount 
+        print('=== FULL POST DATA DEBUG ===')
+        print('POST keys:', list(request.POST.keys()))
+        print('POST values:', dict(request.POST))
+        print('Looking for edit_payment:', 'edit_payment' in request.POST)
+        print('================================')  #total amount stored in starting to calculate amnt pending 
         if 'status' in request.POST:    #To change the current status
             status = bool(request.POST.get('Status'))
             Loan.Status =status
@@ -350,6 +413,171 @@ def Loan_Detail(request,pk):
                 PenaltyObjects[PenaltyIndx].save()
                 Amount_Paid-=PenaltyObjects[PenaltyIndx].Penalty_Calc
                 PenaltyIndx+=1
+        
+            # Handle payment editing
+        if "edit_payment" in request.POST:
+            payment_id = request.POST.get('payment_id')
+            print(f"=== PAYMENT EDIT REQUEST ===")
+            print(f"Payment ID: {payment_id}")
+            print(f"Date Paid: {request.POST.get('date_paid')}")
+            print(f"Amount: {request.POST.get('amount')}")
+            print(f"Payment Type: {request.POST.get('payment_type')}")
+            
+            success = False
+            try:
+                payment = Payments.objects.get(pk=payment_id, Loan=Loan)
+                old_date = payment.Date_Paid
+                old_amount = payment.Amount_Paid
+                
+                print(f"Found payment: {payment.pk}, Old Date: {old_date}, Old Amount: {old_amount}")
+                
+                new_date = request.POST.get('date_paid')
+                new_amount = float(request.POST.get('amount'))
+                new_payment_type = int(request.POST.get('payment_type'))
+                
+                print(f"New values from form: Date={new_date}, Amount={new_amount}, Type={new_payment_type}")
+                print(f"Old values from DB: Date={old_date}, Amount={old_amount}, Type={payment.Payment_Type}")
+                
+                payment.Date_Paid = new_date
+                payment.Amount_Paid = new_amount
+                payment.Payment_Type = new_payment_type
+                payment.save()
+                print(f"Successfully updated payment {payment_id}")
+                print(f"Final values in DB: Date={payment.Date_Paid}, Amount={payment.Amount_Paid}, Type={payment.Payment_Type}")
+                
+                success = True
+                
+                # Recalculate penalties if payment date or amount changed
+                date_changed = str(old_date) != str(new_date)
+                amount_changed = old_amount != new_amount
+                print(f"Date changed: {date_changed} (old: {old_date}, new: {new_date})")
+                print(f"Amount changed: {amount_changed} (old: {old_amount}, new: {new_amount})")
+                
+                if date_changed or amount_changed:
+                    print(f"Payment date/amount changed, recalculating penalties...")
+                    try:
+                        # Convert QuerySets to the format expected by the function
+                        installments_data = []
+                        for inst in Installment:
+                            installments_data.append({
+                                'Date_Due': inst.Date_Due,
+                                'Installment_Due': inst.Installment_Due
+                            })
+                        
+                        payments_data = []
+                        for pay in Payment:
+                            payments_data.append({
+                                'Date_Paid': pay.Date_Paid,
+                                'Amount_Paid': pay.Amount_Paid
+                            })
+                        
+                        _calculate_individual_penalties(Loan, installments_data, payments_data, timezone.now().date())
+                        print(f"Penalties recalculated after payment update")
+                    except Exception as penalty_error:
+                        print(f"WARNING: Penalty recalculation failed: {str(penalty_error)}")
+                        # Don't fail the payment update if penalty recalculation fails
+                else:
+                    print(f"No changes detected, skipping penalty recalculation")
+                
+            except Payments.DoesNotExist:
+                print(f"ERROR: Payment {payment_id} not found")
+            except Exception as e:
+                print(f"ERROR updating payment: {str(e)}")
+            print(f"=== END PAYMENT EDIT ===")
+            
+            # Always redirect back to loan detail page
+            if success:
+                return redirect(f"{request.path}?payment_updated=true")
+            else:
+                return redirect(f"{request.path}?payment_error=true")
+        
+        # Handle payment deletion
+        if "delete_payment" in request.POST:
+            payment_id = request.POST.get('payment_id')
+            try:
+                payment = Payments.objects.get(pk=payment_id, Loan=Loan)
+                payment.delete()
+                print(f"Deleted payment {payment_id}")
+                
+                # Recalculate penalties after payment deletion
+                print(f"Payment deleted, recalculating penalties...")
+                # Convert QuerySets to the format expected by the function
+                installments_data = []
+                for inst in Installment:
+                    installments_data.append({
+                        'Date_Due': inst.Date_Due,
+                        'Installment_Due': inst.Installment_Due
+                    })
+                
+                payments_data = []
+                for pay in Payment:
+                    payments_data.append({
+                        'Date_Paid': pay.Date_Paid,
+                        'Amount_Paid': pay.Amount_Paid
+                    })
+                
+                _calculate_individual_penalties(Loan, installments_data, payments_data, timezone.now().date())
+                print(f"Penalties recalculated after payment deletion")
+                
+                # Redirect with success parameter
+                return redirect(f"{request.path}?payment_deleted=true")
+                
+            except Payments.DoesNotExist:
+                print(f"Payment {payment_id} not found")
+        
+        # Handle penalty editing
+        if "edit_penalty" in request.POST:
+            penalty_id = request.POST.get('penalty_id')
+            try:
+                penalty = Penalty.objects.get(pk=penalty_id, Loan=Loan)
+                penalty.Date_Started = request.POST.get('date_started')
+                penalty.Date_Ended = request.POST.get('date_ended')
+                penalty.Amount = float(request.POST.get('amount'))
+                penalty.Penalty_Calc = float(request.POST.get('penalty_calc'))
+                penalty.Status = bool(request.POST.get('status'))
+                penalty.save()
+                print(f"Updated penalty {penalty_id}")
+                
+                # Redirect with success parameter
+                return redirect(f"{request.path}?penalty_updated=true")
+                
+            except Penalty.DoesNotExist:
+                print(f"Penalty {penalty_id} not found")
+        
+        # Handle penalty deletion
+        if "delete_penalty" in request.POST:
+            penalty_id = request.POST.get('penalty_id')
+            try:
+                penalty = Penalty.objects.get(pk=penalty_id, Loan=Loan)
+                penalty.delete()
+                print(f"Deleted penalty {penalty_id}")
+                
+                # Recalculate penalties after penalty deletion
+                print(f"Penalty deleted, recalculating penalties...")
+                # Convert QuerySets to the format expected by the function
+                installments_data = []
+                for inst in Installment:
+                    installments_data.append({
+                        'Date_Due': inst.Date_Due,
+                        'Installment_Due': inst.Installment_Due
+                    })
+                
+                payments_data = []
+                for pay in Payment:
+                    payments_data.append({
+                        'Date_Paid': pay.Date_Paid,
+                        'Amount_Paid': pay.Amount_Paid
+                    })
+                
+                _calculate_individual_penalties(Loan, installments_data, payments_data, timezone.now().date())
+                print(f"Penalties recalculated after penalty deletion")
+                
+                # Redirect with success parameter
+                return redirect(f"{request.path}?penalty_deleted=true")
+                
+            except Penalty.DoesNotExist:
+                print(f"Penalty {penalty_id} not found")
+        
         return redirect("microfinance:home")
 
     else: 
@@ -437,6 +665,18 @@ def Loan_Detail(request,pk):
         total_penalty_calc = 0
         total_penalty_paid = 0
 
+        # Create a mapping of penalty start dates to installment due dates
+        # This is a simplified approach - in a real system, you'd want to store this in the database
+        # penalty_to_installment_map = {}
+        # for inst in Installment:
+        #     if inst.Date_Due < today:  # Only overdue installments
+        #         # Find penalties that start on or after this installment due date
+        #         for penalty in Penalties:
+        #             if penalty.Date_Started >= inst.Date_Due and penalty.Date_Started not in penalty_to_installment_map:
+        #                 print('fssf',penalty.Date_Started,penalty.Date_Ended, inst.Date_Due)
+        #                 penalty_to_installment_map[penalty.Date_Started] = inst.Date_Due
+        #                 break
+
         # Merge Penalties and PenaltyPayments
         while penaltyIndx < len(list(Penalties)) and penaltyPaymentIndx < len(list(PenaltyPayments)):
             penalty = list(Penalties)[penaltyIndx]
@@ -446,6 +686,7 @@ def Loan_Detail(request,pk):
             if penalty_payment.Date_Paid is None or penalty.Date_Started <= penalty_payment.Date_Paid:
                 # Process penalty first if its start date is earlier or same as payment date
                 # or if the payment date is None
+                # installment_due_date = penalty_to_installment_map.get(penalty.Date_Started, penalty.Date_Started)
                 combinedPenaltyPaymentView.append({
                     "Date_Started": penalty.Date_Started,
                     "Date_Ended": penalty.Date_Ended,
@@ -454,7 +695,8 @@ def Loan_Detail(request,pk):
                     "Penalty_Paid": penalty.Penalty_Paid,
                     "Status": penalty.Status,
                     "Payment_Amount": "-",  # No payment on this row
-                    "Payment_Date": "-"
+                    "Payment_Date": "-",
+                    "Installment_Due_Date": penalty.Installment_Due_Date
                 })
                 current_penalty_outstanding += penalty.Penalty_Calc - penalty.Penalty_Paid
                 total_penalty_calc += penalty.Penalty_Calc
@@ -470,7 +712,8 @@ def Loan_Detail(request,pk):
                     "Penalty_Paid": "-",
                     "Status": "-",
                     "Payment_Amount": penalty_payment.Amount_Paid,
-                    "Payment_Date": penalty_payment.Date_Paid
+                    "Payment_Date": penalty_payment.Date_Paid,
+                    "Installment_Due_Date": penalty.Installment_Due_Date  # No installment date for payment rows
                 })
                 current_penalty_outstanding -= penalty_payment.Amount_Paid
                 penaltyPaymentIndx += 1
@@ -478,6 +721,7 @@ def Loan_Detail(request,pk):
         # Add any remaining penalties
         while penaltyIndx < len(list(Penalties)):
             penalty = list(Penalties)[penaltyIndx]
+            # installment_due_date = penalty_to_installment_map.get(penalty.Date_Started, penalty.Date_Started)
             combinedPenaltyPaymentView.append({
                 "Date_Started": penalty.Date_Started,
                 "Date_Ended": penalty.Date_Ended,
@@ -486,7 +730,8 @@ def Loan_Detail(request,pk):
                 "Penalty_Paid": penalty.Penalty_Paid,
                 "Status": penalty.Status,
                 "Payment_Amount": "-",
-                "Payment_Date": "-"
+                "Payment_Date": "-",
+                "Installment_Due_Date": penalty.Installment_Due_Date
             })
             current_penalty_outstanding += penalty.Penalty_Calc - penalty.Penalty_Paid
             total_penalty_calc += penalty.Penalty_Calc
@@ -504,11 +749,21 @@ def Loan_Detail(request,pk):
                 "Penalty_Paid": "-",
                 "Status": "-",
                 "Payment_Amount": penalty_payment.Amount_Paid,
-                "Payment_Date": penalty_payment.Date_Paid
+                "Payment_Date": penalty_payment.Date_Paid,
+                "Installment_Due_Date": penalty.Installment_Due_Date  # No installment date for payment rows
             })
             current_penalty_outstanding -= penalty_payment.Amount_Paid
             penaltyPaymentIndx += 1
 
+        # Sort combinedPenaltyPaymentView by Installment_Due_Date (penalties first, then payments)
+        def sort_key(item):
+            if item['Installment_Due_Date'] is not None:
+                return (0, item['Installment_Due_Date'])  # Penalties first
+            else:
+                return (1, item['Payment_Date'] if item['Payment_Date'] != '-' else None)  # Payments second
+        
+        combinedPenaltyPaymentView.sort(key=sort_key)
+        
         print('Total_Loan_Amount',Total_Loan_Amount)
         return render(request,'microfinance/LoanDetail.html',{
             'Total_Penalty': round(total_penalty_calc, 1),
@@ -1172,68 +1427,173 @@ def Week_Chart_List(request):
 
 @login_required(login_url="/accounts/login/")
 def EditLoan(request,pk):
+    print("=" * 50)
+    print("EDITLOAN VIEW CALLED!")
+    print(f"Loan ID: {pk}")
+    print(f"Request method: {request.method}")
+    print(f"User: {request.user}")
+    print(f"Is superuser: {request.user.is_superuser}")
+    print("=" * 50)
     if request.user.is_superuser: 
         Loan=Loans.objects.get(pk=pk)
         acc=Loan.Account.pk
         gk=Loan.Guarantor.pk
                 
         if request.method=='POST' and 'edit' in request.POST:
+            print("Edit button clicked - showing form")
             form=EditLoanDetail(instance=Loan)
             return render(request,'microfinance/EditLoan.html',{'form':form})
-        if 'changeLoan' in request.POST:  
-            form=EditLoanDetail(request.POST)
-            instance=form.save(commit=False)
+        if request.method=='POST' and 'changeLoan' in request.POST:
+            print("ChangeLoan button clicked - processing form")  
+            print(f"POST data: {request.POST}")
+            form=EditLoanDetail(request.POST, instance=Loan)
             if form.is_valid():
+                # Store the original first due date to check if it changed
+                original_first_due_date = Loan.First_Due_Date
+                print(f"=== INSTALLMENT UPDATE DEBUG ===")
+                print(f"Original first due date: {original_first_due_date} (type: {type(original_first_due_date)})")
                 
-                instance.Account=Loan.Account
-                instance.Guarantor=Loan.Guarantor
-                instance.save()
-                Installment = (instance.Principle_Amount + (instance.Principle_Amount/100*instance.Intrest_Rate))/instance.No_Of_Installments
-                if instance.Frequency !=2 :
-                    Inst =round(Installment,1)
-                    Installments_Inst = Installments(Installment_Paid = 0, Loan = instance, Date_Due = instance.First_Due_Date, Installment_Due = Inst,Installment_To_Be_Paid=Inst,Pending_Amount=Inst )
+                # Get the new first due date from the form data
+                new_first_due_date = form.cleaned_data.get('First_Due_Date')
+                print(f"New first due date: {new_first_due_date} (type: {type(new_first_due_date)})")
+                
+                # Also check the initial form data to see what the original value was
+                initial_first_due_date = request.POST.get('initial-First_Due_Date')
+                print(f"Initial first due date from form: {initial_first_due_date}")
+                
+                # Update the existing loan with new values
+                form.save()
+                print(f"Form saved successfully")
+                
+                # Check if first due date actually changed
+                # Convert initial date string to date object for comparison
+                from datetime import datetime
+                if initial_first_due_date:
+                    initial_date_obj = datetime.strptime(initial_first_due_date, '%Y-%m-%d').date()
                 else:
-                    Inst = round(Installment,1)
-                    Installments_Inst = Installments(Installment_Paid = 0, Loan = instance, Date_Due = instance.First_Due_Date, Installment_Due = round(Inst*7),Installment_To_Be_Paid=round(Inst*7),Pending_Amount=round(Inst*7) )
-                Installments_Inst.save()   
+                    initial_date_obj = original_first_due_date
                 
-                if instance.Frequency == 1:
-                    Date_Due = instance.First_Due_Date 
-                    for i in range(1,instance.No_Of_Installments):
-                        Inst = Installment
-                        Date_Due = Date_Due + timedelta(1)
-                        Installments_Inst = Installments(Installment_Paid = 0, Loan = instance,Date_Due = Date_Due, Installment_Due = round(Installment,1),Installment_To_Be_Paid=round(Installment,1),Pending_Amount=round(Installment,1) )
-                        Installments_Inst.save()
-                if instance.Frequency == 2:
-                    Date_Due = instance.First_Due_Date 
-                    Extra_Days = instance.No_Of_Installments % 7
-                    for i in range(1,int(instance.No_Of_Installments/7)):
-                        Inst = Installment
-                        Date_Due = Date_Due + timedelta(7)
-                        Installments_Inst = Installments(Installment_Paid = 0, Loan = instance, Date_Due = Date_Due, Installment_Due = round(Inst*7),Installment_To_Be_Paid=round(Inst*7),Pending_Amount=round(Inst *7))
-                        Installments_Inst.save()
-                    if Extra_Days>0:
-                        Inst = Installment
-                        Date_Due = Date_Due + timedelta(Extra_Days)
-                        Installments_Inst = Installments(Installment_Paid = 0, Loan = instance,Date_Due = Date_Due, Installment_Due = round(Inst*Extra_Days),Installment_To_Be_Paid=round(Inst*Extra_Days),Pending_Amount=round(Inst *Extra_Days))
-                        Installments_Inst.save()
-                if instance.Frequency == 3:
-                    Date_Due = instance.First_Due_Date 
-                    for i in range(1,int(instance.No_Of_Installments)):
-                        Inst = round(Installment,1)
-                        Date_Due = Date_Due + relativedelta(months=1)
-                        Installments_Inst = Installments(Installment_Paid = 0, Loan = instance,Date_Due = Date_Due, Installment_Due = round(Installment,1),Installment_To_Be_Paid=round(Installment,1),Pending_Amount=round(Installment,1) )
-                        Installments_Inst.save()
+                print(f"Comparing: {initial_date_obj} != {new_first_due_date} = {initial_date_obj != new_first_due_date}")
+                if initial_date_obj != new_first_due_date:
+                    print(f"FIRST DUE DATE CHANGED - UPDATING INSTALLMENTS")
+                    # Delete existing installments and recreate them with new dates
+                    deleted_count = Installments.objects.filter(Loan=Loan).count()
+                    print(f"Deleting {deleted_count} existing installments")
+                    Installments.objects.filter(Loan=Loan).delete()
+                    
+                    # Recreate installments with updated schedule
+                    Installment = (Loan.Principle_Amount + (Loan.Principle_Amount/100*Loan.Intrest_Rate))/Loan.No_Of_Installments
+                    print(f"Calculated installment amount: {Installment}")
+                    print(f"Loan frequency: {Loan.Frequency}")
+                    print(f"Number of installments: {Loan.No_Of_Installments}")
+                    
+                    # Create first installment
+                    if Loan.Frequency != 2:
+                        Inst = round(Installment, 1)
+                        print(f"Creating first installment (non-weekly): Amount={Inst}, Date={new_first_due_date}")
+                        Installments_Inst = Installments(
+                            Installment_Paid=0, 
+                            Loan=Loan, 
+                            Date_Due=new_first_due_date, 
+                            Installment_Due=Inst,
+                            Installment_To_Be_Paid=Inst,
+                            Pending_Amount=Inst
+                        )
+                    else:
+                        Inst = round(Installment, 1)
+                        print(f"Creating first installment (weekly): Amount={round(Inst*7)}, Date={new_first_due_date}")
+                        Installments_Inst = Installments(
+                            Installment_Paid=0, 
+                            Loan=Loan, 
+                            Date_Due=new_first_due_date, 
+                            Installment_Due=round(Inst*7),
+                            Installment_To_Be_Paid=round(Inst*7),
+                            Pending_Amount=round(Inst*7)
+                        )
+                    Installments_Inst.save()
+                    print(f"First installment saved with ID: {Installments_Inst.pk}")
+                    
+                    # Create remaining installments based on frequency
+                    if Loan.Frequency == 1:  # Daily
+                        print(f"Creating {Loan.No_Of_Installments - 1} additional daily installments")
+                        Date_Due = new_first_due_date 
+                        for i in range(1, Loan.No_Of_Installments):
+                            Inst = round(Installment, 1)
+                            Date_Due = Date_Due + timedelta(days=1)
+                            Installments_Inst = Installments(
+                                Installment_Paid=0, 
+                                Loan=Loan,
+                                Date_Due=Date_Due, 
+                                Installment_Due=round(Installment, 1),
+                                Installment_To_Be_Paid=round(Installment, 1),
+                                Pending_Amount=round(Installment, 1)
+                            )
+                            Installments_Inst.save()
+                    elif Loan.Frequency == 2:  # Weekly
+                        Date_Due = new_first_due_date 
+                        Extra_Days = Loan.No_Of_Installments % 7
+                        for i in range(1, int(Loan.No_Of_Installments/7)):
+                            Inst = Installment
+                            Date_Due = Date_Due + timedelta(days=7)
+                            Installments_Inst = Installments(
+                                Installment_Paid=0, 
+                                Loan=Loan, 
+                                Date_Due=Date_Due, 
+                                Installment_Due=round(Inst*7),
+                                Installment_To_Be_Paid=round(Inst*7),
+                                Pending_Amount=round(Inst*7)
+                            )
+                            Installments_Inst.save()
+                        if Extra_Days > 0:
+                            Inst = Installment
+                            Date_Due = Date_Due + timedelta(days=Extra_Days)
+                            Installments_Inst = Installments(
+                                Installment_Paid=0, 
+                                Loan=Loan,
+                                Date_Due=Date_Due, 
+                                Installment_Due=round(Inst*Extra_Days),
+                                Installment_To_Be_Paid=round(Inst*Extra_Days),
+                                Pending_Amount=round(Inst*Extra_Days)
+                            )
+                            Installments_Inst.save()
+                    elif Loan.Frequency == 3:  # Monthly
+                        Date_Due = new_first_due_date 
+                        for i in range(1, Loan.No_Of_Installments):
+                            Inst = round(Installment, 1)
+                            Date_Due = Date_Due + relativedelta(months=1)
+                            Installments_Inst = Installments(
+                                Installment_Paid=0, 
+                                Loan=Loan,
+                                Date_Due=Date_Due, 
+                                Installment_Due=round(Installment, 1),
+                                Installment_To_Be_Paid=round(Installment, 1),
+                                Pending_Amount=round(Installment, 1)
+                            )
+                            Installments_Inst.save()
+                    
+                    # Final count check
+                    final_count = Installments.objects.filter(Loan=Loan).count()
+                    print(f"Final installment count: {final_count}")
+                    print(f"=== INSTALLMENT UPDATE COMPLETE ===")
                 
-            return redirect('microfinance:clientdetail' ,pk=Loan.Account.Client.pk)
+                return redirect('microfinance:clientdetail', pk=Loan.Account.Client.pk)
+            else:
+                # Form is not valid, show errors
+                print(f"Form is not valid. Errors: {form.errors}")
+                return render(request,'microfinance/EditLoan.html',{'form':form})
    
         if 'del' in request.POST:
             Pen =Penalty.objects.filter(Loan=Loan).delete()
             inst=Installments.objects.filter(Loan=Loan).delete()
             Loan.delete()
             return redirect('microfinance:clientdetail' ,pk=Loan.Account.Client.pk)
-            
+        
+        # Default case: show the edit form
+        form=EditLoanDetail(instance=Loan)
+        return render(request,'microfinance/EditLoan.html',{'form':form})
+                
     else:
+        print(f"User {request.user} is not a superuser - access denied")
         return HttpResponse('you dont have access to this page. Contact admin')
 
 
@@ -1318,8 +1678,8 @@ def _perform_calculation(loan):
     if not installments_list:
         return _get_default_result()
     
-    # Use optimized algorithm
-    return _calculate_with_running_balance(loan,installments_list, payments_list, today)
+    # Use individual penalty approach for better debugging
+    return _calculate_individual_penalties(loan, installments_list, payments_list, today)
 
 
 def calculate_penalties(loan):
@@ -1336,6 +1696,252 @@ def calculate_penalties(loan):
             
         
     
+
+def _calculate_individual_penalties_new(loan, installments, payments, today):
+    """
+    Calculate penalties by creating individual penalty entries for each overdue installment.
+    This makes debugging easier and provides detailed breakdown in the UI.
+    """
+    print(f"=== INDIVIDUAL PENALTY CALCULATION ===")
+    print(f"Today's date: {today}")
+    print(f"Processing {len(installments)} installments")
+    
+    penalty_periods = []
+    total_outstanding = Decimal('0')
+    
+    # Create individual penalties for each overdue installment
+    # First, sort payments by date to process them chronologically
+    sorted_payments = sorted(payments, key=lambda x: x['Date_Paid'])
+    
+    # Track remaining payment amounts for allocation
+    payment_allocations = []
+    for payment in sorted_payments:
+        payment_allocations.append({
+            'date': payment['Date_Paid'],
+            'amount': Decimal(str(payment['Amount_Paid'])),
+            'remaining': Decimal(str(payment['Amount_Paid']))
+        })
+    
+    # Process installments in chronological order
+    sorted_installments = sorted(installments, key=lambda x: x['Date_Due'])
+    
+    for inst in sorted_installments:
+        due_date = inst['Date_Due']
+        amount = Decimal(str(inst['Installment_Due']))
+        
+        if due_date < today:
+            remaining_amount = amount
+            current_date = due_date
+            
+            # Process payments chronologically to create penalty periods
+            for payment_allocation in payment_allocations:
+                payment_date = payment_allocation['date']
+                available_amount = payment_allocation['remaining']
+                
+                # If payment is after current date and we have remaining amount
+                if payment_date > current_date and remaining_amount > 0 and available_amount > 0:
+                    # Create penalty period from current_date to payment_date
+                    if current_date < payment_date:
+                        days_overdue = (payment_date - current_date).days
+                        if days_overdue > 0:
+                            penalty_periods.append({
+                                'start_date': current_date,
+                                'end_date': payment_date,
+                                'amount': remaining_amount,
+                                'days': days_overdue
+                            })
+                            total_outstanding += remaining_amount
+                            print(f"Penalty period: {current_date} to {payment_date}, amount: {remaining_amount}, days: {days_overdue}")
+                    
+                    # Allocate payment to this installment
+                    allocation_amount = min(remaining_amount, available_amount)
+                    remaining_amount -= allocation_amount
+                    payment_allocation['remaining'] -= allocation_amount
+                    
+                    # Update current date to payment date
+                    current_date = payment_date
+                    
+                    # If installment is fully paid, break
+                    if remaining_amount <= 0:
+                        break
+            
+            # If installment is still not fully paid, create penalty until today
+            if remaining_amount > 0 and current_date < today:
+                days_overdue = (today - current_date).days
+                if days_overdue > 0:
+                    penalty_periods.append({
+                        'start_date': current_date,
+                        'end_date': today,
+                        'amount': remaining_amount,
+                        'days': days_overdue
+                    })
+                    total_outstanding += remaining_amount
+                    print(f"Final penalty period: {current_date} to {today}, amount: {remaining_amount}, days: {days_overdue}")
+        else:
+            print(f"Future installment: {due_date}, amount: {amount}")
+    
+    # Apply payments to reduce outstanding amounts
+    total_payments = Decimal('0')
+    for payment in payments:
+        payment_amount = Decimal(str(payment['Amount_Paid']))
+        total_payments += payment_amount
+        print(f"Payment: {payment['Date_Paid']}, amount: {payment_amount}")
+    
+    print(f"Total outstanding: {total_outstanding}")
+    print(f"Total payments: {total_payments}")
+    print(f"Created {len(penalty_periods)} individual penalty periods")
+    
+    # Calculate total penalty
+    total_penalty = _calculate_total_penalty(loan, penalty_periods)
+    
+    # Delete existing penalties and create new ones
+    Penalty.objects.filter(Loan=loan).delete()
+    for p in penalty_periods:
+        if p['days'] > 0:
+            # Calculate penalty amount based on days overdue and penalty percentage (default 2%)
+            # Use penalty percentage from Penalty model default (2%) instead of interest rate
+            penalty_percentage = Decimal('2')  # Default penalty percentage
+            penalty_amount = p['amount'] * penalty_percentage / Decimal('100') * p['days']
+            p['penalty'] = penalty_amount
+            
+            getOrCreatePenalties(loan, p['start_date'], p['end_date'], p['amount'], penalty_amount)
+            print(f"Created penalty: {p['start_date']} to {p['end_date']}, amount: {p['amount']}, penalty: {penalty_amount} (2% per day)")
+    
+    return {
+        'total_penalty': total_penalty,
+        'current_outstanding': max(total_outstanding - total_payments, Decimal('0')),
+        'penalty_details': penalty_periods,
+        'summary': {
+            'total_installments': len(installments),
+            'overdue_installments': len(penalty_periods),
+            'total_outstanding': total_outstanding,
+            'total_payments': total_payments
+        }
+    }
+
+def _calculate_individual_penalties(loan, installments, payments, today):
+    return _calculate_individual_installment_penalties(loan, installments, payments, today)
+
+    """
+    Calculate penalties by creating individual penalty entries for each overdue installment.
+    This makes debugging easier and provides detailed breakdown in the UI.
+    """
+    print(f"=== INDIVIDUAL PENALTY CALCULATION ===")
+    print(f"Today's date: {today}")
+    print(f"Processing {len(installments)} installments")
+    
+    penalty_periods = []
+    total_outstanding = Decimal('0')
+    
+    # Create individual penalties for each overdue installment
+    # First, sort payments by date to process them chronologically
+    sorted_payments = sorted(payments, key=lambda x: x['Date_Paid'])
+    
+    # Track remaining payment amounts for allocation
+    payment_allocations = []
+    for payment in sorted_payments:
+        payment_allocations.append({
+            'date': payment['Date_Paid'],
+            'amount': Decimal(str(payment['Amount_Paid'])),
+            'remaining': Decimal(str(payment['Amount_Paid']))
+        })
+    
+    # Process installments in chronological order
+    sorted_installments = sorted(installments, key=lambda x: x['Date_Due'])
+    
+    for inst in sorted_installments:
+        due_date = inst['Date_Due']
+        amount = Decimal(str(inst['Installment_Due']))
+        
+        if due_date < today:
+            remaining_amount = amount
+            current_date = due_date
+            
+            # Process payments chronologically to create penalty periods
+            for payment_allocation in payment_allocations:
+                payment_date = payment_allocation['date']
+                available_amount = payment_allocation['remaining']
+                
+                # If payment is after current date and we have remaining amount
+                if payment_date > current_date and remaining_amount > 0 and available_amount > 0:
+                    # Create penalty period from current_date to payment_date
+                    if current_date < payment_date:
+                        days_overdue = (payment_date - current_date).days
+                        if days_overdue > 0:
+                            penalty_periods.append({
+                                'start_date': current_date,
+                                'end_date': payment_date,
+                                'amount': remaining_amount,
+                                'days': days_overdue
+                            })
+                            total_outstanding += remaining_amount
+                            print(f"Penalty period: {current_date} to {payment_date}, amount: {remaining_amount}, days: {days_overdue}")
+                    
+                    # Allocate payment to this installment
+                    allocation_amount = min(remaining_amount, available_amount)
+                    remaining_amount -= allocation_amount
+                    payment_allocation['remaining'] -= allocation_amount
+                    
+                    # Update current date to payment date
+                    current_date = payment_date
+                    
+                    # If installment is fully paid, break
+                    if remaining_amount <= 0:
+                        break
+            
+            # If installment is still not fully paid, create penalty until today
+            if remaining_amount > 0 and current_date < today:
+                days_overdue = (today - current_date).days
+                if days_overdue > 0:
+                    penalty_periods.append({
+                        'start_date': current_date,
+                        'end_date': today,
+                        'amount': remaining_amount,
+                        'days': days_overdue
+                    })
+                    total_outstanding += remaining_amount
+                    print(f"Final penalty period: {current_date} to {today}, amount: {remaining_amount}, days: {days_overdue}")
+        else:
+            print(f"Future installment: {due_date}, amount: {amount}")
+    
+    # Apply payments to reduce outstanding amounts
+    total_payments = Decimal('0')
+    for payment in payments:
+        payment_amount = Decimal(str(payment['Amount_Paid']))
+        total_payments += payment_amount
+        print(f"Payment: {payment['Date_Paid']}, amount: {payment_amount}")
+    
+    print(f"Total outstanding: {total_outstanding}")
+    print(f"Total payments: {total_payments}")
+    print(f"Created {len(penalty_periods)} individual penalty periods")
+    
+    # Calculate total penalty
+    total_penalty = _calculate_total_penalty(loan, penalty_periods)
+    
+    # Delete existing penalties and create new ones
+    Penalty.objects.filter(Loan=loan).delete()
+    for p in penalty_periods:
+        if p['days'] > 0:
+            # Calculate penalty amount based on days overdue and penalty percentage (default 2%)
+            # Use penalty percentage from Penalty model default (2%) instead of interest rate
+            penalty_percentage = Decimal('2')  # Default penalty percentage
+            penalty_amount = p['amount'] * penalty_percentage / Decimal('100') * p['days']
+            p['penalty'] = penalty_amount
+            
+            getOrCreatePenalties(loan, p['start_date'], p['end_date'], p['amount'], penalty_amount)
+            print(f"Created penalty: {p['start_date']} to {p['end_date']}, amount: {p['amount']}, penalty: {penalty_amount} (2% per day)")
+    
+    return {
+        'total_penalty': total_penalty,
+        'current_outstanding': max(total_outstanding - total_payments, Decimal('0')),
+        'penalty_details': penalty_periods,
+        'summary': {
+            'total_installments': len(installments),
+            'overdue_installments': len(penalty_periods),
+            'total_outstanding': total_outstanding,
+            'total_payments': total_payments
+        }
+    }
 
 def _calculate_with_running_balance(loan, installments, payments, today):
     """
@@ -1383,6 +1989,11 @@ def _process_date_sequence( loan,sorted_dates, installment_map, payment_map, tod
             if date < today and current_penalty_start is None and running_balance > 0:
                 current_penalty_start = date
                 current_penalty_amount = running_balance
+                print(f"Started penalty period: {date}, amount: {current_penalty_amount}")
+            # If we already have a penalty period and this installment is overdue, add to the amount
+            elif date < today and current_penalty_start is not None:
+                current_penalty_amount += Decimal(str(installment_map[date]))
+                print(f"Added to penalty period: {date}, installment: {installment_map[date]}, total: {current_penalty_amount}")
         
         # Apply payments made on this date
         if date in payment_map:
@@ -1423,7 +2034,9 @@ def _process_date_sequence( loan,sorted_dates, installment_map, payment_map, tod
     # Calculate total penalty
     total_penalty = _calculate_total_penalty(loan,penalty_periods)
     Penalty.objects.filter(Loan=loan).delete()
+    print(f"Creating {len(penalty_periods)} penalty periods:")
     for p in penalty_periods:
+        print(f"Penalty: {p['start_date']} to {p['end_date']}, amount: {p['amount']}, penalty: {p['penalty']}, days: {p['days']}")
         if p['days']>0:
             getOrCreatePenalties(loan,p['start_date'],p['end_date'],p['amount'],p['penalty'])    
         else: removePenalty(loan,p['start_date'])
@@ -1495,159 +2108,276 @@ def batch_calculate_penalties(loan_ids):
 @login_required(login_url="/accounts/login/")
 def dashboard(request):
     """
-    Dashboard view with comprehensive financial insights
+    Dashboard view with comprehensive financial insights and date range filtering
     """
     today = timezone.now().date()
+    
+    # Handle date range filtering
+    selected_range = request.GET.get('date_range', 'today')
+    start_date = None
+    end_date = None
+    
+    if selected_range == 'today':
+        start_date = end_date = today
+    elif selected_range == 'last_week':
+        end_date = today
+        start_date = today - timedelta(days=7)
+    elif selected_range == 'last_month':
+        end_date = today
+        start_date = today - timedelta(days=30)
+    elif selected_range == 'custom':
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        if start_date_str and end_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                # Default to today if invalid dates
+                start_date = end_date = today
+        else:
+            # Default to today if no custom dates provided
+            start_date = end_date = today
+    else:
+        # Default case
+        start_date = end_date = today
+    
+    # Ensure start_date is not after end_date
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+    
+    # Calculate filtered days
+    filtered_days = (end_date - start_date).days + 1
     
     # Get active loans only
     active_loans = Loans.objects.filter(Status=False)
     
-    # 1. DEFAULTERS - Clients with overdue payments
+    # === PERIOD-BASED METRICS ===
+    
+    # 1. Collections in the selected period
+    period_payments = Payments.objects.filter(
+        Loan__in=active_loans,
+        Date_Paid__range=[start_date, end_date],
+        Payment_Type=1  # Installment payments
+    )
+    amount_collected_period = period_payments.aggregate(
+        total=Sum('Amount_Paid')
+    )['total'] or 0
+    
+    # 2. Amount due in the selected period
+    period_installments = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due__range=[start_date, end_date],
+        Installment_Due__gt=0
+    )
+    amount_due_period = period_installments.aggregate(
+        total=Sum('Installment_Due')
+    )['total'] or 0
+    
+    # 3. Clients with dues in the period
+    clients_due_period = period_installments.values_list(
+        'Loan__Account__Client', flat=True
+    ).distinct()
+    clients_due_period_count = len(clients_due_period)
+    
+    # 4. Penalty collections in the period
+    penalty_collected_period = Payments.objects.filter(
+        Loan__in=active_loans,
+        Date_Paid__range=[start_date, end_date],
+        Payment_Type=2  # Penalty payments
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # 5. File charges from new loans in the period
+    period_loans = active_loans.filter(
+        Loan_Date__range=[start_date, end_date]
+    )
+    loans_created_period = period_loans.count()
+    
+    file_charges_period = sum(
+        (loan.Principle_Amount * loan.File_Charge_Percent / 100) 
+        for loan in period_loans
+    )
+    
+    # 6. Interest earned in the period (approximate calculation)
+    interest_earned_period = 0
+    for payment in period_payments:
+        # Calculate interest portion based on loan's interest rate
+        principal_portion = payment.Amount_Paid / (1 + (payment.Loan.Intrest_Rate / 100))
+        interest_portion = payment.Amount_Paid - principal_portion
+        interest_earned_period += interest_portion
+    
+    # === PERFORMANCE METRICS ===
+    
+    # Collection efficiency for the period
+    period_collection_efficiency = 0
+    if amount_due_period > 0:
+        period_collection_efficiency = (amount_collected_period / amount_due_period) * 100
+    
+    # Net performance (collected - due)
+    period_net_performance = amount_collected_period - amount_due_period
+    
+    # Daily average collection
+    daily_average_collection = amount_collected_period / filtered_days if filtered_days > 0 else 0
+    
+    # Collection rate
+    period_collection_rate = period_collection_efficiency
+    
+    # === DEFAULTERS (UNCHANGED - ALWAYS CURRENT) ===
+    
+    # Use a more efficient query to get defaulters with related data
     overdue_installments = Installments.objects.filter(
         Loan__in=active_loans,
         Date_Due__lt=today,
         Date_Paid__isnull=True,
         Installment_Due__gt=0
-    ).select_related('Loan__Account__Client')
+    ).select_related(
+        'Loan__Account__Client',
+        'Loan__Loan_Collector'
+    ).prefetch_related('Loan__Account__loans_set')
     
     defaulters_data = []
-    defaulters_set = set()
+    defaulters_dict = {}
     
+    # Group overdue installments by client for efficient processing
     for installment in overdue_installments:
         client = installment.Loan.Account.Client
-        if client.pk not in defaulters_set:
-            # Calculate total overdue amount for this client
-            client_overdue = Installments.objects.filter(
-                Loan__Account__Client=client,
-                Date_Due__lt=today,
-                Date_Paid__isnull=True,
-                Installment_Due__gt=0
-            ).aggregate(total=Sum('Installment_Due'))['total'] or 0
-            
-            # Calculate days overdue
-            oldest_overdue = Installments.objects.filter(
-                Loan__Account__Client=client,
-                Date_Due__lt=today,
-                Date_Paid__isnull=True,
-                Installment_Due__gt=0
-            ).order_by('Date_Due').first()
-            
-            days_overdue = (today - oldest_overdue.Date_Due).days if oldest_overdue else 0
-            
-            # Get client's account and count loans
-            try:
-                client_account = Accounts.objects.get(Client=client)
-                loan_count = Loans.objects.filter(Account=client_account, Status=False).count()
-            except Accounts.DoesNotExist:
-                loan_count = 0
-            
-            defaulters_data.append({
+        client_id = client.pk
+        
+        if client_id not in defaulters_dict:
+            defaulters_dict[client_id] = {
                 'client': client,
-                'total_overdue': client_overdue,
-                'days_overdue': days_overdue,
-                'loans': loan_count
-            })
-            defaulters_set.add(client.pk)
+                'total_overdue': 0,
+                'oldest_due_date': installment.Date_Due,
+                'loans': set(),
+                'latest_loan_id': None
+            }
+        
+        defaulters_dict[client_id]['total_overdue'] += installment.Installment_Due
+        defaulters_dict[client_id]['loans'].add(installment.Loan.pk)
+        
+        # Track oldest due date
+        if installment.Date_Due < defaulters_dict[client_id]['oldest_due_date']:
+            defaulters_dict[client_id]['oldest_due_date'] = installment.Date_Due
+        
+        # Track latest loan for navigation
+        if (defaulters_dict[client_id]['latest_loan_id'] is None or 
+            installment.Loan.pk > defaulters_dict[client_id]['latest_loan_id']):
+            defaulters_dict[client_id]['latest_loan_id'] = installment.Loan.pk
+    
+    # Convert to list and calculate days overdue
+    for client_id, data in defaulters_dict.items():
+        days_overdue = (today - data['oldest_due_date']).days
+        
+        defaulters_data.append({
+            'client': data['client'],
+            'total_overdue': data['total_overdue'],
+            'days_overdue': days_overdue,
+            'loans': len(data['loans']),
+            'latest_loan_id': data['latest_loan_id']
+        })
     
     # Sort defaulters by overdue amount (highest first)
     defaulters_data.sort(key=lambda x: x['total_overdue'], reverse=True)
     
-    # 2. CLIENTS WITH DUE DATE TODAY
-    clients_due_today = Installments.objects.filter(
+    # Calculate totals
+    total_overdue = sum(d['total_overdue'] for d in defaulters_data)
+    total_defaulters = len(defaulters_data)
+    
+    # === TOP COLLECTORS FOR THE PERIOD ===
+    
+    # Get staff performance for the period
+    staff_collections = {}
+    for payment in period_payments:
+        staff_id = payment.Loan.Loan_Collector.pk
+        staff_name = payment.Loan.Loan_Collector.Officer_Name
+        
+        if staff_id not in staff_collections:
+            staff_collections[staff_id] = {
+                'name': staff_name,
+                'collected_amount': 0,
+                'due_amount': 0,
+                'loans_count': set()
+            }
+        
+        staff_collections[staff_id]['collected_amount'] += payment.Amount_Paid
+        staff_collections[staff_id]['loans_count'].add(payment.Loan.pk)
+    
+    # Add due amounts for efficiency calculation
+    for installment in period_installments:
+        staff_id = installment.Loan.Loan_Collector.pk
+        if staff_id in staff_collections:
+            staff_collections[staff_id]['due_amount'] += installment.Installment_Due
+    
+    # Calculate efficiency and convert to list
+    top_collectors_period = []
+    for staff_id, data in staff_collections.items():
+        efficiency = 0
+        if data['due_amount'] > 0:
+            efficiency = (data['collected_amount'] / data['due_amount']) * 100
+        
+        top_collectors_period.append({
+            'name': data['name'],
+            'collected_amount': data['collected_amount'],
+            'due_amount': data['due_amount'],
+            'efficiency': efficiency,
+            'loans_count': len(data['loans_count'])
+        })
+    
+    # Sort by collected amount
+    top_collectors_period.sort(key=lambda x: x['collected_amount'], reverse=True)
+    top_collectors_period = top_collectors_period[:5]  # Top 5
+    
+    # === PERIOD COLLECTION TREND ===
+    
+    period_collections = []
+    current_date = start_date
+    
+    # Limit the date range to prevent performance issues
+    max_days = 90  # Maximum 90 days for chart
+    if (end_date - start_date).days > max_days:
+        start_date = end_date - timedelta(days=max_days)
+        current_date = start_date
+    
+    while current_date <= end_date:
+        try:
+            daily_collection = Payments.objects.filter(
+                Date_Paid=current_date,
+                Payment_Type=1,
+                Loan__in=active_loans
+            ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+            
+            daily_due = Installments.objects.filter(
+                Date_Due=current_date,
+                Loan__in=active_loans,
+                Installment_Due__gt=0
+            ).aggregate(total=Sum('Installment_Due'))['total'] or 0
+            
+            period_collections.append({
+                'date': current_date,
+                'amount': float(daily_collection),
+                'due_amount': float(daily_due)
+            })
+        except Exception as e:
+            # Handle any database errors gracefully
+            period_collections.append({
+                'date': current_date,
+                'amount': 0,
+                'due_amount': 0
+            })
+        
+        current_date += timedelta(days=1)
+    
+    # === RECENT PAYMENTS IN PERIOD ===
+    
+    recent_payments_period = Payments.objects.filter(
         Loan__in=active_loans,
-        Date_Due=today,
-        Date_Paid__isnull=True,
-        Installment_Due__gt=0
-    ).select_related('Loan__Account__Client').values(
-        'Loan__Account__Client__pk',
-        'Loan__Account__Client__Name',
-        'Loan__Account__Client__Phone_no1',
-        'Loan__pk',
-        'Installment_Due'
-    )
+        Date_Paid__range=[start_date, end_date]
+    ).select_related(
+        'Loan__Account__Client'
+    ).order_by('-Date_Paid', '-Amount_Paid')[:20]
     
-    # 3. FINANCIAL METRICS
-    
-    # Total amount to be collected today
-    amount_due_today = Installments.objects.filter(
-        Loan__in=active_loans,
-        Date_Due=today,
-        Date_Paid__isnull=True
-    ).aggregate(total=Sum('Installment_Due'))['total'] or 0
-    
-    # Total amount collected today
-    amount_collected_today = Payments.objects.filter(
-        Loan__in=active_loans,
-        Date_Paid=today,
-        Payment_Type=1  # Installment payments
-    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
-    
-    # Total overdue amount
-    total_overdue = Installments.objects.filter(
-        Loan__in=active_loans,
-        Date_Due__lt=today,
-        Date_Paid__isnull=True
-    ).aggregate(total=Sum('Installment_Due'))['total'] or 0
-    
-    # Total penalties (both paid and unpaid)
-    total_penalties = Penalty.objects.filter(
-        Loan__in=active_loans
-    ).aggregate(
-        total_calculated=Sum('Penalty_Calc'),
-        total_paid=Sum('Penalty_Paid')
-    )
-    
-    penalty_calculated = total_penalties['total_calculated'] or 0
-    penalty_paid = total_penalties['total_paid'] or 0
-    penalty_outstanding = penalty_calculated - penalty_paid
-    
-    # Penalty collected today
-    penalty_collected_today = Payments.objects.filter(
-        Loan__in=active_loans,
-        Date_Paid=today,
-        Payment_Type=2  # Penalty payments
-    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
-    
-    # Total file charges
-    total_file_charges = active_loans.aggregate(
-        total=Sum('Principle_Amount')
-    )['total'] or 0
-    
-    # Calculate file charge amount (assuming File_Charge_Percent is applied to principal)
-    file_charge_amount = 0
-    for loan in active_loans:
-        file_charge_amount += (loan.Principle_Amount * loan.File_Charge_Percent / 100)
-    
-    # File charges collected today (from new loans)
-    loans_created_today = active_loans.filter(Loan_Date=today)
-    file_charges_today = sum(
-        (loan.Principle_Amount * loan.File_Charge_Percent / 100) 
-        for loan in loans_created_today
-    )
-    
-    # Loan statistics
-    loans_created_today_count = loans_created_today.count()
-    total_active_loans = active_loans.count()
-    
-    # Loans created this month
-    month_start = today.replace(day=1)
-    loans_created_this_month = active_loans.filter(
-        Loan_Date__gte=month_start
-    ).count()
-    
-    # 4. ADDITIONAL INSIGHTS
-    
-    # Collection efficiency
-    collection_efficiency = 0
-    if amount_due_today > 0:
-        collection_efficiency = (amount_collected_today / amount_due_today) * 100
-    
-    # Average loan amount
-    avg_loan_amount = active_loans.aggregate(
-        avg=Sum('Principle_Amount')
-    )['avg'] or 0
-    if total_active_loans > 0:
-        avg_loan_amount = avg_loan_amount / total_active_loans
+    # === ADDITIONAL METRICS (UNCHANGED) ===
     
     # Portfolio value
     total_portfolio_value = active_loans.aggregate(
@@ -1670,29 +2400,39 @@ def dashboard(request):
     
     total_outstanding = total_expected - total_received
     
-    # Interest earned today
-    interest_earned_today = 0
-    for payment in Payments.objects.filter(Date_Paid=today, Payment_Type=1, Loan__in=active_loans):
-        # Approximate interest portion (this could be more sophisticated)
-        interest_portion = payment.Amount_Paid * (payment.Loan.Intrest_Rate / 100)
-        interest_earned_today += interest_portion
+    # Calculate total collected overall (for financial summary)
+    total_collected_overall = Payments.objects.filter(
+        Loan__in=active_loans,
+        Payment_Type=1
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
     
-    # Weekly collection trends (last 7 days)
-    weekly_collections = []
-    for i in range(7):
-        date = today - timedelta(days=i)
-        daily_collection = Payments.objects.filter(
-            Date_Paid=date,
-            Payment_Type=1,
-            Loan__in=active_loans
-        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
-        
-        weekly_collections.append({
-            'date': date,
-            'amount': daily_collection
-        })
+    # Average loan amount
+    total_active_loans = active_loans.count()
+    avg_loan_amount = 0
+    if total_active_loans > 0:
+        avg_loan_amount = total_portfolio_value / total_active_loans
     
-    weekly_collections.reverse()  # Show oldest to newest
+    # Ensure all numeric values are properly formatted
+    def safe_float(value):
+        """Convert value to float, return 0 if None or invalid"""
+        try:
+            return float(value) if value is not None else 0.0
+        except (ValueError, TypeError):
+            return 0.0
+    
+    # Apply safe conversion to all monetary values
+    amount_collected_period = safe_float(amount_collected_period)
+    amount_due_period = safe_float(amount_due_period)
+    penalty_collected_period = safe_float(penalty_collected_period)
+    file_charges_period = safe_float(file_charges_period)
+    interest_earned_period = safe_float(interest_earned_period)
+    period_net_performance = safe_float(period_net_performance)
+    daily_average_collection = safe_float(daily_average_collection)
+    total_portfolio_value = safe_float(total_portfolio_value)
+    total_outstanding = safe_float(total_outstanding)
+    total_collected_overall = safe_float(total_collected_overall)
+    avg_loan_amount = safe_float(avg_loan_amount)
+    total_overdue = safe_float(total_overdue)
     
     # Loan frequency distribution
     frequency_distribution = active_loans.values('Frequency').annotate(
@@ -1704,55 +2444,369 @@ def dashboard(request):
     for item in frequency_distribution:
         item['frequency_label'] = frequency_labels.get(item['Frequency'], 'Unknown')
     
-    # Staff performance (top collectors)
-    staff_performance = active_loans.values(
-        'Loan_Collector__Officer_Name'
-    ).annotate(
-        loans_count=Count('pk'),
-        total_amount=Sum('Principle_Amount')
-    ).order_by('-total_amount')[:5]
-    
-    # Recent activities (last 10 payments)
-    recent_payments = Payments.objects.filter(
-        Loan__in=active_loans
-    ).select_related(
-        'Loan__Account__Client'
-    ).order_by('-Date_Paid')[:10]
-    
     context = {
-        # Main metrics
-        'amount_due_today': amount_due_today,
-        'amount_collected_today': amount_collected_today,
-        'total_overdue': total_overdue,
-        'penalty_outstanding': penalty_outstanding,
-        'penalty_collected_today': penalty_collected_today,
-        'file_charge_amount': file_charge_amount,
-        'file_charges_today': file_charges_today,
-        'loans_created_today_count': loans_created_today_count,
-        'total_active_loans': total_active_loans,
-        'loans_created_this_month': loans_created_this_month,
+        # Date filter context
+        'selected_range': selected_range,
+        'start_date': start_date,
+        'end_date': end_date,
+        'filtered_days': filtered_days,
+        
+        # Period-based metrics
+        'amount_collected_period': amount_collected_period,
+        'amount_due_period': amount_due_period,
+        'clients_due_period_count': clients_due_period_count,
+        'penalty_collected_period': penalty_collected_period,
+        'file_charges_period': file_charges_period,
+        'loans_created_period': loans_created_period,
+        'interest_earned_period': interest_earned_period,
+        
+        # Performance metrics
+        'period_collection_efficiency': round(period_collection_efficiency, 2),
+        'period_net_performance': period_net_performance,
+        'daily_average_collection': daily_average_collection,
+        'period_collection_rate': round(period_collection_rate, 2),
+        
+        # Period-specific data
+        'top_collectors_period': top_collectors_period,
+        'period_collections': period_collections,
+        'recent_payments_period': recent_payments_period,
         
         # Lists
-        'defaulters_data': defaulters_data[:10],  # Top 10 defaulters
-        'clients_due_today': clients_due_today,
+        'defaulters_data': defaulters_data,  # All defaulters, not just top 10
+        'total_overdue': total_overdue,
+        'total_defaulters': total_defaulters,
         
-        # Additional insights
-        'collection_efficiency': round(collection_efficiency, 2),
-        'avg_loan_amount': round(avg_loan_amount, 2),
+        # Portfolio metrics
         'total_portfolio_value': total_portfolio_value,
         'total_outstanding': total_outstanding,
-        'interest_earned_today': round(interest_earned_today, 2),
-        'weekly_collections': weekly_collections,
+        'total_collected_overall': total_collected_overall,
+        'avg_loan_amount': avg_loan_amount,
+        'total_active_loans': total_active_loans,
         'frequency_distribution': frequency_distribution,
-        'staff_performance': staff_performance,
-        'recent_payments': recent_payments,
         
-        # Counts
-        'total_defaulters': len(defaulters_data),
-        'clients_due_today_count': len(clients_due_today),
-        
-        # Date
+        # Current date
         'today': today,
+        
+        # Backward compatibility (keeping original variables)
+        'amount_collected_today': amount_collected_period if selected_range == 'today' else 0,
+        'amount_due_today': amount_due_period if selected_range == 'today' else 0,
+        'clients_due_today_count': clients_due_period_count if selected_range == 'today' else 0,
+        'collection_efficiency': round(period_collection_efficiency, 2),
+        'penalty_outstanding': penalty_collected_period,  # For backward compatibility
+        'file_charge_amount': file_charges_period,
+        'loans_created_today_count': loans_created_period if selected_range == 'today' else 0,
+        'loans_created_this_month': loans_created_period if selected_range == 'last_month' else 0,
+        'recent_payments': recent_payments_period[:10],  # For backward compatibility
+        'weekly_collections': period_collections,  # For backward compatibility
     }
     
     return render(request, 'microfinance/dashboard.html', context)
+
+
+
+
+
+def _calculate_individual_installment_penalties(loan, installments, payments, today):
+    """
+    Calculate penalties for each individual installment separately.
+    This creates separate penalty records for each overdue installment.
+    """
+    print(f"=== INDIVIDUAL INSTALLMENT PENALTIES ===")
+    print(f"Today's date: {today}")
+    print(f"Processing {len(installments)} installments")
+    
+    # Convert payments to list and sort by date
+    payment_list = []
+    for pay in payments:
+        payment_list.append({
+            'date': pay['Date_Paid'],
+            'amount': Decimal(str(pay['Amount_Paid']))
+        })
+    payment_list.sort(key=lambda x: x['date'])
+    
+    # Create payment pool for allocation (FIFO)
+    payment_pool = []
+    for payment in payment_list:
+        payment_pool.append({
+            'date': payment['date'],
+            'original_amount': payment['amount'],
+            'remaining_amount': payment['amount']
+        })
+    
+    print("Payment pool:")
+    for payment in payment_pool:
+        print(f"  {payment['date']}: {payment['original_amount']}")
+    
+    # Process each installment individually
+    penalty_periods = []
+    
+    for inst in installments:
+        due_date = inst['Date_Due']
+        amount = Decimal(str(inst['Installment_Due']))
+        
+        # Skip future installments
+        if due_date >= today:
+            print(f"\nSkipping future installment: {due_date}")
+            continue
+            
+        print(f"\nProcessing installment: {due_date}, amount: {amount}")
+        
+        # Find payments that can be applied to this installment
+        # Payments can only be applied if made after the due date
+        applicable_payments = []
+        for payment in payment_pool:
+            if payment['date'] > due_date and payment['remaining_amount'] > 0:
+                applicable_payments.append(payment)
+        
+        if not applicable_payments:
+            # No payments available - penalty runs from due date to today
+            days = (today - due_date).days
+            if days > 0:
+                penalty_periods.append({
+                    'start_date': due_date,
+                    'end_date': today,
+                    'amount': amount,
+                    'days': days,
+                    'installment_due': due_date,
+                    'description': f"No payment for {due_date} installment"
+                })
+                print(f"  No payment - penalty: {due_date} to {today} ({days} days)")
+            continue
+        
+        # Process payments chronologically to create penalty periods
+        current_date = due_date
+        remaining_installment = amount
+        
+        for payment in applicable_payments:
+            payment_date = payment['date']
+            available_payment = payment['remaining_amount']
+            
+            if remaining_installment <= 0:
+                break
+                
+            # Create penalty period before this payment
+            if current_date < payment_date:
+                days = (payment_date - current_date).days
+                if days > 0:
+                    penalty_periods.append({
+                        'start_date': current_date,
+                        'end_date': payment_date,
+                        'amount': remaining_installment,
+                        'days': days,
+                        'installment_due': due_date,
+                        'description': f"Penalty for {due_date} installment until payment on {payment_date}"
+                    })
+                    print(f"  Penalty period: {current_date} to {payment_date} ({days} days) for {remaining_installment}")
+            
+            # Apply payment to this installment
+            payment_application = min(remaining_installment, available_payment)
+            remaining_installment -= payment_application
+            payment['remaining_amount'] -= payment_application
+            
+            print(f"  Applied payment: {payment_application} on {payment_date}, remaining installment: {remaining_installment}")
+            
+            # Update current date
+            current_date = payment_date
+            
+            # If installment is fully paid, stop processing
+            if remaining_installment <= 0:
+                break
+        
+        # If installment still has remaining amount, penalty continues until today
+        if remaining_installment > 0 and current_date < today:
+            days = (today - current_date).days
+            if days > 0:
+                penalty_periods.append({
+                    'start_date': current_date,
+                    'end_date': today,
+                    'amount': remaining_installment,
+                    'days': days,
+                    'installment_due': due_date,
+                    'description': f"Remaining penalty for {due_date} installment until today"
+                })
+                print(f"  Final penalty: {current_date} to {today} ({days} days) for {remaining_installment}")
+    
+    # Create penalty database records
+    penalty_rate = Decimal('2')  # 2% per day
+    total_penalty = Decimal('0')
+    
+    # Delete existing penalties
+    Penalty.objects.filter(Loan=loan).delete()
+    
+    print(f"\nCreating penalty records:")
+    for period in penalty_periods:
+        penalty_amount = period['amount'] * penalty_rate / Decimal('100') * period['days']
+        total_penalty += penalty_amount
+        
+        penalty_obj = Penalty(
+            Loan=loan,
+            Date_Started=period['start_date'],
+            Date_Ended=period['end_date'],
+            Amount=period['amount'],
+            Penalty_Calc=penalty_amount,
+            Status=False,
+            Penalty_Paid=Decimal('0'),
+            Installment_Due_Date=period.get('installment_due', period['start_date'])
+        )
+        penalty_obj.save()
+        
+        print(f"  {period['start_date']} to {period['end_date']}: "
+              f"installment {period['installment_due']}, amount {period['amount']}, "
+              f"penalty {penalty_amount} ({penalty_rate}% × {period['days']} days)")
+    
+    print(f"Total penalty: {total_penalty}")
+    print(f"=== END INDIVIDUAL INSTALLMENT PENALTIES ===")
+    
+    return {
+        'total_penalty': total_penalty,
+        'penalty_periods': penalty_periods
+    }
+
+
+def _calculate_individual_penalties_corrected(loan, installments_data, payments_data, today):
+    """
+    Updated wrapper function to use individual installment penalty calculation.
+    """
+    return _calculate_individual_installment_penalties(loan, installments_data, payments_data, today)
+
+
+# Alternative detailed approach if you want even more granular control
+def _calculate_installment_by_installment_penalties(loan, installments, payments, today):
+    """
+    Even more detailed approach - tracks each installment independently
+    and shows exactly how payments are allocated.
+    """
+    print(f"=== INSTALLMENT-BY-INSTALLMENT PENALTIES ===")
+    
+    # Create detailed tracking for each installment
+    installment_ledger = {}
+    for inst in installments:
+        due_date = inst['Date_Due']
+        amount = Decimal(str(inst['Installment_Due']))
+        
+        if due_date < today:  # Only track overdue installments
+            installment_ledger[due_date] = {
+                'original_amount': amount,
+                'remaining_balance': amount,
+                'payments_applied': [],
+                'penalty_periods': []
+            }
+    
+    # Sort installments by due date for FIFO payment allocation
+    sorted_due_dates = sorted(installment_ledger.keys())
+    
+    # Process each payment
+    for pay in sorted(payments, key=lambda x: x['Date_Paid']):
+        payment_date = pay['Date_Paid']
+        payment_amount = Decimal(str(pay['Amount_Paid']))
+        remaining_payment = payment_amount
+        
+        print(f"\nProcessing payment: {payment_date}, amount: {payment_amount}")
+        
+        # Allocate payment to installments (FIFO - oldest first)
+        for due_date in sorted_due_dates:
+            if remaining_payment <= 0:
+                break
+                
+            installment = installment_ledger[due_date]
+            if installment['remaining_balance'] > 0 and payment_date > due_date:
+                
+                # Calculate allocation
+                allocation = min(installment['remaining_balance'], remaining_payment)
+                
+                # Record the allocation
+                installment['payments_applied'].append({
+                    'date': payment_date,
+                    'amount': allocation
+                })
+                
+                # Update balances
+                installment['remaining_balance'] -= allocation
+                remaining_payment -= allocation
+                
+                print(f"  Allocated {allocation} to {due_date} installment, "
+                      f"remaining balance: {installment['remaining_balance']}")
+    
+    # Calculate penalty periods for each installment
+    all_penalty_periods = []
+    
+    for due_date in sorted_due_dates:
+        installment = installment_ledger[due_date]
+        original_amount = installment['original_amount']
+        
+        print(f"\nCalculating penalties for {due_date} installment:")
+        
+        # Track penalty periods for this specific installment
+        current_date = due_date
+        current_balance = original_amount
+        
+        # Process payments chronologically
+        for payment_info in sorted(installment['payments_applied'], key=lambda x: x['date']):
+            payment_date = payment_info['date']
+            payment_amount = payment_info['amount']
+            
+            # Create penalty period before payment
+            if current_date < payment_date and current_balance > 0:
+                days = (payment_date - current_date).days
+                if days > 0:
+                    penalty_period = {
+                        'start_date': current_date,
+                        'end_date': payment_date,
+                        'amount': current_balance,
+                        'days': days,
+                        'installment_due': due_date
+                    }
+                    all_penalty_periods.append(penalty_period)
+                    installment['penalty_periods'].append(penalty_period)
+                    print(f"  Penalty: {current_date} to {payment_date}, "
+                          f"amount: {current_balance}, days: {days}")
+            
+            # Apply payment
+            current_balance -= payment_amount
+            current_date = payment_date
+        
+        # Final penalty period if balance remains
+        if current_balance > 0 and current_date < today:
+            days = (today - current_date).days
+            if days > 0:
+                penalty_period = {
+                    'start_date': current_date,
+                    'end_date': today,
+                    'amount': current_balance,
+                    'days': days,
+                    'installment_due': due_date
+                }
+                all_penalty_periods.append(penalty_period)
+                installment['penalty_periods'].append(penalty_period)
+                print(f"  Final penalty: {current_date} to {today}, "
+                      f"amount: {current_balance}, days: {days}")
+    
+    # Create penalty database records
+    penalty_rate = Decimal('2')
+    total_penalty = Decimal('0')
+    
+    Penalty.objects.filter(Loan=loan).delete()
+    
+    for period in all_penalty_periods:
+        penalty_amount = period['amount'] * penalty_rate / Decimal('100') * period['days']
+        total_penalty += penalty_amount
+        
+        penalty_obj = Penalty(
+            Loan=loan,
+            Date_Started=period['start_date'],
+            Date_Ended=period['end_date'],
+            Amount=period['amount'],
+            Penalty_Calc=penalty_amount,
+            Status=False,
+            Installment_Due_Date=period.get('installment_due', period['start_date'])
+        )
+        penalty_obj.save()
+    
+    print(f"\nTotal penalty: {total_penalty}")
+    print(f"=== END INSTALLMENT-BY-INSTALLMENT PENALTIES ===")
+    
+    return {
+        'total_penalty': total_penalty,
+        'penalty_periods': all_penalty_periods,
+        'installment_ledger': installment_ledger
+    }

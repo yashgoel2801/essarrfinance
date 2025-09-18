@@ -39,7 +39,7 @@ urlpatterns = [
 
     url(r'Search/$', ClientSearchList.as_view(),name="search"),
     url(r'Home/$', views.Home,name="home"),
-    url(r'LoanDetail/(?P<pk>\d+)$', views.Loan_Detail ,name="loandetail"),    
+    url(r'LoanDetail/(?P<pk>\d+)/?$', views.Loan_Detail ,name="loandetail"),    
     url(r'^Guarantor/(?P<pk>\d+)/$', views.Add_Guarantor,name="addguarantor"),
     url(r'^GuarantorDocs/(?P<pk>\d+)/(?P<sk>\d+)/$', views.Add_Guarantor_Docs,name="addguarantordocs"),
     url(r'Edit/ClientDetails/(?P<pk>\d+)/$', views.EditClient, name="editclient"),

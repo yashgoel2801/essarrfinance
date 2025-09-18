@@ -1,14 +1,19 @@
 {%extends 'base_layout.html'%} {%block content%}
 <div class="container py-4">
+  <!-- Success/Error Messages -->
+  <div id="messageContainer" class="mb-3" style="display: none;">
+    <div id="messageAlert" class="alert alert-dismissible fade show" role="alert">
+      <span id="messageText"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-12">
       <div class="card shadow-sm mb-4">
         <div class="card-body">
           <h3 class="mb-4">Loan Details</h3>
-          <div
-            class="table-responsive mb-4"
-            style="max-height: 400px; overflow-y: auto"
-          >
+          <div class="table-responsive mb-4" style="max-height: 400px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-success">
                 <tr>
@@ -35,16 +40,8 @@
             </table>
           </div>
           <div class="d-flex flex-wrap gap-2 mb-3">
-            <a
-              href="{% url 'microfinance:clientdetail' pk=Client.pk %}"
-              class="btn btn-secondary"
-              >Back to Client</a
-            >
-            <a
-              href="{% url 'microfinance:addinstallment' pk=Loan.pk %}"
-              class="btn btn-primary"
-              >Add Installment</a
-            >
+            <a href="{% url 'microfinance:clientdetail' pk=Client.pk %}" class="btn btn-secondary">Back to Client</a>
+            <a href="{% url 'microfinance:addinstallment' pk=Loan.pk %}" class="btn btn-primary">Add Installment</a>
           </div>
           <div class="row">
             <div class="col-md-6">
@@ -54,30 +51,14 @@
                   {% csrf_token %}
                   <div class="mb-3">
                     <label for="amount" class="form-label">Amount:</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      class="form-control"
-                      id="amount"
-                      name="amount"
-                      required
-                    />
+                    <input type="number" step="0.01" class="form-control" id="amount" name="amount" required />
                   </div>
                   <div class="mb-3">
                     <label for="date_paid" class="form-label">Date Paid:</label>
-                    <input
-                      type="date"
-                      class="form-control"
-                      id="date_paid"
-                      name="date_paid"
-                      value="{{ Today|date:'Y-m-d' }}"
-                    />
+                    <input type="date" class="form-control" id="date_paid" name="date_paid"
+                      value="{{ Today|date:'Y-m-d' }}" />
                   </div>
-                  <button
-                    type="submit"
-                    name="pay"
-                    class="btn btn-success w-100"
-                  >
+                  <button type="submit" name="pay" class="btn btn-success w-100">
                     Pay Installment
                   </button>
                 </form>
@@ -89,47 +70,20 @@
                 <form method="POST">
                   {% csrf_token %}
                   <div class="mb-3">
-                    <label for="Penalty_Paid" class="form-label"
-                      >Penalty Amount:</label
-                    >
-                    <input
-                      type="number"
-                      step="0.01"
-                      class="form-control"
-                      id="Penalty_Paid"
-                      name="Penalty_Paid"
-                      required
-                    />
+                    <label for="Penalty_Paid" class="form-label">Penalty Amount:</label>
+                    <input type="number" step="0.01" class="form-control" id="Penalty_Paid" name="Penalty_Paid"
+                      required />
                   </div>
                   <div class="mb-3">
-                    <label for="date_paid_penalty" class="form-label"
-                      >Date Paid:</label
-                    >
-                    <input
-                      type="date"
-                      class="form-control"
-                      id="date_paid_penalty"
-                      name="date_paid"
-                      value="{{ Today|date:'Y-m-d' }}"
-                    />
+                    <label for="date_paid_penalty" class="form-label">Date Paid:</label>
+                    <input type="date" class="form-control" id="date_paid_penalty" name="date_paid"
+                      value="{{ Today|date:'Y-m-d' }}" />
                   </div>
                   {% comment %} <div class="mb-3 form-check">
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      id="Status"
-                      name="Status"
-                      value="True"
-                    />
-                    <label class="form-check-label" for="Status"
-                      >Mark as Paid</label
-                    >
+                    <input type="checkbox" class="form-check-input" id="Status" name="Status" value="True" />
+                    <label class="form-check-label" for="Status">Mark as Paid</label>
                   </div> {% endcomment %}
-                  <button
-                    type="submit"
-                    name="penalty"
-                    class="btn btn-warning w-100"
-                  >
+                  <button type="submit" name="penalty" class="btn btn-warning w-100">
                     Pay Penalty
                   </button>
                 </form>
@@ -168,16 +122,14 @@
           </div>
 
           <h4 class="mb-3">Payment History</h4>
-          <div
-            class="table-responsive mb-4"
-            style="max-height: 400px; overflow-y: auto"
-          >
+          <div class="table-responsive mb-4" style="max-height: 400px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-info">
                 <tr>
                   <th>Date Paid</th>
                   <th>Amount Paid</th>
                   <th>Payment Type</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,6 +138,19 @@
                   <td>{{ payment.Date_Paid }}</td>
                   <td>{{ payment.Amount_Paid }}</td>
                   <td>{{ payment.get_Payment_Type_display }}</td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-warning edit-payment-btn" 
+                            data-payment-id="{{ payment.pk|default:0 }}" 
+                            data-date-paid="{{ payment.Date_Paid|date:"Y-m-d"|default:"" }}" 
+                            data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}" 
+                            data-payment-type="{{ payment.Payment_Type|default:1 }}">
+                      <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger"
+                      onclick="deletePayment({{ payment.pk|default:0 }})">
+                      <i class="fas fa-trash"></i> Delete
+                    </button>
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -193,13 +158,11 @@
           </div>
 
           <h4 class="mb-3">Penalty Details</h4>
-          <div
-            class="table-responsive mb-4"
-            style="max-height: 400px; overflow-y: auto"
-          >
+          <div class="table-responsive mb-4" style="max-height: 400px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-danger">
                 <tr>
+                  <th>Installment Date</th>
                   <th>Date Started</th>
                   <th>Date Ended</th>
                   <th>Amount</th>
@@ -207,11 +170,15 @@
                   <th>Status</th>
                   <th>Payment Amount</th>
                   <th>Payment Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for item in combinedPenaltyPaymentView %}
                 <tr>
+                  <td>
+                    <span class="badge bg-primary">{{ item.Installment_Due_Date|date:"M d, Y"|default:'-' }}</span>
+                  </td>
                   <td>{{ item.Date_Started|default:'-' }}</td>
                   <td>{{ item.Date_Ended|default:'-' }}</td>
                   <td>{{ item.Amount|default:'-' }}</td>
@@ -219,6 +186,23 @@
                   <td>{{ item.Status|default:'-' }}</td>
                   <td>{{ item.Payment_Amount|default:'-' }}</td>
                   <td>{{ item.Payment_Date|default:'-' }}</td>
+                  <td>
+                    {% if item.pk %}
+                    <button type="button" class="btn btn-sm btn-warning edit-penalty-btn" 
+                            data-penalty-id="{{ item.pk|default:0 }}" 
+                            data-date-started="{{ item.Date_Started|date:"Y-m-d"|default:"" }}" 
+                            data-date-ended="{{ item.Date_Ended|date:"Y-m-d"|default:"" }}" 
+                            data-amount="{{ item.Amount|default:0|floatformat:2 }}" 
+                            data-penalty-calc="{{ item.Penalty_Calc|default:0|floatformat:2 }}" 
+                            data-status="{{ item.Status|yesno:'true,false'|default:'false' }}">
+                      <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger"
+                      onclick="deletePenalty({{ item.pk|default:0 }})">
+                      <i class="fas fa-trash"></i> Delete
+                    </button>
+                    {% endif %}
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -229,4 +213,283 @@
     </div>
   </div>
 </div>
+
+<!-- Edit Payment Modal -->
+<div class="modal fade" id="editPaymentModal" tabindex="-1" aria-labelledby="editPaymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPaymentModalLabel">Edit Payment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editPaymentForm" method="POST" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="edit_payment" value="1">
+          <input type="hidden" id="editPaymentId" name="payment_id">
+          <div class="mb-3">
+            <label for="editPaymentDate" class="form-label">Date Paid:</label>
+            <input type="date" class="form-control" id="editPaymentDate" name="date_paid" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPaymentAmount" class="form-label">Amount Paid:</label>
+            <input type="number" step="0.01" class="form-control" id="editPaymentAmount" name="amount" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPaymentType" class="form-label">Payment Type:</label>
+            <select class="form-control" id="editPaymentType" name="payment_type" required>
+              <option value="1">Installment Payment</option>
+              <option value="2">Penalty Payment</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" name="edit_payment" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Penalty Modal -->
+<div class="modal fade" id="editPenaltyModal" tabindex="-1" aria-labelledby="editPenaltyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPenaltyModalLabel">Edit Penalty</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editPenaltyForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" id="editPenaltyId" name="penalty_id">
+          <div class="mb-3">
+            <label for="editPenaltyStartDate" class="form-label">Date Started:</label>
+            <input type="date" class="form-control" id="editPenaltyStartDate" name="date_started" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPenaltyEndDate" class="form-label">Date Ended:</label>
+            <input type="date" class="form-control" id="editPenaltyEndDate" name="date_ended" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPenaltyAmount" class="form-label">Amount:</label>
+            <input type="number" step="0.01" class="form-control" id="editPenaltyAmount" name="amount" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPenaltyCalc" class="form-label">Penalty Calculation:</label>
+            <input type="number" step="0.01" class="form-control" id="editPenaltyCalc" name="penalty_calc" required>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="editPenaltyStatus" name="status" value="true">
+            <label class="form-check-label" for="editPenaltyStatus">Paid</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" name="edit_penalty" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Edit Payment Functions
+  function editPayment(paymentId, datePaid, amountPaid, paymentType) {
+    console.log('Editing payment:', {paymentId, datePaid, amountPaid, paymentType});
+
+    // Safely handle the values
+    const safePaymentId = paymentId || 0;
+    const safeDatePaid = datePaid || '';
+    const safeAmountPaid = amountPaid || 0;
+    const safePaymentType = paymentType || 1;
+
+    console.log('Setting form values:', {
+      id: safePaymentId,
+      date: safeDatePaid,
+      amount: safeAmountPaid,
+      type: safePaymentType
+    });
+
+    document.getElementById('editPaymentId').value = safePaymentId;
+    document.getElementById('editPaymentDate').value = safeDatePaid;
+    document.getElementById('editPaymentAmount').value = safeAmountPaid;
+    document.getElementById('editPaymentType').value = safePaymentType;
+
+    // Debug: Check if values are set correctly
+    console.log('Form values after setting:', {
+      id: document.getElementById('editPaymentId').value,
+      date: document.getElementById('editPaymentDate').value,
+      amount: document.getElementById('editPaymentAmount').value,
+      type: document.getElementById('editPaymentType').value
+    });
+
+    var modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
+    modal.show();
+  }
+
+  // Show message function
+  function showMessage(message, type = 'success') {
+    const messageContainer = document.getElementById('messageContainer');
+    const messageAlert = document.getElementById('messageAlert');
+    const messageText = document.getElementById('messageText');
+
+    messageText.textContent = message;
+    messageAlert.className = `alert alert-${type} alert-dismissible fade show`;
+    messageContainer.style.display = 'block';
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      messageContainer.style.display = 'none';
+    }, 5000);
+  }
+
+  // Handle form submission with loading state
+  document.addEventListener('DOMContentLoaded', function () {
+    const editPaymentForm = document.getElementById('editPaymentForm');
+    const editPenaltyForm = document.getElementById('editPenaltyForm');
+
+    // Check for URL parameters to show messages
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment_updated') === 'true') {
+      showMessage('Payment updated successfully!', 'success');
+    }
+    if (urlParams.get('payment_error') === 'true') {
+      showMessage('Error updating payment. Please try again.', 'danger');
+    }
+    if (urlParams.get('payment_deleted') === 'true') {
+      showMessage('Payment deleted successfully!', 'success');
+    }
+    if (urlParams.get('penalty_updated') === 'true') {
+      showMessage('Penalty updated successfully!', 'success');
+    }
+    if (urlParams.get('penalty_deleted') === 'true') {
+      showMessage('Penalty deleted successfully!', 'success');
+    }
+
+    // Add event listeners for edit buttons
+    document.querySelectorAll('.edit-payment-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const paymentId = this.getAttribute('data-payment-id');
+        const datePaid = this.getAttribute('data-date-paid');
+        const amountPaid = this.getAttribute('data-amount-paid');
+        const paymentType = this.getAttribute('data-payment-type');
+        
+        editPayment(paymentId, datePaid, amountPaid, paymentType);
+      });
+    });
+
+    document.querySelectorAll('.edit-penalty-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const penaltyId = this.getAttribute('data-penalty-id');
+        const dateStarted = this.getAttribute('data-date-started');
+        const dateEnded = this.getAttribute('data-date-ended');
+        const amount = this.getAttribute('data-amount');
+        const penaltyCalc = this.getAttribute('data-penalty-calc');
+        const status = this.getAttribute('data-status');
+        
+        editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status);
+      });
+    });
+
+    if (editPaymentForm) {
+      editPaymentForm.addEventListener('submit', function (e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+
+        // Debug form data before submission
+        const formData = new FormData(this);
+        console.log('Form data being submitted:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        
+        // Debug form action and method
+        console.log('Form action:', this.action);
+        console.log('Form method:', this.method);
+        console.log('Current URL:', window.location.href);
+        console.log('Form will submit to:', this.action || window.location.href);
+
+        // Show loading state
+        console.log('Payment form submitted, showing loading state');
+      });
+    }
+
+    if (editPenaltyForm) {
+      editPenaltyForm.addEventListener('submit', function (e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+
+        // Show loading state
+        console.log('Penalty form submitted, showing loading state');
+      });
+    }
+  });
+
+  function deletePayment(paymentId) {
+    if (confirm('Are you sure you want to delete this payment?')) {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.innerHTML = `
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <input type="hidden" name="payment_id" value="${paymentId}">
+      <input type="hidden" name="delete_payment" value="true">
+    `;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Edit Penalty Functions
+  function editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status) {
+    console.log('Editing penalty:', {penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status});
+
+    // Safely handle the values
+    const safePenaltyId = penaltyId || 0;
+    const safeDateStarted = dateStarted || '';
+    const safeDateEnded = dateEnded || '';
+    const safeAmount = amount || 0;
+    const safePenaltyCalc = penaltyCalc || 0;
+    const safeStatus = status === 'true';
+
+    document.getElementById('editPenaltyId').value = safePenaltyId;
+    document.getElementById('editPenaltyStartDate').value = safeDateStarted;
+    document.getElementById('editPenaltyEndDate').value = safeDateEnded;
+    document.getElementById('editPenaltyAmount').value = safeAmount;
+    document.getElementById('editPenaltyCalc').value = safePenaltyCalc;
+    document.getElementById('editPenaltyStatus').checked = safeStatus;
+
+    // Debug: Check if values are set correctly
+    console.log('Penalty form values set:', {
+      id: document.getElementById('editPenaltyId').value,
+      startDate: document.getElementById('editPenaltyStartDate').value,
+      endDate: document.getElementById('editPenaltyEndDate').value,
+      amount: document.getElementById('editPenaltyAmount').value,
+      calc: document.getElementById('editPenaltyCalc').value,
+      status: document.getElementById('editPenaltyStatus').checked
+    });
+
+    var modal = new bootstrap.Modal(document.getElementById('editPenaltyModal'));
+    modal.show();
+  }
+
+  function deletePenalty(penaltyId) {
+    if (confirm('Are you sure you want to delete this penalty?')) {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.innerHTML = `
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <input type="hidden" name="penalty_id" value="${penaltyId}">
+      <input type="hidden" name="delete_penalty" value="true">
+    `;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
 {%endblock%}
