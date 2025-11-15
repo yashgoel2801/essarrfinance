@@ -7,9 +7,9 @@ from microfinance import views as microview
 
 urlpatterns = [
    # path('', views.dashboard,name="dashboard"),
-    path('v2/', include('microfinance.urls')),
-    path('v2/admin/', admin.site.urls),
-    re_path(r'^v2/accounts/', include('accounts.urls')),
+    path('', include('microfinance.urls')),
+    path('admin/', admin.site.urls),
+    re_path(r'^accounts/', include('accounts.urls')),
 
 ]
 urlpatterns = urlpatterns + static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT) 

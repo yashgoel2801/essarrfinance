@@ -1,4 +1,96 @@
 {% extends 'base_layout.html' %} {% load static %} {% block content %}
+<style>
+  .guarantor-item {
+    margin-bottom: 1.5rem;
+  }
+  
+  .guarantor-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  #guarantorsCollapse {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  #guarantorsPreview {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .card {
+    max-height: none;
+  }
+  
+  /* Ensure loan table is always visible */
+  .row.mt-5 {
+    margin-top: 2rem !important;
+  }
+  
+  /* Smooth collapse animation */
+  .collapse {
+    transition: height 0.35s ease;
+  }
+  
+  /* Loan table row styling */
+  .loan-row-closed {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    opacity: 0.7;
+  }
+  
+  .loan-row-closed td {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+  }
+  
+  .loan-row-closed a {
+    color: #6c757d !important;
+    text-decoration: none;
+  }
+  
+  .loan-row-closed a:hover {
+    color: #495057 !important;
+    text-decoration: underline;
+  }
+  
+  .loan-row-closed .btn {
+    opacity: 0.6;
+  }
+  
+  .loan-row-closed .btn:hover {
+    opacity: 0.8;
+  }
+  
+  /* Status badge styling */
+  .status-closed {
+    background-color: #6c757d !important;
+    color: white !important;
+  }
+  
+  .status-active {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb;
+  }
+
+  /* Active loan row highlighting */
+  .loan-row-active {
+    background-color: #d1ecf1 !important;
+    border-left: 4px solid #17a2b8 !important;
+  }
+
+  .loan-row-active td {
+    background-color: #d1ecf1 !important;
+    border-color: #bee5eb !important;
+  }
+
+  .loan-row-active:hover {
+    background-color: #bee5eb !important;
+  }
+
+  .loan-row-active:hover td {
+    background-color: #bee5eb !important;
+  }
+</style>
 <div class="container-fluid py-4">
   <h2 class="mb-4 text-center">Client Details</h2>
   <div class="row gy-4">
@@ -107,75 +199,237 @@
       </div>
     </div>
     <div class="col-12 col-md-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-secondary text-white">
+      <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Guarantor Information</h5>
+          {% if Guarantors|length > 1 %}
+          <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#guarantorsCollapse" 
+                  aria-expanded="false" aria-controls="guarantorsCollapse" id="guarantorsToggle">
+            <i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})
+          </button>
+          {% endif %}
         </div>
         <div class="card-body">
-          {% if Guarantors %} {% for guarantor in Guarantors %}
-          <h6>Guarantor: {{ forloop.counter }}</h6>
-          <div class="d-flex align-items-center mb-3">
-            <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
-              style="width: 100px; height: 100px" />
-            <h5 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h5>
-          </div>
-          <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
-            class="d-inline-block me-2">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-primary btn-sm">
-              View Guarantor Documents
-            </button>
-          </form>
-          <div class="table-responsive mt-3">
-            <table class="table table-sm table-bordered">
-              <tbody>
-                <tr>
-                  <th>Father's Name:</th>
-                  <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Mother's Name:</th>
-                  <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Local Address:</th>
-                  <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Permanent Address:</th>
-                  <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Occupation:</th>
-                  <td>{{ guarantor.Guarantor_Occupation }}</td>
-                </tr>
-                <tr>
-                  <th>Designation:</th>
-                  <td>{{ guarantor.Guarantor_Designation }}</td>
-                </tr>
-                <tr>
-                  <th>Office Address:</th>
-                  <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No:</th>
-                  <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No 2:</th>
-                  <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                </tr>
-                <tr>
-                  <th>Security Documents:</th>
-                  <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          {% if not forloop.last %}
-          <hr />
-          {% endif %} {% endfor %} {% else %}
-          <p>No guarantor details available for this client.</p>
+          {% if Guarantors %}
+            {% if Guarantors|length > 1 %}
+              <!-- Collapsible section for many guarantors -->
+              <div class="collapse" id="guarantorsCollapse">
+                {% for guarantor in Guarantors %}
+                <div class="guarantor-item">
+                  <h6>Guarantor: {{ forloop.counter }}</h6>
+                  <div class="d-flex align-items-center mb-3">
+                    <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
+                      style="width: 100px; height: 100px" />
+                    <h5 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h5>
+                  </div>
+                  <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
+                    class="d-inline-block me-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                      View Guarantor Documents
+                    </button>
+                  </form>
+                  <div class="table-responsive mt-3">
+                    <table class="table table-sm table-bordered">
+                      <tbody>
+                        <tr>
+                          <th>Father's Name:</th>
+                          <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                        </tr>
+                        <tr>
+                          <th>Mother's Name:</th>
+                          <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                        </tr>
+                        <tr>
+                          <th>Local Address:</th>
+                          <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Permanent Address:</th>
+                          <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Occupation:</th>
+                          <td>{{ guarantor.Guarantor_Occupation }}</td>
+                        </tr>
+                        <tr>
+                          <th>Designation:</th>
+                          <td>{{ guarantor.Guarantor_Designation }}</td>
+                        </tr>
+                        <tr>
+                          <th>Office Address:</th>
+                          <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Phone No:</th>
+                          <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                        </tr>
+                        <tr>
+                          <th>Phone No 2:</th>
+                          <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                        </tr>
+                        <tr>
+                          <th>Security Documents:</th>
+                          <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  {% if not forloop.last %}
+                  <hr />
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              
+              <!-- Show first 2 guarantors by default -->
+              <div id="guarantorsPreview">
+                {% for guarantor in Guarantors|slice:":1" %}
+                <div class="guarantor-item">
+                  <h6>Guarantor: {{ forloop.counter }}</h6>
+                  <div class="d-flex align-items-center mb-3">
+                    <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
+                      style="width: 100px; height: 100px" />
+                    <h5 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h5>
+                  </div>
+                  <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
+                    class="d-inline-block me-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                      View Guarantor Documents
+                    </button>
+                  </form>
+                  <div class="table-responsive mt-3">
+                    <table class="table table-sm table-bordered">
+                      <tbody>
+                        <tr>
+                          <th>Father's Name:</th>
+                          <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                        </tr>
+                        <tr>
+                          <th>Mother's Name:</th>
+                          <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                        </tr>
+                        <tr>
+                          <th>Local Address:</th>
+                          <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Permanent Address:</th>
+                          <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Occupation:</th>
+                          <td>{{ guarantor.Guarantor_Occupation }}</td>
+                        </tr>
+                        <tr>
+                          <th>Designation:</th>
+                          <td>{{ guarantor.Guarantor_Designation }}</td>
+                        </tr>
+                        <tr>
+                          <th>Office Address:</th>
+                          <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                        </tr>
+                        <tr>
+                          <th>Phone No:</th>
+                          <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                        </tr>
+                        <tr>
+                          <th>Phone No 2:</th>
+                          <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                        </tr>
+                        <tr>
+                          <th>Security Documents:</th>
+                          <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  {% if not forloop.last %}
+                  <hr />
+                  {% endif %}
+                </div>
+                {% endfor %}
+                {% if Guarantors|length > 2 %}
+                <div class="text-center mt-3">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing 1 of {{ Guarantors|length }} guarantors. Click "Show All" to see all guarantors.
+                  </small>
+                </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <!-- Show all guarantors if 2 or fewer -->
+              {% for guarantor in Guarantors %}
+              <div class="guarantor-item">
+                <h6>Guarantor: {{ forloop.counter }}</h6>
+                <div class="d-flex align-items-center mb-3">
+                  <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
+                    style="width: 100px; height: 100px" />
+                  <h5 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h5>
+                </div>
+                <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
+                  class="d-inline-block me-2">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-primary btn-sm">
+                    View Guarantor Documents
+                  </button>
+                </form>
+                <div class="table-responsive mt-3">
+                  <table class="table table-sm table-bordered">
+                    <tbody>
+                      <tr>
+                        <th>Father's Name:</th>
+                        <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                      </tr>
+                      <tr>
+                        <th>Mother's Name:</th>
+                        <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                      </tr>
+                      <tr>
+                        <th>Local Address:</th>
+                        <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                      </tr>
+                      <tr>
+                        <th>Permanent Address:</th>
+                        <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                      </tr>
+                      <tr>
+                        <th>Occupation:</th>
+                        <td>{{ guarantor.Guarantor_Occupation }}</td>
+                      </tr>
+                      <tr>
+                        <th>Designation:</th>
+                        <td>{{ guarantor.Guarantor_Designation }}</td>
+                      </tr>
+                      <tr>
+                        <th>Office Address:</th>
+                        <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                      </tr>
+                      <tr>
+                        <th>Phone No:</th>
+                        <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                      </tr>
+                      <tr>
+                        <th>Phone No 2:</th>
+                        <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                      </tr>
+                      <tr>
+                        <th>Security Documents:</th>
+                        <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                {% if not forloop.last %}
+                <hr />
+                {% endif %}
+              </div>
+              {% endfor %}
+            {% endif %}
+          {% else %}
+            <p>No guarantor details available for this client.</p>
           {% endif %}
         </div>
       </div>
@@ -257,7 +511,7 @@
               </thead>
               <tbody>
                 {% for loan in Loan %}
-                <tr>
+                <tr {% if loan.Status %}class="loan-row-closed"{% else %}class="loan-row-active"{% endif %}>
                   <td>
                     <a href="{% url 'microfinance:loandetail' pk=loan.pk %}">{{ loan.pk }}</a>
                   </td>
@@ -283,9 +537,9 @@
                   </td>
                   <td>
                     {% if loan.Status %}
-                    <span class="badge bg-success">Closed</span>
+                    <span class="badge status-closed">Closed</span>
                     {% else %}
-                    <span class="badge bg-warning text-dark">Active</span>
+                    <span class="badge status-active">Active</span>
                     {% endif %}
                   </td>
                   <td>
@@ -431,6 +685,23 @@
       console.log('Bootstrap is available');
     } else {
       console.log('Bootstrap is not available');
+    }
+
+    // Handle guarantors collapse toggle
+    const guarantorsToggle = document.getElementById('guarantorsToggle');
+    const guarantorsCollapse = document.getElementById('guarantorsCollapse');
+    const guarantorsPreview = document.getElementById('guarantorsPreview');
+    
+    if (guarantorsToggle && guarantorsCollapse && guarantorsPreview) {
+      guarantorsCollapse.addEventListener('show.bs.collapse', function () {
+        guarantorsToggle.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show Less';
+        guarantorsPreview.style.display = 'none';
+      });
+      
+      guarantorsCollapse.addEventListener('hide.bs.collapse', function () {
+        guarantorsToggle.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})';
+        guarantorsPreview.style.display = 'block';
+      });
     }
   });
 

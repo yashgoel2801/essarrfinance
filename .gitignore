@@ -3,5 +3,5 @@ venv/
 .env.local
 .DS_Store
 *.log
-*.pyc
+.pyc
 __pycache__/

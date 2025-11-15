@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'essarrfinance.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'essarr23',
+        'NAME': 'new3',
         'USER': 'postgres',
         'PASSWORD':'yash2801',
         'HOST': 'localhost',
@@ -138,3 +138,6 @@ STATIC_ROOT= os.path.join(BASE_DIR,'assets')
 
 MEDIA_URL ='/media/'
 MEDIA_ROOT= os.path.join(BASE_DIR,'media')
+
+# Login URL for @login_required decorator
+LOGIN_URL = '/v2/accounts/login/'

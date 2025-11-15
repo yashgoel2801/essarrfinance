@@ -2194,6 +2194,11 @@ def dashboard(request):
     )
     loans_created_period = period_loans.count()
     
+    # Total loan amount disbursed in the period
+    total_loan_amount_period = period_loans.aggregate(
+        total=Sum('Principle_Amount')
+    )['total'] or 0
+    
     file_charges_period = sum(
         (loan.Principle_Amount * loan.File_Charge_Percent / 100) 
         for loan in period_loans
@@ -2217,72 +2222,151 @@ def dashboard(request):
     # Net performance (collected - due)
     period_net_performance = amount_collected_period - amount_due_period
     
-    # Daily average collection
+    # Daily average collection (average amount collected per day in the selected period)
     daily_average_collection = amount_collected_period / filtered_days if filtered_days > 0 else 0
     
     # Collection rate
     period_collection_rate = period_collection_efficiency
     
-    # === DEFAULTERS (UNCHANGED - ALWAYS CURRENT) ===
+    # === DEFAULTERS (NEEDED FOR PERFORMANCE METRICS) ===
     
     # Use a more efficient query to get defaulters with related data
     overdue_installments = Installments.objects.filter(
         Loan__in=active_loans,
-        Date_Due__lt=today,
-        Date_Paid__isnull=True,
-        Installment_Due__gt=0
-    ).select_related(
-        'Loan__Account__Client',
-        'Loan__Loan_Collector'
-    ).prefetch_related('Loan__Account__loans_set')
+        Installment_Due__gt=0,
+        Date_Due__lt=today
+    ).select_related('Loan__Account__Client').order_by('Date_Due')
     
-    defaulters_data = []
+    # Group by client to get total overdue per client
     defaulters_dict = {}
-    
-    # Group overdue installments by client for efficient processing
     for installment in overdue_installments:
-        client = installment.Loan.Account.Client
-        client_id = client.pk
-        
+        client_id = installment.Loan.Account.Client.pk
         if client_id not in defaulters_dict:
             defaulters_dict[client_id] = {
-                'client': client,
+                'client': installment.Loan.Account.Client,
                 'total_overdue': 0,
-                'oldest_due_date': installment.Date_Due,
-                'loans': set(),
-                'latest_loan_id': None
+                'days_overdue': (today - installment.Date_Due).days,
+                'loans': 0,
+                'latest_loan_id': installment.Loan.pk
             }
         
         defaulters_dict[client_id]['total_overdue'] += installment.Installment_Due
-        defaulters_dict[client_id]['loans'].add(installment.Loan.pk)
-        
-        # Track oldest due date
-        if installment.Date_Due < defaulters_dict[client_id]['oldest_due_date']:
-            defaulters_dict[client_id]['oldest_due_date'] = installment.Date_Due
-        
-        # Track latest loan for navigation
-        if (defaulters_dict[client_id]['latest_loan_id'] is None or 
-            installment.Loan.pk > defaulters_dict[client_id]['latest_loan_id']):
-            defaulters_dict[client_id]['latest_loan_id'] = installment.Loan.pk
+        defaulters_dict[client_id]['loans'] += 1
+        defaulters_dict[client_id]['latest_loan_id'] = installment.Loan.pk
     
-    # Convert to list and calculate days overdue
-    for client_id, data in defaulters_dict.items():
-        days_overdue = (today - data['oldest_due_date']).days
-        
-        defaulters_data.append({
-            'client': data['client'],
-            'total_overdue': data['total_overdue'],
-            'days_overdue': days_overdue,
-            'loans': len(data['loans']),
-            'latest_loan_id': data['latest_loan_id']
-        })
-    
-    # Sort defaulters by overdue amount (highest first)
+    # Convert to list and sort by total overdue amount
+    defaulters_data = list(defaulters_dict.values())
     defaulters_data.sort(key=lambda x: x['total_overdue'], reverse=True)
     
     # Calculate totals
     total_overdue = sum(d['total_overdue'] for d in defaulters_data)
     total_defaulters = len(defaulters_data)
+    
+    # === PORTFOLIO VALUE (NEEDED FOR PERFORMANCE METRICS) ===
+    
+    # Portfolio value
+    total_portfolio_value = active_loans.aggregate(
+        total=Sum('Principle_Amount')
+    )['total'] or 0
+    
+    # Outstanding amount (total expected - total received)
+    total_expected = 0
+    total_received = 0
+    
+    for loan in active_loans:
+        loan_total = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        total_expected += loan_total
+        
+        loan_received = Payments.objects.filter(
+            Loan=loan,
+            Payment_Type=1
+        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        total_received += loan_received
+    
+    total_outstanding = total_expected - total_received
+    
+    # Calculate total collected overall (for financial summary)
+    total_collected_overall = Payments.objects.filter(
+        Loan__in=active_loans,
+        Payment_Type=1
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # Average loan amount
+    total_active_loans = active_loans.count()
+    avg_loan_amount = 0
+    if total_active_loans > 0:
+        avg_loan_amount = total_portfolio_value / total_active_loans
+    
+    # === LOAN PERFORMANCE METRICS ===
+    
+    # Recovery rate (percentage of loans that are performing well)
+    total_active_loans_count = active_loans.count()
+    defaulter_client_ids = [defaulter['client'].pk for defaulter in defaulters_data] if defaulters_data else []
+    performing_loans = active_loans.exclude(
+        Account__Client__pk__in=defaulter_client_ids
+    ).count() if defaulter_client_ids else total_active_loans_count
+    recovery_rate = (performing_loans / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+    
+    # Default rate (percentage of loans that are overdue)
+    default_rate = (total_defaulters / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+    
+    # Portfolio at Risk (PAR) - loans overdue by more than 30 days
+    par_30_plus = sum(
+        defaulter['total_overdue'] for defaulter in defaulters_data 
+        if defaulter['days_overdue'] > 30
+    )
+    par_30_plus_rate = (par_30_plus / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+    
+    # Write-off rate (completed loans that were fully recovered vs total completed)
+    completed_loans = Loans.objects.filter(Status=True)
+    total_completed_count = completed_loans.count()
+    fully_recovered_loans = 0
+    for loan in completed_loans:
+        total_expected = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        total_received = Payments.objects.filter(Loan=loan, Payment_Type=1).aggregate(
+            total=Sum('Amount_Paid'))['total'] or 0
+        if total_received >= total_expected * 0.95:  # 95% recovery threshold
+            fully_recovered_loans += 1
+    
+    write_off_rate = ((total_completed_count - fully_recovered_loans) / total_completed_count * 100) if total_completed_count > 0 else 0
+    
+    # === PROFITABILITY ANALYSIS ===
+    
+    # Total interest earned (all time)
+    total_interest_earned = 0
+    for loan in active_loans:
+        total_received = Payments.objects.filter(Loan=loan, Payment_Type=1).aggregate(
+            total=Sum('Amount_Paid'))['total'] or 0
+        if total_received > loan.Principle_Amount:
+            total_interest_earned += (total_received - loan.Principle_Amount)
+    
+    # Total file charges collected (all time)
+    total_file_charges_collected = sum(
+        (loan.Principle_Amount * loan.File_Charge_Percent / 100) 
+        for loan in active_loans
+    )
+    
+    # Total penalties collected (all time)
+    total_penalties_collected = Payments.objects.filter(
+        Loan__in=active_loans,
+        Payment_Type=2  # Penalty payments
+    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # Total revenue (interest + file charges + penalties)
+    total_revenue = total_interest_earned + total_file_charges_collected + total_penalties_collected
+    
+    # Net profit margin (revenue / total portfolio value)
+    net_profit_margin = (total_revenue / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+    
+    # Return on Investment (ROI) - revenue / total disbursed
+    total_disbursed = sum(loan.Principle_Amount for loan in active_loans)
+    roi_percentage = (total_revenue / total_disbursed * 100) if total_disbursed > 0 else 0
+    
+    # Average interest rate across portfolio
+    avg_interest_rate = active_loans.aggregate(
+        avg_rate=models.Avg('Intrest_Rate')
+    )['avg_rate'] or 0
+    
     
     # === TOP COLLECTORS FOR THE PERIOD ===
     
@@ -2377,40 +2461,47 @@ def dashboard(request):
         'Loan__Account__Client'
     ).order_by('-Date_Paid', '-Amount_Paid')[:20]
     
-    # === ADDITIONAL METRICS (UNCHANGED) ===
+    # === TODAY'S DUE INSTALLMENTS ===
     
-    # Portfolio value
-    total_portfolio_value = active_loans.aggregate(
-        total=Sum('Principle_Amount')
-    )['total'] or 0
-    
-    # Outstanding amount (total expected - total received)
-    total_expected = 0
-    total_received = 0
-    
-    for loan in active_loans:
-        loan_total = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
-        total_expected += loan_total
-        
-        loan_received = Payments.objects.filter(
-            Loan=loan,
-            Payment_Type=1
-        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
-        total_received += loan_received
-    
-    total_outstanding = total_expected - total_received
-    
-    # Calculate total collected overall (for financial summary)
-    total_collected_overall = Payments.objects.filter(
+    # Get all installments due today
+    todays_due_installments = Installments.objects.filter(
         Loan__in=active_loans,
-        Payment_Type=1
-    ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        Date_Due=today,
+        Installment_Due__gt=0
+    ).select_related(
+        'Loan__Account__Client',
+        'Loan__Loan_Collector'
+    ).order_by('Loan__Account__Client__Name')
     
-    # Average loan amount
-    total_active_loans = active_loans.count()
-    avg_loan_amount = 0
-    if total_active_loans > 0:
-        avg_loan_amount = total_portfolio_value / total_active_loans
+    # Group by client for better display
+    todays_due_dict = {}
+    for installment in todays_due_installments:
+        client_id = installment.Loan.Account.Client.pk
+        if client_id not in todays_due_dict:
+            todays_due_dict[client_id] = {
+                'client': installment.Loan.Account.Client,
+                'total_due': 0,
+                'installments': [],
+                'collector': installment.Loan.Loan_Collector,
+                'loans_count': 0,
+                'loan_id': installment.Loan.pk
+            }
+        
+        todays_due_dict[client_id]['total_due'] += installment.Installment_Due
+        todays_due_dict[client_id]['installments'].append(installment)
+        todays_due_dict[client_id]['loans_count'] += 1
+        # Ensure we always have a valid loan_id (use the first loan if multiple)
+        if not todays_due_dict[client_id]['loan_id']:
+            todays_due_dict[client_id]['loan_id'] = installment.Loan.pk
+    
+    # Convert to list and sort by total due amount
+    todays_due_data = list(todays_due_dict.values())
+    todays_due_data.sort(key=lambda x: x['total_due'], reverse=True)
+    
+    # Calculate total amount due today
+    total_due_today = sum(client['total_due'] for client in todays_due_data)
+    clients_due_today_count = len(todays_due_data)
+    
     
     # Ensure all numeric values are properly formatted
     def safe_float(value):
@@ -2428,11 +2519,28 @@ def dashboard(request):
     interest_earned_period = safe_float(interest_earned_period)
     period_net_performance = safe_float(period_net_performance)
     daily_average_collection = safe_float(daily_average_collection)
+    total_loan_amount_period = safe_float(total_loan_amount_period)
     total_portfolio_value = safe_float(total_portfolio_value)
     total_outstanding = safe_float(total_outstanding)
     total_collected_overall = safe_float(total_collected_overall)
     avg_loan_amount = safe_float(avg_loan_amount)
     total_overdue = safe_float(total_overdue)
+    
+    # Apply safe conversion to performance metrics
+    recovery_rate = safe_float(recovery_rate)
+    default_rate = safe_float(default_rate)
+    par_30_plus = safe_float(par_30_plus)
+    par_30_plus_rate = safe_float(par_30_plus_rate)
+    write_off_rate = safe_float(write_off_rate)
+    
+    # Apply safe conversion to profitability metrics
+    total_interest_earned = safe_float(total_interest_earned)
+    total_file_charges_collected = safe_float(total_file_charges_collected)
+    total_penalties_collected = safe_float(total_penalties_collected)
+    total_revenue = safe_float(total_revenue)
+    net_profit_margin = safe_float(net_profit_margin)
+    roi_percentage = safe_float(roi_percentage)
+    avg_interest_rate = safe_float(avg_interest_rate)
     
     # Loan frequency distribution
     frequency_distribution = active_loans.values('Frequency').annotate(
@@ -2443,6 +2551,53 @@ def dashboard(request):
     frequency_labels = {1: 'Daily', 2: 'Weekly', 3: 'Monthly'}
     for item in frequency_distribution:
         item['frequency_label'] = frequency_labels.get(item['Frequency'], 'Unknown')
+    
+    # === LOAN SIZE DISTRIBUTION ===
+    
+    # Define loan size categories
+    small_loans = active_loans.filter(Principle_Amount__lte=25000)
+    medium_loans = active_loans.filter(Principle_Amount__gt=25000, Principle_Amount__lte=100000)
+    large_loans = active_loans.filter(Principle_Amount__gt=100000)
+    
+    loan_size_distribution = [
+        {
+            'category': 'Small (≤₹25K)',
+            'count': small_loans.count(),
+            'amount': small_loans.aggregate(total=Sum('Principle_Amount'))['total'] or 0,
+            'percentage': (small_loans.count() / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+        },
+        {
+            'category': 'Medium (₹25K-₹1L)',
+            'count': medium_loans.count(),
+            'amount': medium_loans.aggregate(total=Sum('Principle_Amount'))['total'] or 0,
+            'percentage': (medium_loans.count() / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+        },
+        {
+            'category': 'Large (>₹1L)',
+            'count': large_loans.count(),
+            'amount': large_loans.aggregate(total=Sum('Principle_Amount'))['total'] or 0,
+            'percentage': (large_loans.count() / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+        }
+    ]
+    
+    # Top loan amounts
+    top_loans = active_loans.order_by('-Principle_Amount')[:5].select_related('Account__Client')
+    
+    # Loan amount statistics
+    loan_amount_stats = {
+        'min_amount': active_loans.aggregate(min_amount=models.Min('Principle_Amount'))['min_amount'] or 0,
+        'max_amount': active_loans.aggregate(max_amount=models.Max('Principle_Amount'))['max_amount'] or 0,
+        'median_amount': 0  # Will calculate if needed
+    }
+    
+    # Calculate median
+    loan_amounts = list(active_loans.values_list('Principle_Amount', flat=True).order_by('Principle_Amount'))
+    if loan_amounts:
+        n = len(loan_amounts)
+        if n % 2 == 0:
+            loan_amount_stats['median_amount'] = (loan_amounts[n//2-1] + loan_amounts[n//2]) / 2
+        else:
+            loan_amount_stats['median_amount'] = loan_amounts[n//2]
     
     context = {
         # Date filter context
@@ -2458,6 +2613,7 @@ def dashboard(request):
         'penalty_collected_period': penalty_collected_period,
         'file_charges_period': file_charges_period,
         'loans_created_period': loans_created_period,
+        'total_loan_amount_period': total_loan_amount_period,
         'interest_earned_period': interest_earned_period,
         
         # Performance metrics
@@ -2466,15 +2622,41 @@ def dashboard(request):
         'daily_average_collection': daily_average_collection,
         'period_collection_rate': round(period_collection_rate, 2),
         
+        # Loan performance metrics
+        'recovery_rate': round(recovery_rate, 2),
+        'default_rate': round(default_rate, 2),
+        'par_30_plus': par_30_plus,
+        'par_30_plus_rate': round(par_30_plus_rate, 2),
+        'write_off_rate': round(write_off_rate, 2),
+        
+        # Profitability metrics
+        'total_interest_earned': total_interest_earned,
+        'total_file_charges_collected': total_file_charges_collected,
+        'total_penalties_collected': total_penalties_collected,
+        'total_revenue': total_revenue,
+        'net_profit_margin': round(net_profit_margin, 2),
+        'roi_percentage': round(roi_percentage, 2),
+        'avg_interest_rate': round(avg_interest_rate, 2),
+        
         # Period-specific data
         'top_collectors_period': top_collectors_period,
         'period_collections': period_collections,
         'recent_payments_period': recent_payments_period,
         
+        # Today's due installments
+        'todays_due_data': todays_due_data,
+        'total_due_today': safe_float(total_due_today),
+        'clients_due_today_count': clients_due_today_count,
+        
         # Lists
         'defaulters_data': defaulters_data,  # All defaulters, not just top 10
         'total_overdue': total_overdue,
         'total_defaulters': total_defaulters,
+        
+        # Additional context for templates
+        'performing_loans': performing_loans,
+        'total_active_loans_count': total_active_loans_count,
+        'total_completed_count': total_completed_count,
         
         # Portfolio metrics
         'total_portfolio_value': total_portfolio_value,
@@ -2483,6 +2665,9 @@ def dashboard(request):
         'avg_loan_amount': avg_loan_amount,
         'total_active_loans': total_active_loans,
         'frequency_distribution': frequency_distribution,
+        'loan_size_distribution': loan_size_distribution,
+        'top_loans': top_loans,
+        'loan_amount_stats': loan_amount_stats,
         
         # Current date
         'today': today,
@@ -2551,33 +2736,64 @@ def _calculate_individual_installment_penalties(loan, installments, payments, to
             
         print(f"\nProcessing installment: {due_date}, amount: {amount}")
         
-        # Find payments that can be applied to this installment
-        # Payments can only be applied if made after the due date
-        applicable_payments = []
-        for payment in payment_pool:
-            if payment['date'] > due_date and payment['remaining_amount'] > 0:
-                applicable_payments.append(payment)
+        # Check if there are any payments that can be applied to this installment
+        # We need to check both advance payments (before due date) and regular payments (on or after due date)
+        remaining_installment = amount
+        installment_fully_paid = False
         
-        if not applicable_payments:
-            # No payments available - penalty runs from due date to today
-            days = (today - due_date).days
-            if days > 0:
-                penalty_periods.append({
-                    'start_date': due_date,
-                    'end_date': today,
-                    'amount': amount,
-                    'days': days,
-                    'installment_due': due_date,
-                    'description': f"No payment for {due_date} installment"
-                })
-                print(f"  No payment - penalty: {due_date} to {today} ({days} days)")
+        # First, check for advance payments (payments made before the due date)
+        advance_payments = [p for p in payment_pool if p['remaining_amount'] > 0 and p['date'] < due_date]
+        advance_payments.sort(key=lambda x: x['date'])  # Sort by date
+        
+        for payment in advance_payments:
+            if remaining_installment <= 0:
+                break
+                
+            payment_date = payment['date']
+            available_payment = payment['remaining_amount']
+            
+            # Apply advance payment to this installment
+            payment_application = min(remaining_installment, available_payment)
+            remaining_installment -= payment_application
+            payment['remaining_amount'] -= payment_application
+            
+            print(f"  Applied advance payment: {payment_application} on {payment_date}, remaining installment: {remaining_installment}")
+            
+            # If installment is fully paid by advance payment, no penalty needed
+            if remaining_installment <= 0:
+                print(f"  Installment fully paid in advance - no penalty")
+                installment_fully_paid = True
+                break
+        
+        # If installment is fully paid by advance payments, skip penalty calculation
+        if installment_fully_paid:
             continue
         
-        # Process payments chronologically to create penalty periods
-        current_date = due_date
-        remaining_installment = amount
+        # If installment is not fully paid by advance payments, check for regular payments
+        # and calculate penalties for the remaining amount
+        regular_payments = [p for p in payment_pool if p['remaining_amount'] > 0 and p['date'] >= due_date]
+        regular_payments.sort(key=lambda x: x['date'])  # Sort by date
         
-        for payment in applicable_payments:
+        if not regular_payments:
+            # No regular payments available - penalty runs from due date to today for remaining amount
+            if remaining_installment > 0:
+                days = (today - due_date).days
+                if days > 0:
+                    penalty_periods.append({
+                        'start_date': due_date,
+                        'end_date': today,
+                        'amount': remaining_installment,
+                        'days': days,
+                        'installment_due': due_date,
+                        'description': f"No payment for {due_date} installment"
+                    })
+                    print(f"  No payment - penalty: {due_date} to {today} ({days} days)")
+            continue
+        
+        # Process regular payments chronologically to create penalty periods
+        current_date = due_date
+        
+        for payment in regular_payments:
             payment_date = payment['date']
             available_payment = payment['remaining_amount']
             
@@ -2622,7 +2838,7 @@ def _calculate_individual_installment_penalties(loan, installments, payments, to
                     'amount': remaining_installment,
                     'days': days,
                     'installment_due': due_date,
-                    'description': f"Remaining penalty for {due_date} installment until today"
+                    'description': f"Final penalty for {due_date} installment from {current_date} to today"
                 })
                 print(f"  Final penalty: {current_date} to {today} ({days} days) for {remaining_installment}")
     

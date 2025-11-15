@@ -192,14 +192,21 @@
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1">New Loans</h6>
                     <h5 class="mb-0 text-primary">{{ loans_created_period|default:"0" }}</h5>
+                    <small class="text-muted">₹{{ total_loan_amount_period|floatformat:0|default:"0" }} disbursed</small>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Daily Average</h6>
+                    <h6 class="text-muted mb-1">
+                        Daily Average
+                        <i class="fas fa-info-circle text-muted ms-1" 
+                           data-bs-toggle="tooltip" 
+                           title="Average amount collected per day in the selected period"></i>
+                    </h6>
                     <h5 class="mb-0 text-secondary">₹{{ daily_average_collection|floatformat:0|default:"0" }}</h5>
+                    <small class="text-muted">Per day collection</small>
                 </div>
             </div>
         </div>
@@ -218,6 +225,186 @@
                     <h5 class="mb-0 {% if period_collection_rate >= 80 %}text-success{% elif period_collection_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
                         {{ period_collection_rate|floatformat:1|default:"0" }}%
                     </h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Performance Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-check-circle text-success fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Recovery Rate</h6>
+                            <h4 class="mb-0 {% if recovery_rate >= 80 %}text-success{% elif recovery_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ recovery_rate|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">{{ performing_loans|default:"0" }} of {{ total_active_loans_count|default:"0" }} loans performing</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-exclamation-triangle text-danger fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Default Rate</h6>
+                            <h4 class="mb-0 {% if default_rate <= 5 %}text-success{% elif default_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ default_rate|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">{{ total_defaulters|default:"0" }} defaulters</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-shield-alt text-warning fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">
+                                PAR 30+
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Portfolio at Risk - loans overdue by 30+ days"></i>
+                            </h6>
+                            <h4 class="mb-0 {% if par_30_plus_rate <= 5 %}text-success{% elif par_30_plus_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ par_30_plus_rate|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">₹{{ par_30_plus|floatformat:0|default:"0" }} at risk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-percentage text-info fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">
+                                Write-off Rate
+                                <i class="fas fa-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Percentage of completed loans that were not fully recovered"></i>
+                            </h6>
+                            <h4 class="mb-0 {% if write_off_rate <= 5 %}text-success{% elif write_off_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ write_off_rate|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">{{ total_completed_count|default:"0" }} completed loans</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profitability Analysis -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-chart-line text-success fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Revenue</h6>
+                            <h4 class="mb-0 text-success">₹{{ total_revenue|floatformat:0|default:"0" }}</h4>
+                            <small class="text-muted">Interest + Charges + Penalties</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-percentage text-primary fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">ROI</h6>
+                            <h4 class="mb-0 {% if roi_percentage >= 20 %}text-success{% elif roi_percentage >= 10 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ roi_percentage|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">Return on Investment</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-coins text-info fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Profit Margin</h6>
+                            <h4 class="mb-0 {% if net_profit_margin >= 15 %}text-success{% elif net_profit_margin >= 8 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ net_profit_margin|floatformat:1|default:"0" }}%
+                            </h4>
+                            <small class="text-muted">Net profit margin</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-chart-pie text-warning fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Avg Interest Rate</h6>
+                            <h4 class="mb-0 text-warning">{{ avg_interest_rate|floatformat:1|default:"0" }}%</h4>
+                            <small class="text-muted">Portfolio average</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -273,17 +460,116 @@
             </div>
         </div>
 
+        <!-- Today's Due Installments -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-day text-warning me-2"></i>
+                            Today's Due Installments
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted">{{ clients_due_today_count|default:"0" }} client{% if clients_due_today_count != 1 %}s{% endif %}</small>
+                            <span class="badge bg-warning">₹{{ total_due_today|floatformat:0|default:"0" }}</span>
+                            {% if todays_due_data|length > 5 %}
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleTodaysDueView()" id="todaysDueToggleBtn">
+                                <i class="fas fa-chevron-down"></i> Show All
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if todays_due_data %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Client</th>
+                                        <th>Contact</th>
+                                        <th>Amount Due</th>
+                                        <th>Installments</th>
+                                        <th>Collector</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for client in todays_due_data %}
+                                    <tr class="{% if forloop.counter > 5 %}todays-due-extra d-none{% endif %}">
+                                        <td>
+                                            <div>
+                                                <div class="fw-bold">{{ client.client.Name }}</div>
+                                                <small class="text-muted">ID: {{ client.client.pk }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ client.client.Phone_no1 }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-warning">
+                                                ₹{{ client.total_due|floatformat:0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ client.loans_count }} installment{% if client.loans_count != 1 %}s{% endif %}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ client.collector.Officer_Name|default:"N/A" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'microfinance:clientdetail' pk=client.client.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-user"></i> View Client
+                                                </a>
+                                                {% if client.loan_id %}
+                                                <a href="{% url 'microfinance:addinstallment' pk=client.loan_id %}" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-plus"></i> Add Payment
+                                                </a>
+                                                {% else %}
+                                                <span class="btn btn-sm btn-secondary disabled">
+                                                    <i class="fas fa-plus"></i> No Loan ID
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if todays_due_data|length > 5 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Showing first 5 of {{ todays_due_data|length }} clients</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-check text-success fa-4x mb-3"></i>
+                            <h4 class="text-success">Great!</h4>
+                            <p class="text-muted">No installments are due today. All clients are up to date.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <!-- All Defaulters List -->
         <div class="col-xl-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">All Defaulters</h5>
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                            All Defaulters
+                        </h5>
                         <div class="d-flex align-items-center gap-2">
                             <small class="text-muted">{{ total_defaulters|default:"0" }} total</small>
-                            {% if total_defaulters > 10 %}
-                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleDefaultersView()">
-                                    <span id="defaultersToggleText">Show All</span>
+                            {% if total_defaulters > 5 %}
+                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleDefaultersView()" id="defaultersToggleBtn">
+                                    <i class="fas fa-chevron-down"></i> Show All
                                 </button>
                             {% endif %}
                         </div>
@@ -305,7 +591,7 @@
                                 </thead>
                                 <tbody>
                                     {% for defaulter in defaulters_data %}
-                                    <tr class="{% if forloop.counter > 10 %}defaulter-extra d-none{% endif %}">
+                                    <tr class="{% if forloop.counter > 5 %}defaulter-extra d-none{% endif %}">
                                         <td>
                                             <div>
                                                 <div class="fw-bold">{{ defaulter.client.Name }}</div>
@@ -335,6 +621,16 @@
                                                     <i class="fas fa-user"></i> View Client
                                                 </a>
                                                 {% if defaulter.latest_loan_id %}
+                                                <a href="{% url 'microfinance:addinstallment' pk=defaulter.latest_loan_id %}" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-plus"></i> Add Payment
+                                                </a>
+                                                {% else %}
+                                                <span class="btn btn-sm btn-secondary disabled">
+                                                    <i class="fas fa-plus"></i> No Loan ID
+                                                </span>
+                                                {% endif %}
+                                                {% if defaulter.latest_loan_id %}
                                                 <a href="{% url 'microfinance:loandetail' pk=defaulter.latest_loan_id %}" 
                                                    class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-file-invoice-dollar"></i> View Loan
@@ -347,6 +643,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        {% if defaulters_data|length > 5 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Showing first 5 of {{ defaulters_data|length }} defaulters</small>
+                        </div>
+                        {% endif %}
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
@@ -364,14 +665,21 @@
                 <div class="card-header bg-transparent border-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Payments</h5>
-                        <small class="text-muted">{{ recent_payments_period|length|default:"0" }} payments</small>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted">{{ recent_payments_period|length|default:"0" }} payments</small>
+                            {% if recent_payments_period|length > 8 %}
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleRecentPaymentsView()" id="recentPaymentsToggleBtn">
+                                <i class="fas fa-chevron-down"></i> Show All
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
                     {% if recent_payments_period %}
                         <div class="payment-list" style="max-height: 400px; overflow-y: auto;">
                             {% for payment in recent_payments_period %}
-                            <div class="payment-item d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="payment-item d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %} {% if forloop.counter > 8 %}recent-payments-extra d-none{% endif %}">
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
@@ -402,6 +710,11 @@
                             </div>
                             {% endfor %}
                         </div>
+                        {% if recent_payments_period|length > 8 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Showing first 8 of {{ recent_payments_period|length }} payments</small>
+                        </div>
+                        {% endif %}
                     {% else %}
                         <div class="text-center py-4">
                             <i class="fas fa-receipt text-muted fa-3x mb-3"></i>
@@ -409,6 +722,106 @@
                             <p class="text-muted mb-0">No payments found for the selected period.</p>
                         </div>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Loan Size Distribution -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Loan Size Distribution</h5>
+                        <small class="text-muted">Portfolio breakdown</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Chart -->
+                    <div class="mb-4" style="height: 250px;">
+                        <canvas id="loanSizeChart"></canvas>
+                    </div>
+                    
+                    <!-- Table -->
+                    {% for size in loan_size_distribution %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div>
+                            <div class="fw-bold">{{ size.category }}</div>
+                            <small class="text-muted">{{ size.count }} loan{% if size.count != 1 %}s{% endif %}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary">₹{{ size.amount|floatformat:0 }}</div>
+                            <small class="text-muted">{{ size.percentage|floatformat:1 }}% of portfolio</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Loan Frequency Analysis -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Loan Frequency Analysis</h5>
+                        <small class="text-muted">Payment schedules</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Chart -->
+                    <div class="mb-4" style="height: 250px;">
+                        <canvas id="frequencyChart"></canvas>
+                    </div>
+                    
+                    <!-- Table -->
+                    {% for freq in frequency_distribution %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div>
+                            <div class="fw-bold">{{ freq.frequency_label }}</div>
+                            <small class="text-muted">{{ freq.count }} loan{% if freq.count != 1 %}s{% endif %}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary">₹{{ freq.total_amount|floatformat:0 }}</div>
+                            <small class="text-muted">Total amount</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Loans -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Top Loans</h5>
+                        <small class="text-muted">Highest amounts</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% for loan in top_loans %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div>
+                            <div class="fw-bold">
+                                <a href="{% url 'microfinance:clientdetail' pk=loan.Account.Client.pk %}" 
+                                   class="text-decoration-none">
+                                    {{ loan.Account.Client.Name|truncatechars:20 }}
+                                </a>
+                            </div>
+                            <small class="text-muted">
+                                <a href="{% url 'microfinance:loandetail' pk=loan.pk %}" 
+                                   class="text-decoration-none">
+                                    Loan #{{ loan.pk }}
+                                </a>
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary">₹{{ loan.Principle_Amount|floatformat:0 }}</div>
+                            <small class="text-muted">{{ loan.Intrest_Rate }}% interest</small>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -450,6 +863,28 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Loan Amount Statistics -->
+                    <div class="row g-4 mt-3 pt-3 border-top">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h4 text-secondary mb-1">₹{{ loan_amount_stats.min_amount|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Minimum Loan</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h4 text-secondary mb-1">₹{{ loan_amount_stats.max_amount|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Maximum Loan</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h4 text-secondary mb-1">₹{{ loan_amount_stats.median_amount|floatformat:0|default:"0" }}</div>
+                                <div class="text-muted">Median Loan</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -475,12 +910,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
 // Toggle defaulters view
 function toggleDefaultersView() {
     const extraRows = document.querySelectorAll('.defaulter-extra');
-    const toggleText = document.getElementById('defaultersToggleText');
+    const toggleBtn = document.getElementById('defaultersToggleBtn');
     const isHidden = extraRows[0]?.classList.contains('d-none');
     
     extraRows.forEach(row => {
@@ -491,7 +932,74 @@ function toggleDefaultersView() {
         }
     });
     
-    toggleText.textContent = isHidden ? 'Show Less' : 'Show All';
+    if (toggleBtn) {
+        const icon = toggleBtn.querySelector('i');
+        const text = toggleBtn.querySelector('span') || toggleBtn;
+        
+        if (isHidden) {
+            icon.className = 'fas fa-chevron-up';
+            text.textContent = 'Show Less';
+        } else {
+            icon.className = 'fas fa-chevron-down';
+            text.textContent = 'Show All';
+        }
+    }
+}
+
+// Toggle today's due view
+function toggleTodaysDueView() {
+    const extraRows = document.querySelectorAll('.todays-due-extra');
+    const toggleBtn = document.getElementById('todaysDueToggleBtn');
+    const isHidden = extraRows[0]?.classList.contains('d-none');
+    
+    extraRows.forEach(row => {
+        if (isHidden) {
+            row.classList.remove('d-none');
+        } else {
+            row.classList.add('d-none');
+        }
+    });
+    
+    if (toggleBtn) {
+        const icon = toggleBtn.querySelector('i');
+        const text = toggleBtn.querySelector('span') || toggleBtn;
+        
+        if (isHidden) {
+            icon.className = 'fas fa-chevron-up';
+            text.textContent = 'Show Less';
+        } else {
+            icon.className = 'fas fa-chevron-down';
+            text.textContent = 'Show All';
+        }
+    }
+}
+
+// Toggle recent payments view
+function toggleRecentPaymentsView() {
+    const extraRows = document.querySelectorAll('.recent-payments-extra');
+    const toggleBtn = document.getElementById('recentPaymentsToggleBtn');
+    const isHidden = extraRows[0]?.classList.contains('d-none');
+    
+    extraRows.forEach(row => {
+        if (isHidden) {
+            row.classList.remove('d-none');
+        } else {
+            row.classList.add('d-none');
+        }
+    });
+    
+    if (toggleBtn) {
+        const icon = toggleBtn.querySelector('i');
+        const text = toggleBtn.querySelector('span') || toggleBtn;
+        
+        if (isHidden) {
+            icon.className = 'fas fa-chevron-up';
+            text.textContent = 'Show Less';
+        } else {
+            icon.className = 'fas fa-chevron-down';
+            text.textContent = 'Show All';
+        }
+    }
 }
 
 // Period Collection Chart
@@ -552,6 +1060,144 @@ if (ctx) {
             scales: {
                 y: {
                     beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Loan Size Distribution Chart
+const loanSizeCtx = document.getElementById('loanSizeChart');
+if (loanSizeCtx) {
+    const loanSizeChart = new Chart(loanSizeCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: [
+                {% for size in loan_size_distribution %}
+                '{{ size.category }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for size in loan_size_distribution %}
+                    {{ size.count }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 205, 86, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 205, 86, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' loans (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Frequency Distribution Chart
+const frequencyCtx = document.getElementById('frequencyChart');
+if (frequencyCtx) {
+    const frequencyChart = new Chart(frequencyCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for freq in frequency_distribution %}
+                '{{ freq.frequency_label }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Number of Loans',
+                data: [
+                    {% for freq in frequency_distribution %}
+                    {{ freq.count }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Total Amount (₹)',
+                data: [
+                    {% for freq in frequency_distribution %}
+                    {{ freq.total_amount|default:"0" }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 0) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' loans';
+                            } else {
+                                return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Number of Loans'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Amount (₹)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
                     ticks: {
                         callback: function(value) {
                             return '₹' + value.toLocaleString();
@@ -629,6 +1275,60 @@ setTimeout(() => {
     border-radius: 3px;
 }
 
+/* Collapsible table animations */
+.todays-due-extra, .defaulter-extra, .recent-payments-extra {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Toggle button styling */
+.toggle-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.toggle-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Table row hover effects */
+.table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Badge animations */
+.badge {
+    transition: all 0.2s ease-in-out;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* Button group improvements */
+.btn-group .btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Responsive improvements */
 @media (max-width: 768px) {
     .d-flex.flex-wrap.gap-2 {
         justify-content: center;
@@ -649,6 +1349,33 @@ setTimeout(() => {
     
     .btn-group .btn {
         margin-bottom: 0.25rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .badge {
+        font-size: 0.65rem;
     }
 }
 </style>
