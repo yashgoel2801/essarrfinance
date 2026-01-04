@@ -255,7 +255,6 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     
     # Calculate payment status for each loan (Paid in Advance, On Track, Pending)
     # We need to compare total payments made vs total installments due up to today
-    from datetime import datetime
     import pytz
     local_tz = pytz.timezone('Asia/Kolkata')
     today = datetime.now(local_tz).date()
