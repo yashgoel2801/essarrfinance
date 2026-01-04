@@ -10,6 +10,7 @@
       <span class="badge bg-success me-2">Installments: {{grand_totals.inst|floatformat:1}}</span>
       <span class="badge bg-warning text-dark me-2">Penalties: {{grand_totals.pen|floatformat:1}}</span>
       <span class="badge bg-info text-dark me-2">File Charges: {{grand_totals.fc|floatformat:1}}</span>
+      <span class="badge bg-success me-2">Waivers: {{grand_totals.waivers|floatformat:1}}</span>
       <span class="badge bg-dark">Grand Total: {{grand_totals.total|floatformat:1}}</span>
     </div>
   </div>
@@ -102,6 +103,42 @@
       </div>
       {% endif %}
 
+      {% if data.waivers %}
+      <h5 class="text-success mt-2">Waivers Applied (Total: {{data.totals.waivers|floatformat:1}})</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-striped align-middle">
+          <thead class="table-success">
+            <tr>
+              <th>LID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for waiver in data.waivers %}
+            <tr>
+              <td>{{waiver.Loan.pk}}</td>
+              <td><a
+                  href="{% url 'microfinance:clientdetail' pk=waiver.Loan.Account.Client.pk %}">{{waiver.Loan.Account.Client.Name}}</a>
+              </td>
+              <td>
+                {% if waiver.Waiver_Type == 1 %}
+                <span class="badge bg-warning">Penalty</span>
+                {% else %}
+                <span class="badge bg-success">Interest</span>
+                {% endif %}
+              </td>
+              <td>{{waiver.Amount|floatformat:1}}</td>
+              <td>{{waiver.Reason|default:"-"}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
     </div>
   </div>
   {% empty %}
@@ -121,11 +158,15 @@
           <h6>Penalties</h6>
           <h3>{{grand_totals.pen|floatformat:1}}</h3>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <h6>File Charges</h6>
           <h3>{{grand_totals.fc|floatformat:1}}</h3>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <h6 class="text-success">Waivers</h6>
+          <h3 class="text-success">{{grand_totals.waivers|floatformat:1}}</h3>
+        </div>
+        <div class="col-md-2">
           <h6 class="text-warning">Total Collected</h6>
           <h2 class="text-warning">{{grand_totals.total|floatformat:1}}</h2>
         </div>

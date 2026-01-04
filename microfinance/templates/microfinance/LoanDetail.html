@@ -362,6 +362,19 @@
               </thead>
               <tbody>
                 {% for inst in Installment %}
+                {% if inst.is_waiver %}
+                <tr class="table-success">
+                  <td>-</td>
+                  <td><strong>{{ inst.Date_Paid }}</strong></td>
+                  <td colspan="2" class="text-center">
+                    <span class="badge bg-success">
+                      <i class="fas fa-gift me-1"></i>{{ inst.waiver_type }} Waiver: ₹{{ inst.Amount_Paid|slice:"8:" }}
+                    </span>
+                  </td>
+                  <td>{{ inst.Amount_Balance|default:'-' }}</td>
+                  <td><strong class="text-success">{{ inst.Total_Balance|default:'-' }}</strong></td>
+                </tr>
+                {% else %}
                 <tr>
                   <td>{{ inst.Date_Due }}</td>
                   <td>{{ inst.Date_Paid|default:'-' }}</td>
@@ -370,6 +383,7 @@
                   <td>{{ inst.Amount_Balance|default:'-' }}</td>
                   <td>{{ inst.Total_Balance|default:'-' }}</td>
                 </tr>
+                {% endif %}
                 {% endfor %}
               </tbody>
             </table>

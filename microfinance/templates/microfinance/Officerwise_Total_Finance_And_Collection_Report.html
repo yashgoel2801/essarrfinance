@@ -91,6 +91,10 @@
         <Br>Total File Charge Collection: <b
             style="font-weight: 600; font-size:22px">{{filecollected|floatformat:1}}</b>
         <Br>Total Penalty Collection: <b style="font-weight: 600; font-size:22px">{{penaltycollected|floatformat:1}}</b>
+        <Br><span style="color: #28a745;">Total Penalty Waived: <b
+                style="font-weight: 600; font-size:22px">{{total_penalty_waived|floatformat:1}}</b></span>
+        <Br><span style="color: #28a745;">Total Interest Waived: <b
+                style="font-weight: 600; font-size:22px">{{total_interest_waived|floatformat:1}}</b></span>
 
 
 
@@ -113,6 +117,7 @@
                     <th>Name </th>
                     <th>Amount Paid</th>
                     <th>Amnt To Be Collec.</th>
+                    <th>Status</th>
                     <th>Loan Officer</th>
 
                 </tr>
@@ -127,8 +132,21 @@
                         </a>
                     </td>
                     <td>
-                        {{amnt_collected|keyvalue:loanee.pk|keyvalue:"payments__Amount_Paid__sum"}}</td>
-                    <td>{{amnt_to_be_collected|keyvalue:loanee.pk|keyvalue:"installments__Installment_Due__sum"}}</td>
+                        {{amnt_collected|keyvalue:loanee.pk|keyvalue:"Amount_Paid__sum"}}</td>
+                    <td>{{amnt_to_be_collected|keyvalue:loanee.pk|keyvalue:"Installment_Due__sum"}}</td>
+                    <td>
+                        {% with status=payment_status|keyvalue:loanee.pk %}
+                        {% if status == 'advance' %}
+                        <span class="badge bg-success">Paid in Advance</span>
+                        {% elif status == 'on_track' %}
+                        <span class="badge bg-primary">On Track</span>
+                        {% elif status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% else %}
+                        <span class="badge bg-secondary">-</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
                     <td>{{loanee.Loan_Collector.Officer_Name}}</td>
 
 
@@ -160,7 +178,7 @@
                         <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}}
                         </a>
                     </td>
-                    <td>{{penalty_collected|keyvalue:loanee.pk|keyvalue:"payments__Amount_Paid__sum"}}</td>
+                    <td>{{penalty_collected|keyvalue:loanee.pk|keyvalue:"Amount_Paid__sum"}}</td>
                     <td>{{penalty_to_be_collected|keyvalue:loanee.pk}}</td>
                     <td>{{loanee.Loan_Collector.Officer_Name}}</td>
                 </tr>

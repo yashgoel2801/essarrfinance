@@ -6,29 +6,29 @@
         border-collapse: collapse;
         width: 100%;
     }
-    
+
     th,
     td {
         text-align: left;
         padding: 5px;
         text-align: justify;
     }
-    
+
     .loanees {
         background-color: transparent;
         margin: 0;
         padding: 0;
     }
-    
+
     tr:nth-child(even) {
         background-color: #f2f2f2
     }
-    
+
     th {
         background-color: #4CAF50;
         color: white;
     }
-    
+
     .w3-container {
         padding: 0px;
     }
@@ -116,6 +116,24 @@
                 </header>
                 <div class="w3-container">
                     <h4>{{intrestrec|floatformat:2}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Penalty Waived </h4>
+                </header>
+                <div class="w3-container">
+                    <h4 style="color: #28a745;">{{total_penalty_waived|floatformat:2}}</h4>
+                </div>
+            </div>
+
+            <div class="w3-card-4" style="width:15%">
+                <header class="w3-container w3-light-grey">
+                    <h4>Total Interest Waived </h4>
+                </header>
+                <div class="w3-container">
+                    <h4 style="color: #28a745;">{{total_interest_waived|floatformat:2}}</h4>
                 </div>
             </div>
 

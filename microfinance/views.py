@@ -11,7 +11,7 @@ from datetime import datetime, time, timedelta,date
 from dateutil.relativedelta import relativedelta
 from search_views.search import SearchListView,BaseFilter
 from django.utils.dateparse import parse_date
-from django.db.models import Q,Sum, Count
+from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField
 from django.template import loader
 from datetime import date
 from datetime import datetime
@@ -634,14 +634,50 @@ def Loan_Detail(request,pk):
         paymentIndx =0
         installmentIndx =0
         # Calculate waivers early to use in running totals
-        all_waivers_for_totals = Waiver.objects.filter(Loan=Loan)
+        all_waivers_for_totals = Waiver.objects.filter(Loan=Loan).order_by('Date_Applied')
         total_interest_waived_for_totals = all_waivers_for_totals.filter(Waiver_Type=2).aggregate(Sum('Amount'))['Amount__sum'] or 0
         
-        totalPending = Total_Loan_Amount - total_interest_waived_for_totals
+        totalPending = Total_Loan_Amount  # Waivers will be subtracted as they appear in timeline
         AmntBal=0
         combinedInstallmentPaymentView =[]
         today = datetime.now().date()
-        while(installmentIndx < len(Installment) and paymentIndx < len(Payment)):
+        
+        # Convert waivers to list for iteration
+        interest_waivers_list = list(all_waivers_for_totals.filter(Waiver_Type=2))
+        waiver_indx = 0
+        
+        while(installmentIndx <len(Installment) and paymentIndx <len(Payment)):
+            # Check if there's a waiver to insert before current installment/payment
+            while waiver_indx < len(interest_waivers_list):
+                waiver = interest_waivers_list[waiver_indx]
+                current_inst_date = Installment[installmentIndx].Date_Due if installmentIndx < len(Installment) else None
+                current_pay_date = Payment[paymentIndx].Date_Paid if paymentIndx < len(Payment) and Payment[paymentIndx].Payment_Type == 1 else None
+                
+                # Determine if waiver should be inserted here
+                should_insert = False
+                if current_inst_date and current_pay_date:
+                    should_insert = waiver.Date_Applied <= min(current_inst_date, current_pay_date)
+                elif current_inst_date:
+                    should_insert = waiver.Date_Applied <= current_inst_date
+                elif current_pay_date:
+                    should_insert = waiver.Date_Applied <= current_pay_date
+                
+                if should_insert:
+                    totalPending -= waiver.Amount
+                    combinedInstallmentPaymentView.append({
+                        "Date_Due": "-",
+                        "Date_Paid": waiver.Date_Applied,
+                        "Amount_Due": "-",
+                        "Amount_Paid": f"Waiver: -{waiver.Amount}",
+                        "Amount_Balance": round(AmntBal, 2),
+                        "Total_Balance": totalPending,
+                        "is_waiver": True,
+                        "waiver_type": "Interest/Principal"
+                    })
+                    waiver_indx += 1
+                else:
+                    break
+            
             if(Payment[paymentIndx].Payment_Type!=1):
                 paymentIndx+=1
             elif(Installment[installmentIndx].Date_Due<Payment[paymentIndx].Date_Paid):
@@ -683,7 +719,24 @@ def Loan_Detail(request,pk):
                 })   
                 installmentIndx+=1
                 paymentIndx+=1
-        while(installmentIndx < len(Installment)):
+        
+        # Add remaining waivers
+        while waiver_indx < len(interest_waivers_list):
+            waiver = interest_waivers_list[waiver_indx]
+            totalPending -= waiver.Amount
+            combinedInstallmentPaymentView.append({
+                "Date_Due": "-",
+                "Date_Paid": waiver.Date_Applied,
+                "Amount_Due": "-",
+                "Amount_Paid": f"Waiver: -{waiver.Amount}",
+                "Amount_Balance": round(AmntBal, 2),
+                "Total_Balance": totalPending,
+                "is_waiver": True,
+                "waiver_type": "Interest/Principal"
+            })
+            waiver_indx += 1
+        
+        while(installmentIndx <len(Installment)):
             if(Installment[installmentIndx].Date_Due<=today):
                 AmntBal+=Installment[installmentIndx].Installment_Due
             combinedInstallmentPaymentView.append({
@@ -695,17 +748,18 @@ def Loan_Detail(request,pk):
                 "Total_Balance":totalPending,
             })   
             installmentIndx+=1
-        while(paymentIndx < len(Payment)):
-            AmntBal-=Payment[paymentIndx].Amount_Paid
-            totalPending -= Payment[paymentIndx].Amount_Paid
-            combinedInstallmentPaymentView.append({
-                "Date_Due":"-",
-                "Date_Paid":Payment[paymentIndx].Date_Paid,
-                "Amount_Due":" - ",
-                "Amount_Paid":Payment[paymentIndx].Amount_Paid,
-                "Amount_Balance":round(AmntBal,2),
-                "Total_Balance":totalPending,
-            })   
+        while(paymentIndx <len(Payment)):
+            if(Payment[paymentIndx].Payment_Type==1):
+                AmntBal-=Payment[paymentIndx].Amount_Paid
+                totalPending -= Payment[paymentIndx].Amount_Paid
+                combinedInstallmentPaymentView.append({
+                    "Date_Due":"-",
+                    "Date_Paid":Payment[paymentIndx].Date_Paid,
+                    "Amount_Due":" - ",
+                    "Amount_Paid":Payment[paymentIndx].Amount_Paid,
+                    "Amount_Balance":round(AmntBal,2),
+                    "Total_Balance":totalPending,
+                })   
             paymentIndx+=1
         Recalculate_Penalty(Loan)
         # Re-fetch Penalties to avoid stale data from the cache established earlier in the view
@@ -864,22 +918,25 @@ def Loan_Detail(request,pk):
                     potential_loyalty_bonus = total_interest * 0.10
                     loyalty_msg = "Good Client! 10% Interest Waiver suggested for 0-penalty completion."
 
-        return render(request,'microfinance/LoanDetail.html',{
-            'Total_Penalty': round(total_penalty_calc, 1),
+        # Calculate Amount Overdue (subtracting waivers)
+        amount_overdue = max(0, AmntBal)
+        
+        context = {
+            'Loan': Loan,
+            'Client': Client,
+            'Installment': combinedInstallmentPaymentView,
+            'combinedInstallmentPaymentView': combinedInstallmentPaymentView,
+            'combinedPenaltyPaymentView': combinedPenaltyPaymentView,
             'Total_Loan_Amount': Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100,
-            'Installment':combinedInstallmentPaymentView,
-            'Loan':Loan,
-            'Client':Client,
-            'Penalty':Penalties,
-            'Total_Pending':round(totalPending,1),
-            'amnt_pen':round(AmntBal ,1),
-            'lastinst':lastinst,
-            'Penalties':Penalties,
-            'Payments':Payment,  # Keep for backward compatibility
-            'InstallmentPayments':InstallmentPayments,
-            'PenaltyPayments':PenaltyPayments,
-            'Installments':Installment,
-            'combinedPenaltyPaymentView':combinedPenaltyPaymentView,
+            'Total_Pending': round(totalPending, 1),
+            'amnt_pen': round(AmntBal, 1),
+            'lastinst': lastinst,
+            'Penalties': Penalties,
+            'Payments': Payment,  # Keep for backward compatibility
+            'InstallmentPayments': InstallmentPayments,
+            'PenaltyPayments': PenaltyPayments,
+            'Installments': Installment,
+            'Total_Penalty': round(total_penalty_calc, 1),
             'Total_Penalty_Paid': round(total_actual_penalty_paid, 1),
             'Total_Waived': round(total_penalty_waived, 1),
             'Total_Interest_Waived': round(total_interest_waived, 1),
@@ -889,7 +946,19 @@ def Loan_Detail(request,pk):
             'All_Waivers': all_waivers,
             'Principal_Amount': Loan.Principle_Amount,
             'Total_Amount_Paid': Total_Amount_Paid,
-        })
+            'Amount_Overdue': amount_overdue,
+            'current_penalty_outstanding': current_penalty_outstanding,
+            'total_penalty_calc': total_penalty_calc,
+            'total_penalty_paid': total_actual_penalty_paid,
+            'pending_penalty': pending_penalty,
+            'loyalty_msg': loyalty_msg,
+            'potential_loyalty_bonus': potential_loyalty_bonus,
+            'total_penalty_waived': total_penalty_waived,
+            'total_interest_waived': total_interest_waived,
+            'all_waivers': all_waivers_for_totals,
+        }
+        
+        return render(request, 'microfinance/LoanDetail.html', context)
 
 
 class ClientFilter(BaseFilter):
@@ -1079,16 +1148,27 @@ def Total_Finance_And_Collection_Report(request):
     Total_Intrest_Collected=0
     Total_Penalty =0
     Total_Penalty_Coll =0
-    for Inst in Installment2:
-        Total_Amnt_To_Be_Collected = Total_Amnt_To_Be_Collected + Inst.Installment_Due   
-        Total_Intrest_To_Be_Collected =Total_Intrest_To_Be_Collected + Inst.Installment_Due * Inst.Loan.Intrest_Rate/100
-    for p in Penalties:
-        if p.Status == True:
-            Total_Penalty= Total_Penalty + p.Penalty_Paid
-            
-        else:
-            # Subtract individual penalty waiver
-            Total_Penalty= Total_Penalty + max(0, p.Penalty_Calc - p.Waived_Amount)
+    # Optimized Calculations using Sum
+    Installment_Aggregation = Installment2.aggregate(
+        total_due=Sum('Installment_Due'),
+        # Since Intrest_Rate can vary per loan, we can't sum directly if we want precision per loan in one aggregate
+        # but we can annotate first
+    )
+    Total_Amnt_To_Be_Collected = Installment_Aggregation['total_due'] or 0
+    
+    # Calculate Interest to be collected (requires per-loan logic, so we annotate)
+    Total_Intrest_To_Be_Collected = Installment2.annotate(
+        inst_interest=F('Installment_Due') * F('Loan__Intrest_Rate') / 100
+    ).aggregate(total_int=Sum('inst_interest'))['total_int'] or 0
+
+    # Penalty calculation
+    penalty_agg = Penalties.annotate(
+        effective_val=Case(
+            When(Status=True, then=F('Penalty_Paid')),
+            default=ExpressionWrapper(F('Penalty_Calc') - F('Waived_Amount'), output_field=FloatField())
+        )
+    ).aggregate(total_pen=Sum('effective_val'))
+    Total_Penalty = penalty_agg['total_pen'] or 0
 
     # General Waivers
     general_waivers = Waiver.objects.filter(Date_Applied__range=[start,end])
@@ -1098,21 +1178,42 @@ def Total_Finance_And_Collection_Report(request):
     Total_Penalty = max(0, Total_Penalty - total_pen_waived)
     Total_Amnt_To_Be_Collected = max(0, Total_Amnt_To_Be_Collected - total_int_waived)
             
-    for p in Pen_payments:
-        Total_Penalty_Coll =Total_Penalty_Coll + p.Amount_Paid
-    for L in Lo:
-        Total_Amnt_Financed = Total_Amnt_Financed + L.Principle_Amount
-        Total_FileCharge = Total_FileCharge + L.File_Charge_Percent*L.Principle_Amount/100
+    # Penalty Collected
+    Total_Penalty_Coll = Pen_payments.aggregate(total=Sum('Amount_Paid'))['total'] or 0
+    
+    # Loans Financed & File Charges
+    loan_fin_agg = Lo.annotate(
+        fc=F('File_Charge_Percent') * F('Principle_Amount') / 100
+    ).aggregate(total_fin=Sum('Principle_Amount'), total_fc=Sum('fc'))
+    Total_Amnt_Financed = loan_fin_agg['total_fin'] or 0
+    Total_FileCharge = loan_fin_agg['total_fc'] or 0
 
-    # Use Payments model for collected amounts
+    # Payments Collected
     Payments_Inst = Payments.objects.filter(Date_Paid__range=[start,end], Payment_Type=1, Amount_Paid__gt=0)
-    for payment in Payments_Inst:
-        loan = payment.Loan
-        Total_Intrest_Collected = Total_Intrest_Collected + payment.Amount_Paid * loan.Intrest_Rate/100
-        Total_Amnt_Collected = Total_Amnt_Collected + payment.Amount_Paid
+    payment_agg = Payments_Inst.annotate(
+        int_coll=F('Amount_Paid') * F('Loan__Intrest_Rate') / 100
+    ).aggregate(total_coll=Sum('Amount_Paid'), total_int_coll=Sum('int_coll'))
+    
+    Total_Amnt_Collected = payment_agg['total_coll'] or 0
+    Total_Intrest_Collected = payment_agg['total_int_coll'] or 0
             
-    return render(request,'microfinance/Total_Finance_And_Collection_Report.html',{'Total_pencol':Total_Penalty_Coll,'start':start,'end':end,'loans':Loan,'insts':Installment,'dates':dd,'totalloan':Total_Amnt_Financed,'totalfc':Total_FileCharge,'totalinst':Total_Amnt_Collected,
-    'totalamnt':Total_Amnt_To_Be_Collected,'intrest':Total_Intrest_To_Be_Collected,'totalpenalty':Total_Penalty,'intrestrec':Total_Intrest_Collected})
+    return render(request,'microfinance/Total_Finance_And_Collection_Report.html',{
+        'Total_pencol':Total_Penalty_Coll,
+        'start':start,
+        'end':end,
+        'loans':Loan,
+        'insts':Installment,
+        'dates':dd,
+        'totalloan':Total_Amnt_Financed,
+        'totalfc':Total_FileCharge,
+        'totalinst':Total_Amnt_Collected,
+        'totalamnt':Total_Amnt_To_Be_Collected,
+        'intrest':Total_Intrest_To_Be_Collected,
+        'totalpenalty':Total_Penalty,
+        'intrestrec':Total_Intrest_Collected,
+        'total_penalty_waived': total_pen_waived,
+        'total_interest_waived': total_int_waived,
+    })
 
 @login_required(login_url="/accounts/login/")
 def Total_Finance_And_Collection_pdf(request):
@@ -1289,9 +1390,14 @@ def All_Clients_List(request):
         Loan=Loans.objects.all().filter(Loan_Collector_id=Staff_pk).filter(Status=False).filter(Frequency=1)
     else:
         Loan=Loans.objects.all().filter(Status=False).filter(Frequency=1).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10)
-    Total_Amount_To_Be_Collected = 0
-    for i in Loan:
-        Total_Amount_To_Be_Collected = Total_Amount_To_Be_Collected + i.installments_set.first().Installment_Due
+    today_date = timezone.now().date()
+    # Use annotation to get the first installment due for each loan efficiently
+    Loan = Loan.annotate(
+        first_inst_due=Subquery(
+            Installments.objects.filter(Loan=OuterRef('pk')).order_by('Date_Due').values('Installment_Due')[:1]
+        )
+    )
+    Total_Amount_To_Be_Collected = Loan.aggregate(total=Sum('first_inst_due'))['total'] or 0
     return render(request,'microfinance/All_Clients_List.html',{'loanee':Loan,'Staff':Staff_pk,'Total_Amount_To_Be_Collected':Total_Amount_To_Be_Collected})
 
 
@@ -1365,10 +1471,11 @@ def Total_Amount_Collected_Report(request):
     Date=request.POST.get('Date')
     
     # Fetch Data
-    payments_inst = Payments.objects.filter(Date_Paid=Date, Payment_Type=1, Amount_Paid__gt=0)
-    pen_payments = Payments.objects.filter(Date_Paid=Date, Payment_Type=2, Amount_Paid__gt=0)
-    new_loans = Loans.objects.filter(Loan_Date=Date)
-    waivers = Waiver.objects.filter(Date_Applied=Date)
+    # Fetch Data with select_related to avoid N+1 queries
+    payments_inst = Payments.objects.filter(Date_Paid=Date, Payment_Type=1, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector')
+    pen_payments = Payments.objects.filter(Date_Paid=Date, Payment_Type=2, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector')
+    new_loans = Loans.objects.filter(Loan_Date=Date).select_related('Loan_Collector')
+    waivers = Waiver.objects.filter(Date_Applied=Date).select_related('Loan', 'Loan__Loan_Collector')
     
     # Group Data
     grouped_data = {}
