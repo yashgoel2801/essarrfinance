@@ -2,7 +2,8 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 import pytz
-from microfinance.models import Loans,Installments,Payments
+from microfinance.models import Loans,Installments,Payments,Waiver
+from django.db.models import Sum
 local_timezone = pytz.timezone('Asia/Kolkata')
 
 @login_required(login_url="/accounts/login/")
@@ -39,7 +40,8 @@ def Officer_And_Frequency_Wise_pdf(request):
             for payment in payments:
                 total_amnt_collected += payment.Amount_Paid
 
-            total_bal = loan.Total - total_amnt_collected
+            total_interest_waived = Waiver.objects.filter(Loan=loan, Waiver_Type=2).aggregate(Sum('Amount'))['Amount__sum'] or 0
+            total_bal = loan.Total - total_amnt_collected - total_interest_waived
         
             total_amnt_to_be_coll_dic[loan.pk]=round(total_amnt_to_be_coll,1)
             total_amnt_collected_dic[loan.pk]=round(total_amnt_collected,1)

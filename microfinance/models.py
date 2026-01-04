@@ -5,7 +5,7 @@ from django import forms
 from django.utils.text import slugify
 from django.db.models.signals import pre_save
 from phone_field import PhoneField
-from essarrfinance.utils import unique_slug_generator
+from essarrfinance.utils import unique_slug_generator, compress_image
 from django.core.validators import MaxValueValidator, MinValueValidator
 from PIL import Image
 from django.contrib.auth.models import User,Permission
@@ -95,6 +95,14 @@ class Clients(models.Model):
         # user.user_permissions.add(permissions)
         # user.save()
         # self.ClientUser_id = user.pk
+        if self.pk:
+            old_instance = Clients.objects.get(pk=self.pk)
+            if old_instance.Image != self.Image:
+                self.Image = compress_image(self.Image)
+        else:
+            if self.Image and self.Image.name != 'pics/avatar.png':
+                self.Image = compress_image(self.Image)
+
         super(Clients, self).save(force_insert, force_update,*args, **kawgrs)      
 
 
@@ -102,6 +110,16 @@ class Clients(models.Model):
 class Documents(models.Model):
     Image = models.ImageField(upload_to='documents',blank=True)
     Client = models.ForeignKey(Clients,on_delete=models.PROTECT)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = Documents.objects.get(pk=self.pk)
+            if old_instance.Image != self.Image:
+                self.Image = compress_image(self.Image)
+        else:
+            if self.Image:
+                self.Image = compress_image(self.Image)
+        super(Documents, self).save(*args, **kwargs)
 
 
 class Accounts(models.Model):
@@ -125,6 +143,16 @@ class Guarantors(models.Model):
     Guarantor_Phone_no=PhoneField()
     Guarantor_Phone_no2= PhoneField(null=True,blank=True)    
     Guarantor_Security_Docs= models.TextField(default='not specified')
+    
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = Guarantors.objects.get(pk=self.pk)
+            if old_instance.Image != self.Image:
+                self.Image = compress_image(self.Image)
+        else:
+            if self.Image and self.Image.name != 'pics/avatar.png':
+                self.Image = compress_image(self.Image)
+        super(Guarantors, self).save(*args, **kwargs)
     def __str__(self):
        return "Guarnator ID:"+str(self.pk)
 
@@ -132,6 +160,16 @@ class Guarantors(models.Model):
 class Guarantor_Documents(models.Model):
     Image = models.ImageField(upload_to='Guarantor_Documents',blank=True)
     Guarantor = models.ForeignKey(Guarantors,on_delete=models.PROTECT)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = Guarantor_Documents.objects.get(pk=self.pk)
+            if old_instance.Image != self.Image:
+                self.Image = compress_image(self.Image)
+        else:
+            if self.Image:
+                self.Image = compress_image(self.Image)
+        super(Guarantor_Documents, self).save(*args, **kwargs)
     def __str__(self):
        return "Guarnator ID: "+str(self.Guarantor.pk)
 
@@ -180,6 +218,7 @@ class Installments(models.Model):
 
 class Penalty(models.Model):
     Loan=models.ForeignKey(Loans,on_delete=models.PROTECT,default=0)
+    Installment = models.ForeignKey(Installments, on_delete=models.CASCADE, null=True)
     Date_Started = models.DateField(default=None)
     Date_Ended = models.DateField(default = None,null=True)
     Amount = models.FloatField(default = 0)
@@ -189,6 +228,7 @@ class Penalty(models.Model):
     Penalty_Paid_Date= models.DateField(default=None,null=True)
     Status = models.BooleanField(default=False)
     Installment_Due_Date = models.DateField(null=True, blank=True) 
+    Waived_Amount = models.FloatField(default=0)
     def __str__(self):
        return str(self.Date_Started) +" - "+str(self.Loan.pk)  
     class Meta:
@@ -209,6 +249,21 @@ class Payments(models.Model):
        return str(self.Date_Paid) +" - "+str(self.Amount_Paid)+ " - "+str(self.Loan.pk)  
     class Meta:
         ordering = ['Loan_id','Date_Paid']
+
+WAIVER_TYPE = (
+    (1, 'Penalty'),
+    (2, 'Interest/Loyalty')
+)
+
+class Waiver(models.Model):
+    Loan = models.ForeignKey(Loans, on_delete=models.PROTECT)
+    Waiver_Type = models.IntegerField(choices=WAIVER_TYPE, default=1)
+    Amount = models.FloatField(default=0)
+    Date_Applied = models.DateField(default=timezone.now)
+    Reason = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Waiver {self.pk} - Loan {self.Loan.pk}"
 
 
 

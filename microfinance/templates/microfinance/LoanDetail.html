@@ -1,9 +1,12 @@
-{%extends 'base_layout.html'%} {%block content%}
+{%extends 'base_layout.html'%} {% load noofinstallment %} {%block content%}
 <style>
   .borrower-card {
     border-left: 4px solid #007bff;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
-  
+
   .borrower-info-table th {
     background-color: #f8f9fa !important;
     font-weight: 600;
@@ -11,103 +14,131 @@
     width: 40%;
     padding: 0.4rem 0.6rem;
   }
-  
+
   .borrower-info-table td {
     font-size: 0.9rem;
     vertical-align: middle;
     padding: 0.4rem 0.6rem;
   }
-  
+
   .borrower-avatar {
     border: 3px solid #007bff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
+
   .installment-table-section {
     border-left: 4px solid #28a745;
   }
-  
+
   .container-fluid {
     padding-left: 20px;
     padding-right: 20px;
   }
-  
+
   .borrower-card .card-body {
     padding: 0.75rem;
   }
-  
+
   .installment-table-section .card-body {
     padding: 1.5rem;
   }
-  
+
   @media (min-width: 1200px) {
     .borrower-card {
       min-height: 600px;
     }
   }
-  
+
   .row {
     margin-left: 0;
     margin-right: 0;
   }
-  
-  .col-lg-3, .col-lg-9, .col-md-4, .col-md-8 {
+
+  .col-lg-3,
+  .col-lg-9,
+  .col-md-4,
+  .col-md-8 {
     padding-left: 15px;
     padding-right: 15px;
   }
-  
+
   .card {
     border-radius: 10px;
   }
-  
+
   .card-header {
     border-radius: 10px 10px 0 0 !important;
   }
-  
+
   .collapse {
     transition: all 0.3s ease-in-out;
   }
-  
+
   #rightContent {
     transition: all 0.3s ease-in-out;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
-  
+
   #rightContent.col-12 {
     width: 100% !important;
     flex: 0 0 100% !important;
     max-width: 100% !important;
   }
-  
+
   .sidebar-collapsed #rightContent {
     width: 100% !important;
     flex: 0 0 100% !important;
     max-width: 100% !important;
   }
-  
+
   .sidebar-collapsed .col-lg-3 {
     display: none !important;
   }
-  
+
   .last-payment-card {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-left: 4px solid #007bff;
   }
-  
+
   .last-payment-card .card-body {
     padding: 1rem;
   }
-  
+
   .loan-summary-table th {
     font-size: 0.9rem;
     padding: 0.4rem 0.6rem;
     width: 50%;
   }
-  
+
   .loan-summary-table td {
     font-size: 0.9rem;
     padding: 0.4rem 0.6rem;
   }
-  
+
+  /* Smooth scrolling */
+  .borrower-card::-webkit-scrollbar,
+  #rightContent::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .borrower-card::-webkit-scrollbar-track,
+  #rightContent::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  .borrower-card::-webkit-scrollbar-thumb,
+  #rightContent::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .borrower-card::-webkit-scrollbar-thumb:hover,
+  #rightContent::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 </style>
 <div class="container-fluid py-4">
   <!-- Success/Error Messages -->
@@ -121,11 +152,12 @@
   <div class="row">
     <!-- Toggle Button for Left Side -->
     <div class="col-12 mb-3">
-      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#leftSidebar" aria-expanded="true" aria-controls="leftSidebar">
+      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse"
+        data-bs-target="#leftSidebar" aria-expanded="true" aria-controls="leftSidebar">
         <i class="fas fa-bars me-1"></i>Toggle Client Details
       </button>
     </div>
-    
+
     <!-- Borrower Details Section -->
     <div class="col-lg-3 col-md-4 mb-4 collapse show" id="leftSidebar">
       <div class="card shadow-sm h-100 borrower-card">
@@ -141,7 +173,7 @@
               <span class="text-muted">Client ID: {{ Client.pk }}</span>
             </div>
           </div>
-          
+
           <div class="table-responsive">
             <table class="table table-sm table-bordered borrower-info-table">
               <tbody>
@@ -173,9 +205,9 @@
                   <th class="bg-light">Loan Status:</th>
                   <td>
                     {% if Loan.Status %}
-                      <span class="badge bg-danger">Closed</span>
+                    <span class="badge bg-danger">Closed</span>
                     {% else %}
-                      <span class="badge bg-success">Active</span>
+                    <span class="badge bg-success">Active</span>
                     {% endif %}
                   </td>
                 </tr>
@@ -190,13 +222,13 @@
               </tbody>
             </table>
           </div>
-          
+
           <div class="mt-1">
             <a href="{% url 'microfinance:clientdetail' pk=Client.pk %}" class="btn btn-outline-primary btn-sm w-100">
               <i class="fas fa-arrow-left me-1"></i>Back to Client
             </a>
           </div>
-          
+
           <!-- Loan Summary Table -->
           <div class="mt-3">
             <h5 class="text-success mb-3"><i class="fas fa-calculator me-1"></i>Loan Summary</h5>
@@ -210,6 +242,10 @@
                   <tr>
                     <th class="bg-light">Interest Rate:</th>
                     <td>{{ Loan.Intrest_Rate }}%</td>
+                  </tr>
+                  <tr>
+                    <th class="bg-light">No of Installments:</th>
+                    <td><strong>{{ Loan|noofinstallment }}</strong></td>
                   </tr>
                   <tr>
                     <th class="bg-light">Total Amount:</th>
@@ -235,6 +271,18 @@
                     <th class="bg-light">Penalty Paid:</th>
                     <td><strong class="text-success">₹{{ Total_Penalty_Paid|floatformat:2 }}</strong></td>
                   </tr>
+                  <tr>
+                    <th class="bg-light">Penalty Waived:</th>
+                    <td><strong class="text-info">₹{{ Total_Waived|floatformat:2 }}</strong></td>
+                  </tr>
+                  <tr>
+                    <th class="bg-light">Interest Waived:</th>
+                    <td><strong class="text-success">₹{{ Total_Interest_Waived|floatformat:2 }}</strong></td>
+                  </tr>
+                  <tr>
+                    <th class="bg-light">Pending Penalty:</th>
+                    <td><strong class="text-danger">₹{{ Pending_Penalty|floatformat:2 }}</strong></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -242,13 +290,13 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Loan Details Table Section -->
     <div class="col-lg-9 col-md-8" id="rightContent">
       <div class="card shadow-sm mb-4 installment-table-section">
         <div class="card-body">
           <h3 class="mb-4"><i class="fas fa-list me-2"></i>Installment Details</h3>
-          
+
           <!-- Last Payment Information -->
           <div class="row mb-4">
             <div class="col-12">
@@ -260,34 +308,38 @@
                         <i class="fas fa-credit-card me-2"></i>Last Payment Information
                       </h6>
                       {% if lastinst %}
-                        <p class="mb-0 text-muted">
-                          <strong>Date:</strong> {{ lastinst.Date_Paid|date:"M d, Y" }} 
-                          <span class="mx-2">|</span>
-                          <strong>Amount:</strong> <span class="text-success">₹{{ lastinst.Installment_Paid|floatformat:2 }}</span>
-                          <span class="mx-2">|</span>
-                          <strong>Type:</strong> 
-                          <span class="badge bg-success">Installment Payment</span>
-                        </p>
+                      <p class="mb-0 text-muted">
+                        <strong>Date:</strong> {{ lastinst.Date_Paid|date:"M d, Y" }}
+                        <span class="mx-2">|</span>
+                        <strong>Amount:</strong>
+                        <span class="text-success">
+                          <i class="fas fa-rupee-sign small me-1"></i>
+                          {{ lastinst.Installment_Paid|floatformat:2 }}
+                        </span>
+                        <span class="mx-2">|</span>
+                        <strong>Type:</strong>
+                        <span class="badge bg-success">Installment Payment</span>
+                      </p>
                       {% else %}
-                        <p class="mb-0 text-muted">
-                          <i class="fas fa-info-circle me-1"></i>No payments made yet
-                        </p>
+                      <p class="mb-0 text-muted">
+                        <i class="fas fa-info-circle me-1"></i>No payments made yet
+                      </p>
                       {% endif %}
                     </div>
                     <div class="col-md-4 text-md-end">
                       {% if lastinst %}
-                        <div class="d-flex flex-column align-items-md-end">
-                          <span class="badge bg-primary mb-1">
-                            <i class="fas fa-calendar me-1"></i>{{ lastinst.Date_Paid|date:"M d, Y" }}
-                          </span>
-                          <span class="badge bg-success">
-                            <i class="fas fa-rupee-sign me-1"></i>{{ lastinst.Installment_Paid|floatformat:2 }}
-                          </span>
-                        </div>
-                      {% else %}
-                        <span class="badge bg-secondary">
-                          <i class="fas fa-exclamation-circle me-1"></i>No Payments
+                      <div class="d-flex flex-column align-items-md-end">
+                        <span class="badge bg-primary mb-1">
+                          <i class="fas fa-calendar me-1"></i>{{ lastinst.Date_Paid|date:"M d, Y" }}
                         </span>
+                        <span class="badge bg-success">
+                          <i class="fas fa-rupee-sign me-1"></i>{{ lastinst.Installment_Paid|floatformat:2 }}
+                        </span>
+                      </div>
+                      {% else %}
+                      <span class="badge bg-secondary">
+                        <i class="fas fa-exclamation-circle me-1"></i>No Payments
+                      </span>
                       {% endif %}
                     </div>
                   </div>
@@ -295,7 +347,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-success">
@@ -346,35 +398,145 @@
                 </form>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="card card-body mb-3">
-                <h5 class="mb-3">Pay Penalty</h5>
-                <form method="POST">
-                  {% csrf_token %}
-                  <div class="mb-3">
-                    <label for="Penalty_Paid" class="form-label">Penalty Amount:</label>
-                    <input type="number" step="0.01" class="form-control" id="Penalty_Paid" name="Penalty_Paid"
-                      required />
+            <!-- Loyalty & Waiver Management -->
+            <div class="card shadow-sm mb-4 border-0">
+              <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary"><i class="fas fa-gift me-2"></i>Loyalty & Waiver Management</h5>
+              </div>
+              <div class="card-body">
+                {% if Loyalty_Msg %}
+                <div class="alert alert-info border-0 shadow-sm mb-4"
+                  style="background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-info text-white rounded-circle p-2 me-3">
+                      <i class="fas fa-certificate"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0 text-info fw-bold">Loyalty Bonus Suggestion</h6>
+                      <p class="mb-0 small">{{ Loyalty_Msg }} <br><strong>Suggested Rebate: ₹{{ Loyalty_Bonus
+                          }}</strong></p>
+                    </div>
                   </div>
-                  <div class="mb-3">
-                    <label for="date_paid_penalty" class="form-label">Date Paid:</label>
-                    <input type="date" class="form-control" id="date_paid_penalty" name="date_paid"
-                      value="{{ Today|date:'Y-m-d' }}" />
+                </div>
+                {% endif %}
+
+                <div class="row g-4">
+                  <!-- Pay Penalty -->
+                  <div class="col-md-6 border-end">
+                    <form method="POST" class="p-2">
+                      {% csrf_token %}
+                      <h6 class="mb-3 text-warning fw-bold">Record Penalty Payment</h6>
+                      <div class="mb-3">
+                        <label class="form-label small">Amount Paid:</label>
+                        <input type="number" step="0.01" name="Penalty_Paid" class="form-control" required
+                          placeholder="0.00">
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label small">Date Paid:</label>
+                        <input type="date" name="date_paid" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                      </div>
+                      <button type="submit" name="penalty" class="btn btn-warning w-100">
+                        Record Payment
+                      </button>
+                    </form>
                   </div>
-                  {% comment %} <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="Status" name="Status" value="True" />
-                    <label class="form-check-label" for="Status">Mark as Paid</label>
-                  </div> {% endcomment %}
-                  <button type="submit" name="penalty" class="btn btn-warning w-100">
-                    Pay Penalty
-                  </button>
-                </form>
+
+                  <!-- Apply Waiver -->
+                  <div class="col-md-6">
+                    <form method="POST" class="p-2">
+                      {% csrf_token %}
+                      <h6 class="mb-3 text-info fw-bold">Apply Waiver / Credit Note</h6>
+                      <div class="mb-3">
+                        <label class="form-label small">Waiver Type:</label>
+                        <select name="waiver_type" class="form-select">
+                          <option value="1">Penalty Waiver</option>
+                          <option value="2">Interest/Loyalty Waiver</option>
+                        </select>
+                      </div>
+                      <div class="row g-2 mb-3">
+                        <div class="col-6">
+                          <label class="form-label small">Amount:</label>
+                          <input type="number" step="0.01" name="waived_amount" class="form-control" required
+                            placeholder="0.00">
+                        </div>
+                        <div class="col-6">
+                          <label class="form-label small">Date:</label>
+                          <input type="date" name="waived_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <input type="text" name="reason" class="form-control"
+                          placeholder="Reason (e.g., 'Early closure reward')">
+                      </div>
+                      <button type="submit" name="record_waiver" class="btn btn-info text-white w-100">
+                        Apply Waiver
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Waiver Audit Trail -->
+                {% if All_Waivers %}
+                <div class="mt-4 pt-3 border-top">
+                  <h6 class="small text-uppercase text-muted fw-bold mb-3">Waiver Audit Trail</h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                      <thead class="bg-light">
+                        <tr class="small text-muted">
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Reason</th>
+                          <th class="text-end">Amount</th>
+                          <th class="text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for w in All_Waivers %}
+                        <tr class="small">
+                          <td>{{ w.Date_Applied|date:"M d, Y" }}</td>
+                          <td>
+                            {% if w.Waiver_Type == 1 %}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle">Penalty</span>
+                            {% else %}
+                            <span
+                              class="badge bg-success-subtle text-success border border-success-subtle">Loyalty</span>
+                            {% endif %}
+                          </td>
+                          <td class="text-muted">{{ w.Reason|default:"-" }}</td>
+                          <td class="text-end fw-bold">₹{{ w.Amount|floatformat:2 }}</td>
+                          <td class="text-center">
+                            <form method="POST" onsubmit="return confirm('Delete this waiver entry?');"
+                              style="display:inline;">
+                              {% csrf_token %}
+                              <input type="hidden" name="waiver_id" value="{{ w.pk }}">
+                              <button type="submit" name="delete_waiver" class="btn btn-sm btn-link text-danger p-0">
+                                <i class="fas fa-trash-alt"></i>
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {% endif %}
               </div>
             </div>
           </div>
 
 
-          <h4 class="mb-3">Penalty Details</h4>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Penalty Details</h4>
+            <div class="d-flex gap-2">
+              <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
+                <i class="fas fa-hand-holding-heart me-1"></i>Penalty Waived: ₹{{ Total_Waived|floatformat:1 }}
+              </span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                <i class="fas fa-gift me-1"></i>Interest Waived: ₹{{ Total_Interest_Waived|floatformat:1 }}
+              </span>
+            </div>
+          </div>
           <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-danger">
@@ -384,6 +546,7 @@
                   <th>Date Ended</th>
                   <th>Amount</th>
                   <th>Penalty Calc</th>
+                  <th>Waived</th>
                   <th>Status</th>
                   <th>Payment Amount</th>
                   <th>Payment Date</th>
@@ -398,22 +561,14 @@
                   </td>
                   <td>{{ item.Date_Started|default:'-' }}</td>
                   <td>{{ item.Date_Ended|default:'-' }}</td>
-                  <td>{{ item.Amount|default:'-' }}</td>
-                  <td>{{ item.Penalty_Calc|default:'-' }}</td>
+                  <td>{{ item.Amount|floatformat:1 }}</td>
+                  <td>{{ item.Penalty_Calc|floatformat:1 }}</td>
+                  <td>{{ item.Waived_Amount|floatformat:1 }}</td>
                   <td>{{ item.Status|default:'-' }}</td>
-                  <td>{{ item.Payment_Amount|default:'-' }}</td>
+                  <td>{{ item.Payment_Amount|floatformat:1|default:'-' }}</td>
                   <td>{{ item.Payment_Date|default:'-' }}</td>
                   <td>
                     {% if item.pk %}
-                    <button type="button" class="btn btn-sm btn-warning edit-penalty-btn" 
-                            data-penalty-id="{{ item.pk|default:0 }}" 
-                            data-date-started="{{ item.Date_Started|date:"Y-m-d"|default:"" }}" 
-                            data-date-ended="{{ item.Date_Ended|date:"Y-m-d"|default:"" }}" 
-                            data-amount="{{ item.Amount|default:0|floatformat:2 }}" 
-                            data-penalty-calc="{{ item.Penalty_Calc|default:0|floatformat:2 }}" 
-                            data-status="{{ item.Status|yesno:'true,false'|default:'false' }}">
-                      <i class="fas fa-edit"></i> Edit
-                    </button>
                     <button type="button" class="btn btn-sm btn-danger"
                       onclick="deletePenalty({{ item.pk|default:0 }})">
                       <i class="fas fa-trash"></i> Delete
@@ -426,40 +581,109 @@
             </table>
           </div>
 
-          <h4 class="mb-3">Payment History</h4>
-          <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
-            <table class="table table-bordered table-striped align-middle">
-              <thead class="table-info">
-                <tr>
-                  <th>Date Paid</th>
-                  <th>Amount Paid</th>
-                  <th>Payment Type</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for payment in Payments %}
-                <tr>
-                  <td>{{ payment.Date_Paid }}</td>
-                  <td>{{ payment.Amount_Paid }}</td>
-                  <td>{{ payment.get_Payment_Type_display }}</td>
-                  <td>
-                    <button type="button" class="btn btn-sm btn-warning edit-payment-btn" 
-                            data-payment-id="{{ payment.pk|default:0 }}" 
-                            data-date-paid="{{ payment.Date_Paid|date:"Y-m-d"|default:"" }}" 
-                            data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}" 
+          <!-- Payment History Section - Collapsed by Default -->
+          <div class="mb-4">
+            <h4 class="mb-3">
+              <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse"
+                data-bs-target="#paymentHistoryCollapse" aria-expanded="false" aria-controls="paymentHistoryCollapse">
+                <i class="fas fa-chevron-down me-2"></i>Payment History
+              </button>
+            </h4>
+            <div class="collapse" id="paymentHistoryCollapse">
+              <!-- Installment Payments Section -->
+              <div class="mb-4">
+                <h5 class="text-success mb-3">
+                  <i class="fas fa-money-bill-wave me-2"></i>Installment Payments
+                  <span class="badge bg-success ms-2">{{ InstallmentPayments|length }}</span>
+                </h5>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
+                  <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-success">
+                      <tr>
+                        <th>Date Paid</th>
+                        <th>Amount Paid</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% if InstallmentPayments %}
+                      {% for payment in InstallmentPayments %}
+                      <tr>
+                        <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
+                        <td><strong class="text-success">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                        <td>
+                          <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
+                            data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
+                            Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
                             data-payment-type="{{ payment.Payment_Type|default:1 }}">
-                      <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger"
-                      onclick="deletePayment({{ payment.pk|default:0 }})">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                            <i class="fas fa-edit"></i> Edit
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger"
+                            onclick="deletePayment({{ payment.pk|default:0 }})">
+                            <i class="fas fa-trash"></i> Delete
+                          </button>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                      {% else %}
+                      <tr>
+                        <td colspan="3" class="text-center text-muted">
+                          <i class="fas fa-info-circle me-2"></i>No installment payments recorded
+                        </td>
+                      </tr>
+                      {% endif %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Penalty Payments Section -->
+              <div class="mb-4">
+                <h5 class="text-warning mb-3">
+                  <i class="fas fa-exclamation-triangle me-2"></i>Penalty Payments
+                  <span class="badge bg-warning ms-2">{{ PenaltyPayments|length }}</span>
+                </h5>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
+                  <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-warning">
+                      <tr>
+                        <th>Date Paid</th>
+                        <th>Amount Paid</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% if PenaltyPayments %}
+                      {% for payment in PenaltyPayments %}
+                      <tr>
+                        <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
+                        <td><strong class="text-warning">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                        <td>
+                          <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
+                            data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
+                            Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
+                            data-payment-type="{{ payment.Payment_Type|default:2 }}">
+                            <i class="fas fa-edit"></i> Edit
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger"
+                            onclick="deletePayment({{ payment.pk|default:0 }})">
+                            <i class="fas fa-trash"></i> Delete
+                          </button>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                      {% else %}
+                      <tr>
+                        <td colspan="3" class="text-center text-muted">
+                          <i class="fas fa-info-circle me-2"></i>No penalty payments recorded
+                        </td>
+                      </tr>
+                      {% endif %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -532,6 +756,10 @@
           <div class="mb-3">
             <label for="editPenaltyCalc" class="form-label">Penalty Calculation:</label>
             <input type="number" step="0.01" class="form-control" id="editPenaltyCalc" name="penalty_calc" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPenaltyWaived" class="form-label">Waived Amount:</label>
+            <input type="number" step="0.01" class="form-control" id="editPenaltyWaived" name="waived_amount" required>
           </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="editPenaltyStatus" name="status" value="true">
@@ -623,26 +851,27 @@
 
     // Add event listeners for edit buttons
     document.querySelectorAll('.edit-payment-btn').forEach(button => {
-      button.addEventListener('click', function() {
+      button.addEventListener('click', function () {
         const paymentId = this.getAttribute('data-payment-id');
         const datePaid = this.getAttribute('data-date-paid');
         const amountPaid = this.getAttribute('data-amount-paid');
         const paymentType = this.getAttribute('data-payment-type');
-        
+
         editPayment(paymentId, datePaid, amountPaid, paymentType);
       });
     });
 
     document.querySelectorAll('.edit-penalty-btn').forEach(button => {
-      button.addEventListener('click', function() {
+      button.addEventListener('click', function () {
         const penaltyId = this.getAttribute('data-penalty-id');
         const dateStarted = this.getAttribute('data-date-started');
         const dateEnded = this.getAttribute('data-date-ended');
         const amount = this.getAttribute('data-amount');
         const penaltyCalc = this.getAttribute('data-penalty-calc');
+        const waivedAmount = this.getAttribute('data-waived-amount');
         const status = this.getAttribute('data-status');
-        
-        editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status);
+
+        editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, waivedAmount, status);
       });
     });
 
@@ -659,7 +888,7 @@
         for (let [key, value] of formData.entries()) {
           console.log(`${key}: ${value}`);
         }
-        
+
         // Debug form action and method
         console.log('Form action:', this.action);
         console.log('Form method:', this.method);
@@ -699,8 +928,8 @@
   }
 
   // Edit Penalty Functions
-  function editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status) {
-    console.log('Editing penalty:', {penaltyId, dateStarted, dateEnded, amount, penaltyCalc, status});
+  function editPenalty(penaltyId, dateStarted, dateEnded, amount, penaltyCalc, waivedAmount, status) {
+    console.log('Editing penalty:', {penaltyId, dateStarted, dateEnded, amount, penaltyCalc, waivedAmount, status});
 
     // Safely handle the values
     const safePenaltyId = penaltyId || 0;
@@ -708,6 +937,7 @@
     const safeDateEnded = dateEnded || '';
     const safeAmount = amount || 0;
     const safePenaltyCalc = penaltyCalc || 0;
+    const safeWaivedAmount = waivedAmount || 0;
     const safeStatus = status === 'true';
 
     document.getElementById('editPenaltyId').value = safePenaltyId;
@@ -715,6 +945,7 @@
     document.getElementById('editPenaltyEndDate').value = safeDateEnded;
     document.getElementById('editPenaltyAmount').value = safeAmount;
     document.getElementById('editPenaltyCalc').value = safePenaltyCalc;
+    document.getElementById('editPenaltyWaived').value = safeWaivedAmount;
     document.getElementById('editPenaltyStatus').checked = safeStatus;
 
     // Debug: Check if values are set correctly
@@ -746,22 +977,22 @@
   }
 
   // Handle sidebar collapse and expand
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const leftSidebar = document.getElementById('leftSidebar');
     const rightContent = document.getElementById('rightContent');
     const toggleButton = document.querySelector('[data-bs-target="#leftSidebar"]');
-    
+
     console.log('Elements found:', {
       leftSidebar: !!leftSidebar,
       rightContent: !!rightContent,
       toggleButton: !!toggleButton
     });
-    
+
     if (!leftSidebar || !rightContent || !toggleButton) {
       console.error('Required elements not found');
       return;
     }
-    
+
     // Function to update column classes
     function updateLayout(isCollapsed) {
       console.log('Updating layout, collapsed:', isCollapsed);
@@ -777,18 +1008,40 @@
         console.log('Right content set to col-lg-9 col-md-8, sidebar-collapsed class removed');
       }
     }
-    
+
     // Listen for collapse events
-    leftSidebar.addEventListener('hidden.bs.collapse', function() {
+    leftSidebar.addEventListener('hidden.bs.collapse', function () {
       updateLayout(true);
     });
-    
-    leftSidebar.addEventListener('shown.bs.collapse', function() {
+
+    leftSidebar.addEventListener('shown.bs.collapse', function () {
       updateLayout(false);
     });
-    
+
     // Set initial state
     updateLayout(false);
+
+    // Handle Payment History collapse icon rotation
+    const paymentHistoryCollapse = document.getElementById('paymentHistoryCollapse');
+    const paymentHistoryToggle = document.querySelector('[data-bs-target="#paymentHistoryCollapse"]');
+
+    if (paymentHistoryCollapse && paymentHistoryToggle) {
+      const chevronIcon = paymentHistoryToggle.querySelector('i.fas.fa-chevron-down');
+
+      paymentHistoryCollapse.addEventListener('show.bs.collapse', function () {
+        if (chevronIcon) {
+          chevronIcon.classList.remove('fa-chevron-down');
+          chevronIcon.classList.add('fa-chevron-up');
+        }
+      });
+
+      paymentHistoryCollapse.addEventListener('hide.bs.collapse', function () {
+        if (chevronIcon) {
+          chevronIcon.classList.remove('fa-chevron-up');
+          chevronIcon.classList.add('fa-chevron-down');
+        }
+      });
+    }
   });
 </script>
 {%endblock%}

@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'essarrfinance.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'new3',
+        'NAME': 'essarr-new-2026',
         'USER': 'postgres',
         'PASSWORD':'yash2801',
         'HOST': 'localhost',

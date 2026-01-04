@@ -1,83 +1,137 @@
-{%extends 'base_layout.html'%} {%block content%}
+{%extends 'base_layout.html'%}
+{% load keyvalue %}
+{%block content%}
 <div class="container py-4">
-  <h3 class="mb-4">
-    Total Collection on Date : <b>{{Date}}</b> : <span class="fw-bold fs-5">{{Total_coll}}</span><br>
-    Total File Charge Collection: <span class="fw-bold fs-5">{{file_charge}}</span><br>
-    Total Penalty Collection: <span class="fw-bold fs-5">{{tot_pen}}</span>
-  </h3>
-  <div class="table-responsive mb-4">
-    <table class="table table-bordered table-striped align-middle">
-      <thead class="table-success">
-        <tr>
-          <th>S.No</th>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Amount Paid</th>
-          <th>Loan Officer</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for loanee in Inst %}
-        <tr>
-          <td></td>
-          <td>{{loanee.Loan.pk}}</td>
-          <td><a href="{% url 'microfinance:clientdetail' pk=loanee.Loan.Account.Client.pk %}">{{loanee.Loan.Account.Client.Name}}</a></td>
-          <td>{{loanee.Installment_Paid}}</td>
-          <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="alert alert-primary mb-4">
+    <h3 class="mb-0">
+      Total Collection Report on : <b>{{Date}}</b>
+    </h3>
+    <div class="mt-2 fs-5">
+      <span class="badge bg-success me-2">Installments: {{grand_totals.inst|floatformat:1}}</span>
+      <span class="badge bg-warning text-dark me-2">Penalties: {{grand_totals.pen|floatformat:1}}</span>
+      <span class="badge bg-info text-dark me-2">File Charges: {{grand_totals.fc|floatformat:1}}</span>
+      <span class="badge bg-dark">Grand Total: {{grand_totals.total|floatformat:1}}</span>
+    </div>
   </div>
-  <div class="table-responsive mb-4">
-    <table class="table table-bordered table-striped align-middle">
-      <thead class="table-warning">
-        <tr><th colspan="5">Penalty</th></tr>
-        <tr>
-          <th>S.No</th>
-          <th>LID</th>
-          <th>Name</th>
-          <th>Penalty Paid</th>
-          <th>Loan Officer</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for loanee in pen %}
-        <tr>
-          <td></td>
-          <td>{{loanee.Loan.pk}}</td>
-          <td><a href="{% url 'microfinance:clientdetail' pk=loanee.Loan.Account.Client.pk %}">{{loanee.Loan.Account.Client.Name}}</a></td>
-          <td>{{loanee.Penalty_Paid}}</td>
-          <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+  {% for data in report_data %}
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="mb-0 text-primary">{{data.officer.Officer_Name}}</h4>
+        <h5 class="mb-0">Total: <span class="badge bg-secondary">{{data.totals.total|floatformat:1}}</span></h5>
+      </div>
+    </div>
+    <div class="card-body">
+
+      {% if data.installments %}
+      <h5 class="text-success mt-2">Installments (Total: {{data.totals.inst|floatformat:1}})</h5>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered table-striped align-middle">
+          <thead class="table-success">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Amount Paid</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in data.installments %}
+            <tr>
+              <td>{{payment.Loan.pk}}</td>
+              <td><a
+                  href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}">{{payment.Loan.Account.Client.Name}}</a>
+              </td>
+              <td>{{payment.Amount_Paid}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if data.penalties %}
+      <h5 class="text-warning mt-2">Penalties (Total: {{data.totals.pen|floatformat:1}})</h5>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered table-striped align-middle">
+          <thead class="table-warning">
+            <tr>
+              <th>LID</th>
+              <th>Name</th>
+              <th>Penalty Paid</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in data.penalties %}
+            <tr>
+              <td>{{payment.Loan.pk}}</td>
+              <td><a
+                  href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}">{{payment.Loan.Account.Client.Name}}</a>
+              </td>
+              <td>{{payment.Amount_Paid}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if data.new_loans %}
+      <h5 class="text-info mt-2">File Charges (Total: {{data.totals.fc|floatformat:1}})</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-striped align-middle">
+          <thead class="table-info">
+            <tr>
+              <th>LID</th>
+              <th>Name</th>
+              <th>File Charge</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in data.new_loans %}
+            <tr>
+              <td>{{loan.pk}}</td>
+              <td><a
+                  href="{% url 'microfinance:clientdetail' pk=loan.Account.Client.pk %}">{{loan.Account.Client.Name}}</a>
+              </td>
+              <td>{{loan.calculated_fc}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+    </div>
   </div>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped align-middle">
-      <thead class="table-info">
-        <tr><th colspan="5">File Charge</th></tr>
-        <tr>
-          <th>S.No</th>
-          <th>LID</th>
-          <th>Name</th>
-          <th>File Charge</th>
-          <th>Loan Officer</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for loanee in Loan %}
-        <tr>
-          <td></td>
-          <td>{{loanee.pk}}</td>
-          <td><a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk %}">{{loanee.Account.Client.Name}}</a></td>
-          <td>{{filec|keyvalue:loanee.pk}}</td>
-          <td>{{loanee.Loan.Loan_Collector.Officer_Name}}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% empty %}
+  <div class="alert alert-info">No collections found for this date.</div>
+  {% endfor %}
+
+  {% if report_data %}
+  <div class="card bg-dark text-white">
+    <div class="card-body">
+      <h4 class="mb-3">Grand Totals</h4>
+      <div class="row text-center">
+        <div class="col-md-3">
+          <h6>Installments</h6>
+          <h3>{{grand_totals.inst|floatformat:1}}</h3>
+        </div>
+        <div class="col-md-3">
+          <h6>Penalties</h6>
+          <h3>{{grand_totals.pen|floatformat:1}}</h3>
+        </div>
+        <div class="col-md-3">
+          <h6>File Charges</h6>
+          <h3>{{grand_totals.fc|floatformat:1}}</h3>
+        </div>
+        <div class="col-md-3">
+          <h6 class="text-warning">Total Collected</h6>
+          <h2 class="text-warning">{{grand_totals.total|floatformat:1}}</h2>
+        </div>
+      </div>
+    </div>
   </div>
+  {% endif %}
 </div>
 {% endblock %}

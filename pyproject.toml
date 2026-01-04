@@ -1,0 +1,30 @@
+[project]
+name = "essarrfinance"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "asgiref>=3.11.0",
+    "certifi>=2025.11.12",
+    "chardet>=5.2.0",
+    "django>=6.0",
+    "django-appconf>=1.2.0",
+    "django-debug-toolbar>=6.1.0",
+    "django-filter>=25.2",
+    "django-phone-field>=1.8.1",
+    "django-search-views>=0.3.7",
+    "django-storages>=1.14.6",
+    "gunicorn>=23.0.0",
+    "idna>=3.11",
+    "pillow>=12.1.0",
+    "psycopg2-binary>=2.9.11",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2025.2",
+    "requests>=2.32.5",
+    "rjsmin>=1.2.5",
+    "six>=1.17.0",
+    "sqlparse>=0.5.5",
+    "urllib3>=2.6.2",
+    "whitenoise>=6.11.0",
+]
