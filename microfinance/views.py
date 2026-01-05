@@ -391,7 +391,7 @@ def Loan_Detail(request,pk):
     print(f"=== END PENALTY DEBUG ===")
     DatePaid= request.POST.get('date_paid')    
 
-    lastinst = Installment.filter(Date_Paid__isnull=False).filter(Installment_Paid__gt=0).order_by('Date_Paid').last()  
+    lastinst = Payments.objects.filter(Loan=Loan, Payment_Type=1).order_by('Date_Paid').last()  
 
     if request.method == "POST":  
         Total_Pending = Total_Loan_Amount 
