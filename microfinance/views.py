@@ -349,6 +349,7 @@ def pay_installment(request,loan,payments,DatePaid):
     installments_data = []
     for inst in installments:
         installments_data.append({
+            'id': inst.pk,
             'Date_Due': inst.Date_Due,
             'Installment_Due': inst.Installment_Due
         })
@@ -509,6 +510,7 @@ def Loan_Detail(request,pk):
                         installments_data = []
                         for inst in Installment:
                             installments_data.append({
+                                'id': inst.pk,
                                 'Date_Due': inst.Date_Due,
                                 'Installment_Due': inst.Installment_Due
                             })
@@ -554,6 +556,7 @@ def Loan_Detail(request,pk):
                 installments_data = []
                 for inst in Installment:
                     installments_data.append({
+                        'id': inst.pk,
                         'Date_Due': inst.Date_Due,
                         'Installment_Due': inst.Installment_Due
                     })
@@ -608,6 +611,7 @@ def Loan_Detail(request,pk):
                 installments_data = []
                 for inst in Installment:
                     installments_data.append({
+                        'id': inst.pk,
                         'Date_Due': inst.Date_Due,
                         'Installment_Due': inst.Installment_Due
                     })
@@ -1983,7 +1987,7 @@ def _perform_calculation(loan):
     installments = Installments.objects.filter(
         Loan=loan,
         Installment_Due__gt=0
-    ).values('Date_Due', 'Installment_Due').order_by('Date_Due')
+    ).values('id', 'Date_Due', 'Installment_Due').order_by('Date_Due')
     
     # Single query for all payments
     payments = Payments.objects.filter(
@@ -3069,9 +3073,11 @@ def _calculate_installment_by_installment_penalties(loan, installments, payments
     for inst in installments:
         due_date = inst['Date_Due']
         amount = Decimal(str(inst['Installment_Due']))
+        inst_id = inst.get('id')
         
         if due_date < today:  # Only track overdue installments
             installment_ledger[due_date] = {
+                'id': inst_id,
                 'original_amount': amount,
                 'remaining_balance': amount,
                 'payments_applied': [],
@@ -3140,7 +3146,8 @@ def _calculate_installment_by_installment_penalties(loan, installments, payments
                         'end_date': payment_date,
                         'amount': current_balance,
                         'days': days,
-                        'installment_due': due_date
+                        'installment_due': due_date,
+                        'installment_id': installment.get('id')
                     }
                     all_penalty_periods.append(penalty_period)
                     installment['penalty_periods'].append(penalty_period)
@@ -3160,7 +3167,8 @@ def _calculate_installment_by_installment_penalties(loan, installments, payments
                     'end_date': today,
                     'amount': current_balance,
                     'days': days,
-                    'installment_due': due_date
+                    'installment_due': due_date,
+                    'installment_id': installment.get('id')
                 }
                 all_penalty_periods.append(penalty_period)
                 installment['penalty_periods'].append(penalty_period)
@@ -3179,6 +3187,7 @@ def _calculate_installment_by_installment_penalties(loan, installments, payments
         
         penalty_obj = Penalty(
             Loan=loan,
+            Installment_id=period.get('installment_id'),
             Date_Started=period['start_date'],
             Date_Ended=period['end_date'],
             Amount=period['amount'],
