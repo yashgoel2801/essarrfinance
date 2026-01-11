@@ -364,6 +364,7 @@
           </div>
 
           <!-- Process Transaction Hub -->
+          {% if request.user.is_staff %}
           <style>
             /* Override global nav-link styles from base_layout for these tabs specifically */
             #transactionTabs .nav-link {
@@ -691,207 +692,213 @@
               });
             });
           </script>
-          <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
-            <table class="table table-bordered table-striped align-middle">
-              <thead class="table-success">
-                <tr>
-                  <th>Date Due</th>
-                  <th>Date Paid</th>
-                  <th>Amount Due</th>
-                  <th>Amount Paid</th>
-                  <th>Amount Balance</th>
-                  <th>Total Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for inst in Installment %}
-                {% if inst.is_waiver %}
-                <tr class="table-success">
-                  <td>-</td>
-                  <td><strong>{{ inst.Date_Paid }}</strong></td>
-                  <td colspan="2" class="text-center">
-                    <span class="badge bg-success">
-                      <i class="fas fa-gift me-1"></i>{{ inst.waiver_type }} Waiver: ₹{{ inst.Amount_Paid|slice:"8:" }}
-                    </span>
-                  </td>
-                  <td>{{ inst.Amount_Balance|default:'-' }}</td>
-                  <td><strong class="text-success">{{ inst.Total_Balance|default:'-' }}</strong></td>
-                </tr>
-                {% else %}
-                <tr>
-                  <td>{{ inst.Date_Due }}</td>
-                  <td>{{ inst.Date_Paid|default:'-' }}</td>
-                  <td>{{ inst.Amount_Due|default:'-' }}</td>
-                  <td>{{ inst.Amount_Paid|default:'-' }}</td>
-                  <td>{{ inst.Amount_Balance|default:'-' }}</td>
-                  <td>{{ inst.Total_Balance|default:'-' }}</td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <div class="d-flex flex-wrap gap-2 mb-3">
-            <a href="{% url 'microfinance:addinstallment' pk=Loan.pk %}" class="btn btn-primary">Add Installment</a>
-          </div>
+        </div>
+        {% endif %}
+        <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
+          <table class="table table-bordered table-striped align-middle">
+            <thead class="table-success">
+              <tr>
+                <th>Date Due</th>
+                <th>Date Paid</th>
+                <th>Amount Due</th>
+                <th>Amount Paid</th>
+                <th>Amount Balance</th>
+                <th>Total Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inst in Installment %}
+              {% if inst.is_waiver %}
+              <tr class="table-success">
+                <td>-</td>
+                <td><strong>{{ inst.Date_Paid }}</strong></td>
+                <td colspan="2" class="text-center">
+                  <span class="badge bg-success">
+                    <i class="fas fa-gift me-1"></i>{{ inst.waiver_type }} Waiver: ₹{{ inst.Amount_Paid|slice:"8:" }}
+                  </span>
+                </td>
+                <td>{{ inst.Amount_Balance|default:'-' }}</td>
+                <td><strong class="text-success">{{ inst.Total_Balance|default:'-' }}</strong></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td>{{ inst.Date_Due }}</td>
+                <td>{{ inst.Date_Paid|default:'-' }}</td>
+                <td>{{ inst.Amount_Due|default:'-' }}</td>
+                <td>{{ inst.Amount_Paid|default:'-' }}</td>
+                <td>{{ inst.Amount_Balance|default:'-' }}</td>
+                <td>{{ inst.Total_Balance|default:'-' }}</td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          {% if request.user.is_staff %}
+          <a href="{% url 'microfinance:addinstallment' pk=Loan.pk %}" class="btn btn-primary">Add Installment</a>
+          {% endif %}
+        </div>
 
 
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Penalty Details</h4>
-            <div class="d-flex gap-2">
-              <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
-                <i class="fas fa-hand-holding-heart me-1"></i>Penalty Waived: ₹{{ Total_Waived|floatformat:1 }}
-              </span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
-                <i class="fas fa-gift me-1"></i>Interest Waived: ₹{{ Total_Interest_Waived|floatformat:1 }}
-              </span>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Penalty Details</h4>
+          <div class="d-flex gap-2">
+            <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
+              <i class="fas fa-hand-holding-heart me-1"></i>Penalty Waived: ₹{{ Total_Waived|floatformat:1 }}
+            </span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+              <i class="fas fa-gift me-1"></i>Interest Waived: ₹{{ Total_Interest_Waived|floatformat:1 }}
+            </span>
           </div>
-          <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
-            <table class="table table-bordered table-striped align-middle">
-              <thead class="table-danger">
-                <tr>
-                  <th>Installment Date</th>
-                  <th>Date Started</th>
-                  <th>Date Ended</th>
-                  <th>Amount</th>
-                  <th>Penalty Calc</th>
-                  <th>Waived</th>
-                  <th>Status</th>
-                  <th>Payment Amount</th>
-                  <th>Payment Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in combinedPenaltyPaymentView %}
-                <tr>
-                  <td>
-                    <span class="badge bg-primary">{{ item.Installment_Due_Date|date:"M d, Y"|default:'-' }}</span>
-                  </td>
-                  <td>{{ item.Date_Started|default:'-' }}</td>
-                  <td>{{ item.Date_Ended|default:'-' }}</td>
-                  <td>{{ item.Amount|floatformat:1 }}</td>
-                  <td>{{ item.Penalty_Calc|floatformat:1 }}</td>
-                  <td>{{ item.Waived_Amount|floatformat:1 }}</td>
-                  <td>{{ item.Status|default:'-' }}</td>
-                  <td>{{ item.Payment_Amount|floatformat:1|default:'-' }}</td>
-                  <td>{{ item.Payment_Date|default:'-' }}</td>
-                  <td>
-                    {% if item.pk %}
-                    <button type="button" class="btn btn-sm btn-danger"
-                      onclick="deletePenalty({{ item.pk|default:0 }})">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
+        </div>
+        <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
+          <table class="table table-bordered table-striped align-middle">
+            <thead class="table-danger">
+              <tr>
+                <th>Installment Date</th>
+                <th>Date Started</th>
+                <th>Date Ended</th>
+                <th>Amount</th>
+                <th>Penalty Calc</th>
+                <th>Waived</th>
+                <th>Status</th>
+                <th>Payment Amount</th>
+                <th>Payment Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in combinedPenaltyPaymentView %}
+              <tr>
+                <td>
+                  <span class="badge bg-primary">{{ item.Installment_Due_Date|date:"M d, Y"|default:'-' }}</span>
+                </td>
+                <td>{{ item.Date_Started|default:'-' }}</td>
+                <td>{{ item.Date_Ended|default:'-' }}</td>
+                <td>{{ item.Amount|floatformat:1 }}</td>
+                <td>{{ item.Penalty_Calc|floatformat:1 }}</td>
+                <td>{{ item.Waived_Amount|floatformat:1 }}</td>
+                <td>{{ item.Status|default:'-' }}</td>
+                <td>{{ item.Payment_Amount|floatformat:1|default:'-' }}</td>
+                <td>{{ item.Payment_Date|default:'-' }}</td>
+                <td>
+                  {% if request.user.is_staff and item.pk %}
+                  <button type="button" class="btn btn-sm btn-danger" onclick="deletePenalty({{ item.pk|default:0 }})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Payment History Section - Collapsed by Default -->
+        <div class="mb-4">
+          <h4 class="mb-3">
+            <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse"
+              data-bs-target="#paymentHistoryCollapse" aria-expanded="false" aria-controls="paymentHistoryCollapse">
+              <i class="fas fa-chevron-down me-2"></i>Payment History
+            </button>
+          </h4>
+          <div class="collapse" id="paymentHistoryCollapse">
+            <!-- Installment Payments Section -->
+            <div class="mb-4">
+              <h5 class="text-success mb-3">
+                <i class="fas fa-money-bill-wave me-2"></i>Installment Payments
+                <span class="badge bg-success ms-2">{{ InstallmentPayments|length }}</span>
+              </h5>
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
+                <table class="table table-bordered table-striped align-middle">
+                  <thead class="table-success">
+                    <tr>
+                      <th>Date Paid</th>
+                      <th>Amount Paid</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if InstallmentPayments %}
+                    {% for payment in InstallmentPayments %}
+                    <tr>
+                      <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
+                      <td><strong class="text-success">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                      <td>
+                        {% if request.user.is_staff %}
+                        <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
+                          data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
+                          Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
+                          data-payment-type="{{ payment.Payment_Type|default:1 }}">
+                          <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                          onclick="deletePayment({{ payment.pk|default:0 }})">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                      <td colspan="3" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No installment payments recorded
+                      </td>
+                    </tr>
                     {% endif %}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Payment History Section - Collapsed by Default -->
-          <div class="mb-4">
-            <h4 class="mb-3">
-              <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse"
-                data-bs-target="#paymentHistoryCollapse" aria-expanded="false" aria-controls="paymentHistoryCollapse">
-                <i class="fas fa-chevron-down me-2"></i>Payment History
-              </button>
-            </h4>
-            <div class="collapse" id="paymentHistoryCollapse">
-              <!-- Installment Payments Section -->
-              <div class="mb-4">
-                <h5 class="text-success mb-3">
-                  <i class="fas fa-money-bill-wave me-2"></i>Installment Payments
-                  <span class="badge bg-success ms-2">{{ InstallmentPayments|length }}</span>
-                </h5>
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
-                  <table class="table table-bordered table-striped align-middle">
-                    <thead class="table-success">
-                      <tr>
-                        <th>Date Paid</th>
-                        <th>Amount Paid</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% if InstallmentPayments %}
-                      {% for payment in InstallmentPayments %}
-                      <tr>
-                        <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
-                        <td><strong class="text-success">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
-                        <td>
-                          <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
-                            data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
-                            Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
-                            data-payment-type="{{ payment.Payment_Type|default:1 }}">
-                            <i class="fas fa-edit"></i> Edit
-                          </button>
-                          <button type="button" class="btn btn-sm btn-danger"
-                            onclick="deletePayment({{ payment.pk|default:0 }})">
-                            <i class="fas fa-trash"></i> Delete
-                          </button>
-                        </td>
-                      </tr>
-                      {% endfor %}
-                      {% else %}
-                      <tr>
-                        <td colspan="3" class="text-center text-muted">
-                          <i class="fas fa-info-circle me-2"></i>No installment payments recorded
-                        </td>
-                      </tr>
-                      {% endif %}
-                    </tbody>
-                  </table>
-                </div>
+                  </tbody>
+                </table>
               </div>
+            </div>
 
-              <!-- Penalty Payments Section -->
-              <div class="mb-4">
-                <h5 class="text-warning mb-3">
-                  <i class="fas fa-exclamation-triangle me-2"></i>Penalty Payments
-                  <span class="badge bg-warning ms-2">{{ PenaltyPayments|length }}</span>
-                </h5>
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
-                  <table class="table table-bordered table-striped align-middle">
-                    <thead class="table-warning">
-                      <tr>
-                        <th>Date Paid</th>
-                        <th>Amount Paid</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% if PenaltyPayments %}
-                      {% for payment in PenaltyPayments %}
-                      <tr>
-                        <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
-                        <td><strong class="text-warning">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
-                        <td>
-                          <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
-                            data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
-                            Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
-                            data-payment-type="{{ payment.Payment_Type|default:2 }}">
-                            <i class="fas fa-edit"></i> Edit
-                          </button>
-                          <button type="button" class="btn btn-sm btn-danger"
-                            onclick="deletePayment({{ payment.pk|default:0 }})">
-                            <i class="fas fa-trash"></i> Delete
-                          </button>
-                        </td>
-                      </tr>
-                      {% endfor %}
-                      {% else %}
-                      <tr>
-                        <td colspan="3" class="text-center text-muted">
-                          <i class="fas fa-info-circle me-2"></i>No penalty payments recorded
-                        </td>
-                      </tr>
-                      {% endif %}
-                    </tbody>
-                  </table>
-                </div>
+            <!-- Penalty Payments Section -->
+            <div class="mb-4">
+              <h5 class="text-warning mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>Penalty Payments
+                <span class="badge bg-warning ms-2">{{ PenaltyPayments|length }}</span>
+              </h5>
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto">
+                <table class="table table-bordered table-striped align-middle">
+                  <thead class="table-warning">
+                    <tr>
+                      <th>Date Paid</th>
+                      <th>Amount Paid</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if PenaltyPayments %}
+                    {% for payment in PenaltyPayments %}
+                    <tr>
+                      <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
+                      <td><strong class="text-warning">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                      <td>
+                        {% if request.user.is_staff %}
+                        <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
+                          data-payment-id="{{ payment.pk|default:0 }}" data-date-paid="{{ payment.Date_Paid|date:"
+                          Y-m-d"|default:"" }}" data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
+                          data-payment-type="{{ payment.Payment_Type|default:2 }}">
+                          <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                          onclick="deletePayment({{ payment.pk|default:0 }})">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                      <td colspan="3" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No penalty payments recorded
+                      </td>
+                    </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -899,6 +906,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <!-- Edit Payment Modal -->

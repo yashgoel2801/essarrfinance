@@ -141,12 +141,15 @@
                     <i class="fas fa-file-alt me-1"></i>Docs
                   </button>
                 </form>
+                </form>
+                {% if request.user.is_staff %}
                 <form action="{% url 'microfinance:editclient' pk=Client.pk %}" method="GET">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-edit me-1"></i>Edit
                   </button>
                 </form>
+                {% endif %}
                 <form action="{% url 'microfinance:pdf4' pk=Client.pk %}" method="POST">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-outline-info btn-sm">
@@ -166,6 +169,7 @@
         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Loan Details</h5>
           <div>
+            {% if request.user.is_staff %}
             {% if Guarantors %}
             {% if Guarantors|length == 1 %}
             <!-- Debug: Client ID: {{ Client.pk }}, Guarantor ID: {{ Guarantors.first.pk }} -->
@@ -218,417 +222,285 @@
             </a>
             {% endif %}
           </div>
+          {% endif %}
         </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Loan ID</th>
-                  <th>A/c No.</th>
-                  <th>Date Created</th>
-                  <th>Principle Amount</th>
-                  <th>Installment</th>
-                  <th>Reminder and remarks</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for loan in Loan %}
-                <tr {% if loan.Status %}class="loan-row-closed" {% else %}class="loan-row-active" {% endif %}>
-                  <td>
-                    <a href="{% url 'microfinance:loandetail' pk=loan.pk %}">{{ loan.pk }}</a>
-                  </td>
-                  <td>{{ loan.AccNo }}</td>
-                  <td>{{ loan.Loan_Date|date:"M d, Y" }}</td>
-                  <td>{{ loan.Principle_Amount }}</td>
-                  <td>
-                    {{loan.installments_set.first.Installment_Due|floatformat:2}}
-                  </td>
-                  <td>
-                    <form action="{% url 'microfinance:clientdetail' pk=Client.pk %}" method="POST"
-                      class="d-flex align-items-center gap-2">
-                      {% csrf_token %}
-                      <input type="hidden" name="pk" value="{{ loan.pk }}" />
-                      <input type="text" name="remark" class="form-control form-control-sm" value="{{ loan.remark }}"
-                        placeholder="Remark" />
-                      <input type="date" name="Reminder" class="form-control form-control-sm"
-                        value="{{ loan.reminder|date:'Y-m-d' }}" />
-                      <button type="submit" name="save" class="btn btn-sm btn-success">
-                        Save
-                      </button>
-                    </form>
-                  </td>
-                  <td>
-                    {% if loan.Status %}
-                    <span class="badge status-closed">Closed</span>
-                    {% else %}
-                    <span class="badge status-active">Active</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <div class="btn-group" role="group">
-                      <a href="{% url 'microfinance:editloan' pk=loan.pk %}" class="btn btn-sm btn-warning"
-                        title="Edit this loan">
-                        <i class="fas fa-edit me-1"></i>Edit
-                      </a>
-                      <button type="button" class="btn btn-sm btn-danger delete-loan-btn" data-loan-id="{{ loan.pk }}"
-                        data-amount="{{ loan.Principle_Amount }}" title="Delete this loan">
-                        <i class="fas fa-trash me-1"></i>Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Loan ID</th>
+                <th>A/c No.</th>
+                <th>Date Created</th>
+                <th>Principle Amount</th>
+                <th>Installment</th>
+                <th>Reminder and remarks</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loan in Loan %}
+              <tr {% if loan.Status %}class="loan-row-closed" {% else %}class="loan-row-active" {% endif %}>
+                <td>
+                  <a href="{% url 'microfinance:loandetail' pk=loan.pk %}">{{ loan.pk }}</a>
+                </td>
+                <td>{{ loan.AccNo }}</td>
+                <td>{{ loan.Loan_Date|date:"M d, Y" }}</td>
+                <td>{{ loan.Principle_Amount }}</td>
+                <td>
+                  {{loan.installments_set.first.Installment_Due|floatformat:2}}
+                </td>
+                <td>
+                  {% if request.user.is_staff %}
+                  <form action="{% url 'microfinance:clientdetail' pk=Client.pk %}" method="POST"
+                    class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="pk" value="{{ loan.pk }}" />
+                    <input type="text" name="remark" class="form-control form-control-sm" value="{{ loan.remark }}"
+                      placeholder="Remark" />
+                    <input type="date" name="Reminder" class="form-control form-control-sm"
+                      value="{{ loan.reminder|date:'Y-m-d' }}" />
+                    <button type="submit" name="save" class="btn btn-sm btn-success">
+                      Save
+                    </button>
+                  </form>
+                  {% else %}
+                  {{ loan.remark }}
+                  {% if loan.reminder %}
+                  <br><small class="text-muted">Reminder: {{ loan.reminder|date:'M d, Y' }}</small>
+                  {% endif %}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if loan.Status %}
+                  <span class="badge status-closed">Closed</span>
+                  {% else %}
+                  <span class="badge status-active">Active</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if request.user.is_staff %}
+                  <div class="btn-group" role="group">
+                    <a href="{% url 'microfinance:editloan' pk=loan.pk %}" class="btn btn-sm btn-warning"
+                      title="Edit this loan">
+                      <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    <button type="button" class="btn btn-sm btn-danger delete-loan-btn" data-loan-id="{{ loan.pk }}"
+                      data-amount="{{ loan.Principle_Amount }}" title="Delete this loan">
+                      <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-          <!-- Add Loan Button Section -->
-          <div class="mt-4 text-center">
-            <!-- Debug Information -->
-            <div class="alert alert-info mb-3">
-              <strong>Debug Info:</strong><br>
-              Client ID: {{ Client.pk }}<br>
-              Guarantors Count: {{ Guarantors|length }}<br>
-              {% if Guarantors %}
-              First Guarantor ID: {{ Guarantors.first.pk }}<br>
-              Generated URL: {% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}
-              {% endif %}
-            </div>
+      </div>
+      {% if request.user.is_staff %}
+      <!-- Add Loan Button Section -->
+      <div class="mt-4 text-center">
+        <!-- Debug Information -->
+        <div class="alert alert-info mb-3">
+          <strong>Debug Info:</strong><br>
+          Client ID: {{ Client.pk }}<br>
+          Guarantors Count: {{ Guarantors|length }}<br>
+          {% if Guarantors %}
+          First Guarantor ID: {{ Guarantors.first.pk }}<br>
+          Generated URL: {% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}
+          {% endif %}
+        </div>
 
-            {% if Guarantors %}
-            {% if Guarantors|length == 1 %}
-            <!-- Debug: Client ID: {{ Client.pk }}, Guarantor ID: {{ Guarantors.first.pk }} -->
-            <div class="dropdown">
-              <button class="btn btn-success btn-lg dropdown-toggle" type="button" id="addLoanDropdown"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-plus me-2"></i>Add New Loan
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="addLoanDropdown">
-                <li>
-                  <h6 class="dropdown-header">Choose Guarantor:</h6>
-                </li>
-                <li>
-                  <a class="dropdown-item" href="{% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}">
-                    <i class="fas fa-user me-2"></i>Use Existing Guarantor
-                    <small class="text-muted d-block">{{ Guarantors.first.Guarantor_Name }} - {{ Guarantors.first.Guarantor_Phone_no }} </small>
-                  </a>
-                </li>
-                <li>
-                  <a class="dropdown-item" href="{% url 'microfinance:addguarantor' pk=Client.pk %}">
-                    <i class="fas fa-user-plus me-2"></i>Add New Guarantor
-                    <small class="text-muted d-block">Create a new guarantor for this loan</small>
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <p class="text-muted mt-2">
-              <i class="fas fa-info-circle me-1"></i>
-              Choose whether to use the existing guarantor or add a new one for this loan.
-            </p>
-
-            <!-- Direct Add Loan Link -->
-            <div class="mt-3">
-              <a href="{% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}"
-                class="btn btn-warning btn-sm">
-                <i class="fas fa-plus me-1"></i>Quick Add Loan
+        {% if Guarantors %}
+        {% if Guarantors|length == 1 %}
+        <!-- Debug: Client ID: {{ Client.pk }}, Guarantor ID: {{ Guarantors.first.pk }} -->
+        <div class="dropdown">
+          <button class="btn btn-success btn-lg dropdown-toggle" type="button" id="addLoanDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-plus me-2"></i>Add New Loan
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="addLoanDropdown">
+            <li>
+              <h6 class="dropdown-header">Choose Guarantor:</h6>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}">
+                <i class="fas fa-user me-2"></i>Use Existing Guarantor
+                <small class="text-muted d-block">{{ Guarantors.first.Guarantor_Name }} - {{
+                  Guarantors.first.Guarantor_Phone_no }} </small>
               </a>
-            </div>
-            {% else %}
-            <div class="dropdown">
-              <button class="btn btn-success btn-lg dropdown-toggle" type="button" id="addLoanDropdown"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-plus me-2"></i>Add New Loan
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="addLoanDropdown">
-                <li>
-                  <h6 class="dropdown-header">Select Guarantor:</h6>
-                </li>
-                {% for guarantor in Guarantors %}
-                <li>
-                  <a class="dropdown-item" href="{% url 'microfinance:addloan' pk=Client.pk sk=guarantor.pk %}">
-                    <i class="fas fa-user me-2"></i>{{ guarantor.Guarantor_Name }}
-                    <small class="text-muted d-block">{{ guarantor.Guarantor_Phone_no }}</small>
-                  </a>
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-            <p class="text-muted mt-2">
-              <i class="fas fa-info-circle me-1"></i>
-              Select a guarantor from the dropdown to add a new loan.
-            </p>
-            {% endif %}
-            {% else %}
-            <div class="alert alert-warning">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              <strong>No Guarantor Found!</strong> You need to add a guarantor before creating a loan.
-            </div>
-            <a href="{% url 'microfinance:addguarantor' pk=Client.pk %}" class="btn btn-warning btn-lg">
-              <i class="fas fa-user-plus me-2"></i>Add Guarantor First
-            </a>
-            {% endif %}
-          </div>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'microfinance:addguarantor' pk=Client.pk %}">
+                <i class="fas fa-user-plus me-2"></i>Add New Guarantor
+                <small class="text-muted d-block">Create a new guarantor for this loan</small>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <p class="text-muted mt-2">
+          <i class="fas fa-info-circle me-1"></i>
+          Choose whether to use the existing guarantor or add a new one for this loan.
+        </p>
+
+        <!-- Direct Add Loan Link -->
+        <div class="mt-3">
+          <a href="{% url 'microfinance:addloan' pk=Client.pk sk=Guarantors.first.pk %}" class="btn btn-warning btn-sm">
+            <i class="fas fa-plus me-1"></i>Quick Add Loan
+          </a>
+        </div>
+        {% else %}
+        <div class="dropdown">
+          <button class="btn btn-success btn-lg dropdown-toggle" type="button" id="addLoanDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-plus me-2"></i>Add New Loan
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="addLoanDropdown">
+            <li>
+              <h6 class="dropdown-header">Select Guarantor:</h6>
+            </li>
+            {% for guarantor in Guarantors %}
+            <li>
+              <a class="dropdown-item" href="{% url 'microfinance:addloan' pk=Client.pk sk=guarantor.pk %}">
+                <i class="fas fa-user me-2"></i>{{ guarantor.Guarantor_Name }}
+                <small class="text-muted d-block">{{ guarantor.Guarantor_Phone_no }}</small>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <p class="text-muted mt-2">
+          <i class="fas fa-info-circle me-1"></i>
+          Select a guarantor from the dropdown to add a new loan.
+        </p>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>No Guarantor Found!</strong> You need to add a guarantor before creating a loan.
+        </div>
+        <a href="{% url 'microfinance:addguarantor' pk=Client.pk %}" class="btn btn-warning btn-lg">
+          <i class="fas fa-user-plus me-2"></i>Add Guarantor First
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+</div>
+<div class="row mt-4 mb-5">
+  <!-- Full Client Profile Column -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Full Client Profile</h5>
+      </div>
+      <div class="card-body details-scroll-container">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0">
+            <tbody>
+              <tr>
+                <th width="40%">Father's Name:</th>
+                <td>{{ Client.Father_Name }}</td>
+              </tr>
+              <tr>
+                <th>Husband's Name:</th>
+                <td>{{ Client.Husband_Name }}</td>
+              </tr>
+              <tr>
+                <th>Mother's Name:</th>
+                <td>{{ Client.Mother_Name }}</td>
+              </tr>
+              <tr>
+                <th>Wife's Name:</th>
+                <td>{{ Client.Wife_Name }}</td>
+              </tr>
+              <tr>
+                <th>Local Address:</th>
+                <td>{{ Client.Local_Address }}</td>
+              </tr>
+              <tr>
+                <th>Permanent Address:</th>
+                <td>{{ Client.Permanent_Address }}</td>
+              </tr>
+              <tr>
+                <th>Occupation:</th>
+                <td>{{ Client.Occupation }}</td>
+              </tr>
+              <tr>
+                <th>Designation:</th>
+                <td>{{ Client.Designation }}</td>
+              </tr>
+              <tr>
+                <th>Office Address:</th>
+                <td>{{ Client.Office_Address }}</td>
+              </tr>
+              <tr>
+                <th>Phone No 1:</th>
+                <td>{{ Client.Phone_no1 }}</td>
+              </tr>
+              <tr>
+                <th>Phone No 2:</th>
+                <td>{{ Client.Phone_no2 }}</td>
+              </tr>
+              <tr>
+                <th>{{ Client.Photo_Id }}:</th>
+                <td>{{ Client.Photo_Id_No }}</td>
+              </tr>
+              <tr>
+                <th>Reference Name:</th>
+                <td>{{ Client.Reference_Name }}</td>
+              </tr>
+              <tr>
+                <th>Reference Phone No:</th>
+                <td>{{ Client.Reference_No }}</td>
+              </tr>
+              <tr>
+                <th>Verified By:</th>
+                <td>{{ Client.Verified_By }}</td>
+              </tr>
+              <tr>
+                <th>Date Added:</th>
+                <td>{{ Client.Date_Added }}</td>
+              </tr>
+              <tr>
+                <th>Entered By:</th>
+                <td>{{ Client.author }}</td>
+              </tr>
+              <tr>
+                <th>Medical Issues:</th>
+                <td>{{ Client.Major_Medical_Issues }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
-  <div class="row mt-4 mb-5">
-    <!-- Full Client Profile Column -->
-    <div class="col-md-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0">Full Client Profile</h5>
-        </div>
-        <div class="card-body details-scroll-container">
-          <div class="table-responsive">
-            <table class="table table-sm table-bordered mb-0">
-              <tbody>
-                <tr>
-                  <th width="40%">Father's Name:</th>
-                  <td>{{ Client.Father_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Husband's Name:</th>
-                  <td>{{ Client.Husband_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Mother's Name:</th>
-                  <td>{{ Client.Mother_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Wife's Name:</th>
-                  <td>{{ Client.Wife_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Local Address:</th>
-                  <td>{{ Client.Local_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Permanent Address:</th>
-                  <td>{{ Client.Permanent_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Occupation:</th>
-                  <td>{{ Client.Occupation }}</td>
-                </tr>
-                <tr>
-                  <th>Designation:</th>
-                  <td>{{ Client.Designation }}</td>
-                </tr>
-                <tr>
-                  <th>Office Address:</th>
-                  <td>{{ Client.Office_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No 1:</th>
-                  <td>{{ Client.Phone_no1 }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No 2:</th>
-                  <td>{{ Client.Phone_no2 }}</td>
-                </tr>
-                <tr>
-                  <th>{{ Client.Photo_Id }}:</th>
-                  <td>{{ Client.Photo_Id_No }}</td>
-                </tr>
-                <tr>
-                  <th>Reference Name:</th>
-                  <td>{{ Client.Reference_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Reference Phone No:</th>
-                  <td>{{ Client.Reference_No }}</td>
-                </tr>
-                <tr>
-                  <th>Verified By:</th>
-                  <td>{{ Client.Verified_By }}</td>
-                </tr>
-                <tr>
-                  <th>Date Added:</th>
-                  <td>{{ Client.Date_Added }}</td>
-                </tr>
-                <tr>
-                  <th>Entered By:</th>
-                  <td>{{ Client.author }}</td>
-                </tr>
-                <tr>
-                  <th>Medical Issues:</th>
-                  <td>{{ Client.Major_Medical_Issues }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+
+  <!-- Guarantor Information Column -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Guarantor Information</h5>
+        {% if Guarantors|length > 1 %}
+        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse"
+          data-bs-target="#guarantorsCollapse" aria-expanded="false" aria-controls="guarantorsCollapse"
+          id="guarantorsToggle">
+          <i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})
+        </button>
+        {% endif %}
       </div>
-    </div>
-
-    <!-- Guarantor Information Column -->
-    <div class="col-md-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Guarantor Information</h5>
-          {% if Guarantors|length > 1 %}
-          <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse"
-            data-bs-target="#guarantorsCollapse" aria-expanded="false" aria-controls="guarantorsCollapse"
-            id="guarantorsToggle">
-            <i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})
-          </button>
-          {% endif %}
-        </div>
-        <div class="card-body details-scroll-container">
-          {% if Guarantors %}
-          {% if Guarantors|length > 1 %}
-          <!-- Collapsible section for many guarantors -->
-          <div class="collapse" id="guarantorsCollapse">
-            {% for guarantor in Guarantors %}
-            <div class="guarantor-item">
-              <h6>Guarantor: {{ forloop.counter }}</h6>
-              <div class="d-flex align-items-center mb-3">
-                <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
-                  style="width: 80px; height: 80px; object-fit: cover;" />
-                <h6 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h6>
-              </div>
-              <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
-                class="d-inline-block mb-2">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-primary btn-sm py-0">
-                  Docs
-                </button>
-              </form>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered mb-0">
-                  <tbody>
-                    <tr>
-                      <th width="40%">Father's Name:</th>
-                      <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                    </tr>
-                    <tr>
-                      <th>Mother's Name:</th>
-                      <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                    </tr>
-                    <tr>
-                      <th>Local Address:</th>
-                      <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Permanent Address:</th>
-                      <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Occupation:</th>
-                      <td>{{ guarantor.Guarantor_Occupation }}</td>
-                    </tr>
-                    <tr>
-                      <th>Designation:</th>
-                      <td>{{ guarantor.Guarantor_Designation }}</td>
-                    </tr>
-                    <tr>
-                      <th>Office Address:</th>
-                      <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Phone No:</th>
-                      <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                    </tr>
-                    <tr>
-                      <th>Phone No 2:</th>
-                      <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                    </tr>
-                    <tr>
-                      <th>Security Documents:</th>
-                      <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {% if not forloop.last %}
-              <hr />
-              {% endif %}
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- Show first 1 guarantor by default -->
-          <div id="guarantorsPreview">
-            {% for guarantor in Guarantors|slice:":1" %}
-            <div class="guarantor-item">
-              <h6>Guarantor: {{ forloop.counter }}</h6>
-              <div class="d-flex align-items-center mb-3">
-                <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
-                  style="width: 80px; height: 80px; object-fit: cover;" />
-                <h6 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h6>
-              </div>
-              <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
-                class="d-inline-block mb-2">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-primary btn-sm py-0">
-                  Docs
-                </button>
-              </form>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered mb-0">
-                  <tbody>
-                    <tr>
-                      <th width="40%">Father's Name:</th>
-                      <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                    </tr>
-                    <tr>
-                      <th>Mother's Name:</th>
-                      <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                    </tr>
-                    <tr>
-                      <th>Local Address:</th>
-                      <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Permanent Address:</th>
-                      <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Occupation:</th>
-                      <td>{{ guarantor.Guarantor_Occupation }}</td>
-                    </tr>
-                    <tr>
-                      <th>Designation:</th>
-                      <td>{{ guarantor.Guarantor_Designation }}</td>
-                    </tr>
-                    <tr>
-                      <th>Office Address:</th>
-                      <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                    </tr>
-                    <tr>
-                      <th>Phone No:</th>
-                      <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                    </tr>
-                    <tr>
-                      <th>Phone No 2:</th>
-                      <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                    </tr>
-                    <tr>
-                      <th>Security Documents:</th>
-                      <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {% if not forloop.last %}
-              <hr />
-              {% endif %}
-            </div>
-            {% endfor %}
-            {% if Guarantors|length > 1 %}
-            <div class="text-center mt-3">
-              <small class="text-muted">
-                Showing top guarantor.
-              </small>
-            </div>
-            {% endif %}
-          </div>
-          {% else %}
-          <!-- Show all guarantors if 1 or fewer -->
+      <div class="card-body details-scroll-container">
+        {% if Guarantors %}
+        {% if Guarantors|length > 1 %}
+        <!-- Collapsible section for many guarantors -->
+        <div class="collapse" id="guarantorsCollapse">
           {% for guarantor in Guarantors %}
           <div class="guarantor-item">
             <h6>Guarantor: {{ forloop.counter }}</h6>
@@ -690,111 +562,257 @@
                 </tbody>
               </table>
             </div>
+            {% if not forloop.last %}
+            <hr />
+            {% endif %}
           </div>
           {% endfor %}
-          {% endif %}
-          {% else %}
-          <p>No guarantor details available.</p>
+        </div>
+
+        <!-- Show first 1 guarantor by default -->
+        <div id="guarantorsPreview">
+          {% for guarantor in Guarantors|slice:":1" %}
+          <div class="guarantor-item">
+            <h6>Guarantor: {{ forloop.counter }}</h6>
+            <div class="d-flex align-items-center mb-3">
+              <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
+                style="width: 80px; height: 80px; object-fit: cover;" />
+              <h6 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h6>
+            </div>
+            <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
+              class="d-inline-block mb-2">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-primary btn-sm py-0">
+                Docs
+              </button>
+            </form>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered mb-0">
+                <tbody>
+                  <tr>
+                    <th width="40%">Father's Name:</th>
+                    <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                  </tr>
+                  <tr>
+                    <th>Mother's Name:</th>
+                    <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                  </tr>
+                  <tr>
+                    <th>Local Address:</th>
+                    <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                  </tr>
+                  <tr>
+                    <th>Permanent Address:</th>
+                    <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                  </tr>
+                  <tr>
+                    <th>Occupation:</th>
+                    <td>{{ guarantor.Guarantor_Occupation }}</td>
+                  </tr>
+                  <tr>
+                    <th>Designation:</th>
+                    <td>{{ guarantor.Guarantor_Designation }}</td>
+                  </tr>
+                  <tr>
+                    <th>Office Address:</th>
+                    <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                  </tr>
+                  <tr>
+                    <th>Phone No:</th>
+                    <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                  </tr>
+                  <tr>
+                    <th>Phone No 2:</th>
+                    <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                  </tr>
+                  <tr>
+                    <th>Security Documents:</th>
+                    <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {% if not forloop.last %}
+            <hr />
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if Guarantors|length > 1 %}
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              Showing top guarantor.
+            </small>
+          </div>
           {% endif %}
         </div>
+        {% else %}
+        <!-- Show all guarantors if 1 or fewer -->
+        {% for guarantor in Guarantors %}
+        <div class="guarantor-item">
+          <h6>Guarantor: {{ forloop.counter }}</h6>
+          <div class="d-flex align-items-center mb-3">
+            <img src="{{ guarantor.Image.url }}" alt="Guarantor Image" class="img-fluid rounded me-3"
+              style="width: 80px; height: 80px; object-fit: cover;" />
+            <h6 class="mb-0"><b>{{ guarantor.Guarantor_Name }}</b></h6>
+          </div>
+          <form action="{% url 'microfinance:viewguarantordocs' pk=guarantor.pk %}" method="POST"
+            class="d-inline-block mb-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary btn-sm py-0">
+              Docs
+            </button>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+              <tbody>
+                <tr>
+                  <th width="40%">Father's Name:</th>
+                  <td>{{ guarantor.Guarantor_Father_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Mother's Name:</th>
+                  <td>{{ guarantor.Guarantor_Mother_Name }}</td>
+                </tr>
+                <tr>
+                  <th>Local Address:</th>
+                  <td>{{ guarantor.Guarantor_Local_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Permanent Address:</th>
+                  <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Occupation:</th>
+                  <td>{{ guarantor.Guarantor_Occupation }}</td>
+                </tr>
+                <tr>
+                  <th>Designation:</th>
+                  <td>{{ guarantor.Guarantor_Designation }}</td>
+                </tr>
+                <tr>
+                  <th>Office Address:</th>
+                  <td>{{ guarantor.Guarantor_Office_Address }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No:</th>
+                  <td>{{ guarantor.Guarantor_Phone_no }}</td>
+                </tr>
+                <tr>
+                  <th>Phone No 2:</th>
+                  <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
+                </tr>
+                <tr>
+                  <th>Security Documents:</th>
+                  <td>{{ guarantor.Guarantor_Security_Docs }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% else %}
+        <p>No guarantor details available.</p>
+        {% endif %}
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Debug and functionality script -->
-  <script>
-    // Debug function to test button clicks and URL generation
-    document.addEventListener('DOMContentLoaded', function () {
-      console.log('Client Detail page loaded');
+<!-- Debug and functionality script -->
+<script>
+  // Debug function to test button clicks and URL generation
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('Client Detail page loaded');
 
-      // Test if buttons are clickable
-      const addLoanButtons = document.querySelectorAll('a[href*="addloan"]');
-      console.log('Found add loan buttons:', addLoanButtons.length);
+    // Test if buttons are clickable
+    const addLoanButtons = document.querySelectorAll('a[href*="addloan"]');
+    console.log('Found add loan buttons:', addLoanButtons.length);
 
-      addLoanButtons.forEach((button, index) => {
-        console.log(`Button ${index}:`, button.href);
-        button.addEventListener('click', function (e) {
-          console.log('Add loan button clicked:', this.href);
-          // Let the default action proceed
-        });
-      });
-
-      // Test dropdown functionality
-      const dropdowns = document.querySelectorAll('.dropdown-toggle');
-      console.log('Found dropdowns:', dropdowns.length);
-
-      dropdowns.forEach((dropdown, index) => {
-        console.log(`Dropdown ${index}:`, dropdown.id);
-      });
-
-      // Ensure Bootstrap dropdowns work
-      if (typeof bootstrap !== 'undefined') {
-        console.log('Bootstrap is available');
-      } else {
-        console.log('Bootstrap is not available');
-      }
-
-      // Handle guarantors collapse toggle
-      const guarantorsToggle = document.getElementById('guarantorsToggle');
-      const guarantorsCollapse = document.getElementById('guarantorsCollapse');
-      const guarantorsPreview = document.getElementById('guarantorsPreview');
-
-      if (guarantorsToggle && guarantorsCollapse && guarantorsPreview) {
-        guarantorsCollapse.addEventListener('show.bs.collapse', function () {
-          guarantorsToggle.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show Less';
-          guarantorsPreview.style.display = 'none';
-        });
-
-        guarantorsCollapse.addEventListener('hide.bs.collapse', function () {
-          guarantorsToggle.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})';
-          guarantorsPreview.style.display = 'block';
-        });
-      }
-
-      // Handle delete loan buttons
-      document.querySelectorAll('.delete-loan-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-          const loanId = this.getAttribute('data-loan-id');
-          const amount = this.getAttribute('data-amount');
-          confirmDeleteLoan(loanId, amount);
-        });
+    addLoanButtons.forEach((button, index) => {
+      console.log(`Button ${index}:`, button.href);
+      button.addEventListener('click', function (e) {
+        console.log('Add loan button clicked:', this.href);
+        // Let the default action proceed
       });
     });
 
+    // Test dropdown functionality
+    const dropdowns = document.querySelectorAll('.dropdown-toggle');
+    console.log('Found dropdowns:', dropdowns.length);
 
-    // Function to confirm loan deletion
-    function confirmDeleteLoan(loanId, amount) {
-      if (confirm(`Are you sure you want to delete this loan (Amount: ₹${amount})?\n\nThis action cannot be undone and will also delete all associated installments and payments.`)) {
-        // Create a form to submit the delete request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{% url "microfinance:clientdetail" pk=Client.pk %}';
+    dropdowns.forEach((dropdown, index) => {
+      console.log(`Dropdown ${index}:`, dropdown.id);
+    });
 
-        // Add CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfToken;
-        form.appendChild(csrfInput);
-
-        // Add loan ID
-        const loanInput = document.createElement('input');
-        loanInput.type = 'hidden';
-        loanInput.name = 'loan_id';
-        loanInput.value = loanId;
-        form.appendChild(loanInput);
-
-        // Add delete action
-        const deleteInput = document.createElement('input');
-        deleteInput.type = 'hidden';
-        deleteInput.name = 'delete_loan';
-        deleteInput.value = 'true';
-        form.appendChild(deleteInput);
-
-        document.body.appendChild(form);
-        form.submit();
-      }
+    // Ensure Bootstrap dropdowns work
+    if (typeof bootstrap !== 'undefined') {
+      console.log('Bootstrap is available');
+    } else {
+      console.log('Bootstrap is not available');
     }
-  </script>
-  {% endblock %}
+
+    // Handle guarantors collapse toggle
+    const guarantorsToggle = document.getElementById('guarantorsToggle');
+    const guarantorsCollapse = document.getElementById('guarantorsCollapse');
+    const guarantorsPreview = document.getElementById('guarantorsPreview');
+
+    if (guarantorsToggle && guarantorsCollapse && guarantorsPreview) {
+      guarantorsCollapse.addEventListener('show.bs.collapse', function () {
+        guarantorsToggle.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show Less';
+        guarantorsPreview.style.display = 'none';
+      });
+
+      guarantorsCollapse.addEventListener('hide.bs.collapse', function () {
+        guarantorsToggle.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Show All ({{ Guarantors|length }})';
+        guarantorsPreview.style.display = 'block';
+      });
+    }
+
+    // Handle delete loan buttons
+    document.querySelectorAll('.delete-loan-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const loanId = this.getAttribute('data-loan-id');
+        const amount = this.getAttribute('data-amount');
+        confirmDeleteLoan(loanId, amount);
+      });
+    });
+  });
+
+
+  // Function to confirm loan deletion
+  function confirmDeleteLoan(loanId, amount) {
+    if (confirm(`Are you sure you want to delete this loan (Amount: ₹${amount})?\n\nThis action cannot be undone and will also delete all associated installments and payments.`)) {
+      // Create a form to submit the delete request
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "microfinance:clientdetail" pk=Client.pk %}';
+
+      // Add CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      // Add loan ID
+      const loanInput = document.createElement('input');
+      loanInput.type = 'hidden';
+      loanInput.name = 'loan_id';
+      loanInput.value = loanId;
+      form.appendChild(loanInput);
+
+      // Add delete action
+      const deleteInput = document.createElement('input');
+      deleteInput.type = 'hidden';
+      deleteInput.name = 'delete_loan';
+      deleteInput.value = 'true';
+      form.appendChild(deleteInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
+{% endblock %}

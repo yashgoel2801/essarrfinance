@@ -16,7 +16,7 @@ from django.template import loader
 from datetime import date
 from datetime import datetime
 from django.contrib.auth.models import Permission
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 import base64
 from django.core.files.base import ContentFile
@@ -54,6 +54,8 @@ def Add_Officer(request):
 
 @login_required(login_url="/accounts/login/")
 def Add_Client(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("You do not have permission to add clients.")
     
     Today = datetime.now()
     if request.method == 'POST':
@@ -75,7 +77,7 @@ def Add_Client(request):
             instance=form.save(commit=False)
             newobj = Accounts(Client=instance)
             permissions = Permission.objects.get(codename='client_view')
-            username = form.cleaned_data['Phone_no1']
+            username = ''.join(filter(str.isdigit, str(form.cleaned_data['Phone_no1'])))
             password = instance.Name[:4]+ form.cleaned_data['Photo_Id_No'][-4:]
             if not User.objects.filter(username=username).exists():
                 user = User.objects.create_user(
@@ -390,11 +392,16 @@ def pay_installment(request,loan,payments,DatePaid):
 
 @login_required(login_url="/accounts/login/")
 def Loan_Detail(request,pk):
-    print("=" * 50)
-    print("LOAN_DETAIL VIEW CALLED!")
-    print(f"Loan ID: {pk}")
-    print("=" * 50)
-    Loan=Loans.objects.get(pk=pk)
+    Loan=get_object_or_404(Loans, pk=pk)
+    
+    # Permission check: Non-staff can only see their own loan detail
+    if not request.user.is_staff:
+        try:
+            client_record = Clients.objects.get(ClientUser=request.user)
+            if Loan.Account.Client.pk != client_record.pk:
+                return HttpResponseForbidden("You do not have permission to view this loan.")
+        except Clients.DoesNotExist:
+            return HttpResponseForbidden("Client record not found for this user.")
     Installment = Installments.objects.filter(Loan=Loan).filter(Installment_Due__gt=0).order_by('Date_Due')
     print(f"=== INSTALLMENT DEBUG ===")
     print(f"Found {Installment.count()} installments for loan {Loan.pk}")
@@ -1005,7 +1012,9 @@ class ClientFilter(BaseFilter):
         'search_phone' : ['Phone_no1','Phone_no2']
     }
 
-class ClientSearchList(LoginRequiredMixin, SearchListView):
+class ClientSearchList(LoginRequiredMixin, UserPassesTestMixin, SearchListView):
+    def test_func(self):
+        return self.request.user.is_staff
 
     model = Clients
     template_name = "microfinance/Client_Result.html"
@@ -1026,6 +1035,8 @@ def Loanidsearch(request):
 
 @login_required(login_url="/accounts/login/")
 def Reports(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("You do not have permission to view reports.")
     staff =Staff.objects.all().distinct()
     return render(request,'microfinance/Reports.html',{'users':staff})
 
@@ -1422,6 +1433,8 @@ def Officerwise_Total_Finance_And_Collection_pdf(request):
 
 @login_required(login_url="/accounts/login/")
 def All_Clients_List(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Access Denied")
     Staff_pk=int(request.POST.get('name'))
     if Staff_pk !=0 :
         Loan=Loans.objects.all().filter(Loan_Collector_id=Staff_pk).filter(Status=False).filter(Frequency=1)
@@ -1616,6 +1629,14 @@ def Client_Detail_Pdf(request,pk):
 
 @login_required(login_url="/accounts/login/")
 def Home(request):
+    # Redirect clients to their own detail page
+    if not request.user.is_staff:
+        try:
+            client = Clients.objects.get(ClientUser=request.user)
+            return redirect('microfinance:clientdetail', pk=client.pk)
+        except Clients.DoesNotExist:
+            return HttpResponse("Client profile not found. Please contact support.")
+
     loan=Loans.objects.filter(reminder__lte=datetime.now()).filter(Status=False).distinct()    
     dic={}
     for i in Loans.objects.all().filter(reminder__lt=datetime.now()).filter(Status=False).distinct():

@@ -49,7 +49,7 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        
+
         .card {
             flex: 0 0 calc(50% - 1rem);
             min-width: 250px;
@@ -82,11 +82,14 @@
 <body style="margin: 0;">
     <div class="cards-container">
         <div class="cards-wrapper">
+            {% if request.user.is_staff %}
             <!-- Add Clients Card -->
             <div class="card shadow-sm hover-shadow">
                 <div class="card-body text-center p-4">
-                    <div class="icon-circle mb-3 bg-primary-subtle d-inline-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/Clients-icon.png' %}" alt="Clients" class="img-fluid" style="width: 40px; height: 40px;">
+                    <div
+                        class="icon-circle mb-3 bg-primary-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/Clients-icon.png' %}" alt="Clients" class="img-fluid"
+                            style="width: 40px; height: 40px;">
                     </div>
                     <h4 class="card-title mb-3">Add Clients</h4>
                     <p class="card-text text-muted mb-4">Add new client to the database.</p>
@@ -99,8 +102,10 @@
             <!-- Search Card -->
             <div class="card shadow-sm hover-shadow">
                 <div class="card-body text-center p-4">
-                    <div class="icon-circle mb-3 bg-info-subtle d-inline-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/search.png' %}" alt="Search" class="img-fluid" style="width: 40px; height: 40px;">
+                    <div
+                        class="icon-circle mb-3 bg-info-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/search.png' %}" alt="Search" class="img-fluid"
+                            style="width: 40px; height: 40px;">
                     </div>
                     <h4 class="card-title mb-3">Search</h4>
                     <p class="card-text text-muted mb-4">Add new client details or loan to the database.</p>
@@ -109,13 +114,16 @@
                     </a>
                 </div>
             </div>
+            {% endif %}
 
             {% if request.user.is_superuser %}
             <!-- Add Expenditure Card -->
             <div class="card shadow-sm hover-shadow">
                 <div class="card-body text-center p-4">
-                    <div class="icon-circle mb-3 bg-success-subtle d-inline-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/expenses.png' %}" alt="Expenses" class="img-fluid" style="width: 40px; height: 40px;">
+                    <div
+                        class="icon-circle mb-3 bg-success-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/expenses.png' %}" alt="Expenses" class="img-fluid"
+                            style="width: 40px; height: 40px;">
                     </div>
                     <h4 class="card-title mb-3">Add Expenditure</h4>
                     <span id="monthname" class="d-none" value="{{month}}">{{month}}</span>
@@ -129,8 +137,10 @@
             <!-- Dashboard Card -->
             <div class="card shadow-sm hover-shadow">
                 <div class="card-body text-center p-4">
-                    <div class="icon-circle mb-3 bg-warning-subtle d-inline-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/report-icon.png' %}" alt="Dashboard" class="img-fluid" style="width: 40px; height: 40px;">
+                    <div
+                        class="icon-circle mb-3 bg-warning-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/report-icon.png' %}" alt="Dashboard" class="img-fluid"
+                            style="width: 40px; height: 40px;">
                     </div>
                     <h4 class="card-title mb-3">Dashboard</h4>
                     <p class="card-text text-muted mb-4">View dashboard with key metrics and analytics.</p>
@@ -143,8 +153,10 @@
             <!-- SMS Card -->
             {% comment %} <div class="card shadow-sm hover-shadow">
                 <div class="card-body text-center p-4">
-                    <div class="icon-circle mb-3 bg-danger-subtle d-inline-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/sms.png' %}" alt="SMS" class="img-fluid" style="width: 40px; height: 40px;">
+                    <div
+                        class="icon-circle mb-3 bg-danger-subtle d-inline-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/sms.png' %}" alt="SMS" class="img-fluid"
+                            style="width: 40px; height: 40px;">
                     </div>
                     <h4 class="card-title mb-3">Send SMS</h4>
                     <p class="card-text text-muted mb-4">Send SMS notifications to clients.</p>
@@ -176,7 +188,8 @@
                     </form>
                     <form action="{% url 'microfinance:smsselect' %}" method="POST">
                         {% csrf_token %}
-                        <button type="submit" name="CustomSmsSendList" class="btn btn-outline-primary w-100">Custom SMS</button>
+                        <button type="submit" name="CustomSmsSendList" class="btn btn-outline-primary w-100">Custom
+                            SMS</button>
                     </form>
                 </div>
             </div>
@@ -254,7 +267,8 @@
             font-weight: 500;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             padding: 0.75rem;
             border-radius: 8px;
         }
@@ -282,7 +296,7 @@
         }
 
         // Set current month in the expense form
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
             document.getElementById('month').value = currentMonth;
         });
@@ -294,39 +308,39 @@
             margin: 20px 10px;
             width: 95%;
             line-height: 1.5;
-            border-radius: 8px 8px 0 0!important;
+            border-radius: 8px 8px 0 0 !important;
             overflow: hidden;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
         }
-        
+
         .table thead tr {
             background-color: #009879;
             color: white;
             text-align: left;
             font-weight: bold;
         }
-        
+
         .table tbody tr {
             border-bottom: 1px solid #dddddd;
         }
-        
+
         .table tbody td a {
             text-decoration: none;
         }
-        
+
         .table tbody tr:nth-of-type(even) {
             background-color: #E7E7E7 !important;
         }
-        
+
         .table tbody tr:last-of-type {
             border-bottom: 2px solid #009879;
         }
-        
+
         .table th,
         .table td {
             padding: 8px 8px;
         }
-        
+
         .table td,
         .table th,
         .table-all td,
@@ -336,7 +350,7 @@
             vertical-align: top;
             border-bottom: 1px solid grey;
         }
-        
+
         tbody {
             display: table-row-group;
             vertical-align: middle;
@@ -350,7 +364,7 @@
             text-align: left;
             font-size: 15px;
         }
-        
+
         .labels tr td {
             background-color: #dddddd;
             text-align: center;
@@ -359,16 +373,17 @@
             font-weight: 600;
             font-size: 16px;
         }
-        
+
         .label tr td label {
             display: block;
         }
-        
+
         [data-toggle="toggle"] {
             display: none;
         }
     </style>
 
+    {% if request.user.is_staff %}
     <div class="container-fluid px-4">
         <div class="row">
             <div class="col-12">
@@ -381,9 +396,9 @@
                                 <label for="id_Loan_Collector" class="me-2">Loan Officer:</label>
                                 <select name="Loan_Collector" id="id_Loan_Collector" class="form-select">
                                     {% for user in users %}
-                                        {% if user.pk != 0 %}
-                                            <option value={{user.pk}}>{{user}}</option>
-                                        {% endif %}
+                                    {% if user.pk != 0 %}
+                                    <option value={{user.pk}}>{{user}}</option>
+                                    {% endif %}
                                     {% endfor %}
                                     <option value=0>All</option>
                                 </select>
@@ -408,77 +423,83 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tbody class="labels">
-                                    <tr>
-                                        <td colspan="9">
-                                            <label for="Daily">Daily</label>
-                                            <input type="checkbox" name="Daily" id="Daily" data-toggle="toggle">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tbody class="hide">
-                                    {% for object in filter.qs%}{% if object.Frequency == 1 %}
-                                    <tr>
-                                        <td>{{object.pk}}</td>
-                                        <td>{{object.AccNo}}</td>
-                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                                        <td>{{object.Account.Client.Father_Name}}</td>
-                                        <td>{{object.Account.Client.Phone_no1}}</td>
-                                        <td>{{dic|keyvalue:object.pk}}</td>
-                                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                                        <td>{{object.remark}}</td>
-                                        <td>{{object.reminder}}</td>
-                                    </tr>
-                                    {%endif%}{% endfor %}
-                                </tbody>
+                            <tbody class="labels">
+                                <tr>
+                                    <td colspan="9">
+                                        <label for="Daily">Daily</label>
+                                        <input type="checkbox" name="Daily" id="Daily" data-toggle="toggle">
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody class="hide">
+                                {% for object in filter.qs%}{% if object.Frequency == 1 %}
+                                <tr>
+                                    <td>{{object.pk}}</td>
+                                    <td>{{object.AccNo}}</td>
+                                    <td><a
+                                            href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a>
+                                    </td>
+                                    <td>{{object.Account.Client.Father_Name}}</td>
+                                    <td>{{object.Account.Client.Phone_no1}}</td>
+                                    <td>{{dic|keyvalue:object.pk}}</td>
+                                    <td>{{object.installments_set.first.Installment_Due}}</td>
+                                    <td>{{object.remark}}</td>
+                                    <td>{{object.reminder}}</td>
+                                </tr>
+                                {%endif%}{% endfor %}
+                            </tbody>
 
-                                <tbody class="labels">
-                                    <tr>
-                                        <td colspan="9">
-                                            <label for="Weekly">Weekly</label>
-                                            <input type="checkbox" name="Weekly" id="Weekly" data-toggle="toggle">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tbody class="hide">
-                                    {% for object in filter.qs%}{% if object.Frequency == 2 %}
-                                    <tr>
-                                        <td>{{object.pk}}</td>
-                                        <td>{{object.AccNo}}</td>
-                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                                        <td>{{object.Account.Client.Father_Name}}</td>
-                                        <td>{{object.Account.Client.Phone_no1}}</td>
-                                        <td>{{dic|keyvalue:object.pk}}</td>
-                                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                                        <td>{{object.remark}}</td>
-                                        <td>{{object.reminder}}</td>
-                                    </tr>
-                                    {%endif%}{% endfor %}
-                                </tbody>
+                            <tbody class="labels">
+                                <tr>
+                                    <td colspan="9">
+                                        <label for="Weekly">Weekly</label>
+                                        <input type="checkbox" name="Weekly" id="Weekly" data-toggle="toggle">
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody class="hide">
+                                {% for object in filter.qs%}{% if object.Frequency == 2 %}
+                                <tr>
+                                    <td>{{object.pk}}</td>
+                                    <td>{{object.AccNo}}</td>
+                                    <td><a
+                                            href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a>
+                                    </td>
+                                    <td>{{object.Account.Client.Father_Name}}</td>
+                                    <td>{{object.Account.Client.Phone_no1}}</td>
+                                    <td>{{dic|keyvalue:object.pk}}</td>
+                                    <td>{{object.installments_set.first.Installment_Due}}</td>
+                                    <td>{{object.remark}}</td>
+                                    <td>{{object.reminder}}</td>
+                                </tr>
+                                {%endif%}{% endfor %}
+                            </tbody>
 
-                                <tbody class="labels">
-                                    <tr>
-                                        <td colspan="9">
-                                            <label for="Monthly">Monthly</label>
-                                            <input type="checkbox" name="Monthly" id="Monthly" data-toggle="toggle">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tbody class="hide">
-                                    {% for object in filter.qs%}{% if object.Frequency == 3 %}
-                                    <tr>
-                                        <td>{{object.pk}}</td>
-                                        <td>{{object.AccNo}}</td>
-                                        <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a></td>
-                                        <td>{{object.Account.Client.Father_Name}}</td>
-                                        <td>{{object.Account.Client.Phone_no1}}</td>
-                                        <td>{{dic|keyvalue:object.pk}}</td>
-                                        <td>{{object.installments_set.first.Installment_Due}}</td>
-                                        <td>{{object.remark}}</td>
-                                        <td>{{object.reminder}}</td>
-                                    </tr>
-                                    {%endif%}{% endfor %}
-                                </tbody>
+                            <tbody class="labels">
+                                <tr>
+                                    <td colspan="9">
+                                        <label for="Monthly">Monthly</label>
+                                        <input type="checkbox" name="Monthly" id="Monthly" data-toggle="toggle">
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody class="hide">
+                                {% for object in filter.qs%}{% if object.Frequency == 3 %}
+                                <tr>
+                                    <td>{{object.pk}}</td>
+                                    <td>{{object.AccNo}}</td>
+                                    <td><a
+                                            href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}">{{object.Account.Client.Name}}</a>
+                                    </td>
+                                    <td>{{object.Account.Client.Father_Name}}</td>
+                                    <td>{{object.Account.Client.Phone_no1}}</td>
+                                    <td>{{dic|keyvalue:object.pk}}</td>
+                                    <td>{{object.installments_set.first.Installment_Due}}</td>
+                                    <td>{{object.remark}}</td>
+                                    <td>{{object.reminder}}</td>
+                                </tr>
+                                {%endif%}{% endfor %}
+                            </tbody>
                             </tbody>
                         </table>
                     </div>
@@ -486,12 +507,13 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <a href="{% url 'microfinance:tempview' %}">temporary</a>
 
     <script>
-        $(document).ready(function() {
-            $('[data-toggle="toggle"]').change(function() {
+        $(document).ready(function () {
+            $('[data-toggle="toggle"]').change(function () {
                 $(this).parents().next('.hide').toggle();
             });
         });
