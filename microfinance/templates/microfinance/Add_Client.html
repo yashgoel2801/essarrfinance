@@ -17,7 +17,6 @@
   }
 
   textarea {
-    rows: 10;
     height: auto;
     max-height: 100px;
   }
@@ -166,6 +165,62 @@
       margin-bottom: 1.5rem;
     }
   }
+
+  /* Webcam Styles */
+  .webcam-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 1rem auto;
+    background: #000;
+    border-radius: 15px;
+    overflow: hidden;
+    display: none;
+  }
+
+  #webcam-video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .webcam-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  #captured-preview {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 10px;
+    margin-top: 10px;
+    display: none;
+    border: 2px solid #667eea;
+  }
+
+  .camera-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #667eea;
+    transition: all 0.3s ease;
+  }
+
+  .camera-btn:hover {
+    background: #fff;
+    transform: scale(1.1);
+  }
 </style>
 
 <div class="gradient-bg">
@@ -182,19 +237,11 @@
       <div class="col-12 col-md-6 col-lg-4 mb-3">
         <div class="card client-card shadow-sm">
           <div class="card-body d-flex align-items-center">
-            <img
-              src="{{c.Image.url}}"
-              class="client-image me-3"
-              alt="{{c.Name}}"
-            />
+            <img src="{{c.Image.url}}" class="client-image me-3" alt="{{c.Name}}" />
             <div class="flex-grow-1">
               <div class="fw-bold mb-1">
                 <i class="fas fa-user me-1 text-primary"></i>
-                <a
-                  href="{% url 'microfinance:clientdetail' pk=c.pk %}"
-                  class="text-decoration-none"
-                  >{{c.Name}}</a
-                >
+                <a href="{% url 'microfinance:clientdetail' pk=c.pk %}" class="text-decoration-none">{{c.Name}}</a>
               </div>
               <div class="text-muted">
                 <i class="fas fa-phone me-1"></i>{{c.Phone_no1}}
@@ -235,12 +282,7 @@
           </div>
 
           <div class="card-body p-4">
-            <form
-              method="POST"
-              enctype="multipart/form-data"
-              class="needs-validation"
-              novalidate
-            >
+            <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
               {% csrf_token %}
 
               <!-- Personal Information Section -->
@@ -251,31 +293,39 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Name.id_for_label }}"
-                      class="form-label required-field"
-                      >Full Name</label
-                    >
+                    <label for="{{ form.Name.id_for_label }}" class="form-label required-field">Full Name</label>
                     {{ form.Name }} {% for error in form.Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Image.id_for_label }}"
-                      class="form-label"
-                      >Profile Image</label
-                    >
-                    {{ form.Image }} {% for error in form.Image.errors %}
+                    <label for="{{ form.Image.id_for_label }}" class="form-label">Profile Image</label>
+                    {{ form.Image }}
+                    <div class="mt-2 text-center">
+                      <button type="button" id="start-webcam" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-camera me-1"></i> Use Webcam
+                      </button>
+                      <div id="webcam-ui" class="webcam-container">
+                        <video id="webcam-video" autoplay playsinline></video>
+                        <canvas id="webcam-canvas" style="display:none;"></canvas>
+                        <div class="webcam-controls">
+                          <button type="button" id="capture-photo" class="camera-btn" title="Capture Photo">
+                            <i class="fas fa-circle fa-2x"></i>
+                          </button>
+                          <button type="button" id="stop-webcam" class="btn btn-sm btn-danger ms-2">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                      <img id="captured-preview" alt="Preview">
+                      <input type="hidden" name="image_data" id="image_data">
+                    </div>
+                    {% for error in form.Image.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Date_Added.id_for_label }}"
-                      class="form-label"
-                      >Date Added</label
-                    >
+                    <label for="{{ form.Date_Added.id_for_label }}" class="form-label">Date Added</label>
                     {{ form.Date_Added }} {% for error in form.Date_Added.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
@@ -291,41 +341,25 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Father_Name.id_for_label }}"
-                      class="form-label"
-                      >Father's Name</label
-                    >
+                    <label for="{{ form.Father_Name.id_for_label }}" class="form-label">Father's Name</label>
                     {{ form.Father_Name }} {% for error in form.Father_Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Mother_Name.id_for_label }}"
-                      class="form-label"
-                      >Mother's Name</label
-                    >
+                    <label for="{{ form.Mother_Name.id_for_label }}" class="form-label">Mother's Name</label>
                     {{ form.Mother_Name }} {% for error in form.Mother_Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Husband_Name.id_for_label }}"
-                      class="form-label"
-                      >Husband's Name</label
-                    >
+                    <label for="{{ form.Husband_Name.id_for_label }}" class="form-label">Husband's Name</label>
                     {{ form.Husband_Name }} {% for error in form.Husband_Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Wife_Name.id_for_label }}"
-                      class="form-label"
-                      >Wife's Name</label
-                    >
+                    <label for="{{ form.Wife_Name.id_for_label }}" class="form-label">Wife's Name</label>
                     {{ form.Wife_Name }} {% for error in form.Wife_Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
@@ -341,31 +375,19 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Local_Address.id_for_label }}"
-                      class="form-label"
-                      >Local Address</label
-                    >
+                    <label for="{{ form.Local_Address.id_for_label }}" class="form-label">Local Address</label>
                     {{ form.Local_Address }} {% for error in form.Local_Address.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Permanent_Address.id_for_label }}"
-                      class="form-label"
-                      >Permanent Address</label
-                    >
+                    <label for="{{ form.Permanent_Address.id_for_label }}" class="form-label">Permanent Address</label>
                     {{ form.Permanent_Address }} {% for error in form.Permanent_Address.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Office_Address.id_for_label }}"
-                      class="form-label"
-                      >Office Address</label
-                    >
+                    <label for="{{ form.Office_Address.id_for_label }}" class="form-label">Office Address</label>
                     {{ form.Office_Address }} {% for error in form.Office_Address.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
@@ -381,21 +403,13 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Occupation.id_for_label }}"
-                      class="form-label"
-                      >Occupation</label
-                    >
+                    <label for="{{ form.Occupation.id_for_label }}" class="form-label">Occupation</label>
                     {{ form.Occupation }} {% for error in form.Occupation.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Designation.id_for_label }}"
-                      class="form-label"
-                      >Designation</label
-                    >
+                    <label for="{{ form.Designation.id_for_label }}" class="form-label">Designation</label>
                     {{ form.Designation }} {% for error in form.Designation.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
@@ -411,11 +425,8 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Phone_no1.id_for_label }}"
-                      class="form-label required-field"
-                      >Primary Phone</label
-                    >
+                    <label for="{{ form.Phone_no1.id_for_label }}" class="form-label required-field">Primary
+                      Phone</label>
                     {{ form.Phone_no1 }} {% if form.Phone_no1.help_text %}
                     <div class="form-text">{{ form.Phone_no1.help_text }}</div>
                     {% endif %} {% for error in form.Phone_no1.errors %}
@@ -423,11 +434,7 @@
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Phone_no2.id_for_label }}"
-                      class="form-label"
-                      >Secondary Phone</label
-                    >
+                    <label for="{{ form.Phone_no2.id_for_label }}" class="form-label">Secondary Phone</label>
                     {{ form.Phone_no2 }} {% if form.Phone_no2.help_text %}
                     <div class="form-text">{{ form.Phone_no2.help_text }}</div>
                     {% endif %} {% for error in form.Phone_no2.errors %}
@@ -435,21 +442,13 @@
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Reference_Name.id_for_label }}"
-                      class="form-label"
-                      >Reference Name</label
-                    >
+                    <label for="{{ form.Reference_Name.id_for_label }}" class="form-label">Reference Name</label>
                     {{ form.Reference_Name }} {% for error in form.Reference_Name.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Reference_No.id_for_label }}"
-                      class="form-label"
-                      >Reference Phone</label
-                    >
+                    <label for="{{ form.Reference_No.id_for_label }}" class="form-label">Reference Phone</label>
                     {{ form.Reference_No }} {% if form.Reference_No.help_text %}
                     <div class="form-text">
                       {{ form.Reference_No.help_text }}
@@ -469,51 +468,32 @@
                 </h5>
                 <div class="row g-3">
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Verified_By.id_for_label }}"
-                      class="form-label"
-                      >Verified By</label
-                    >
+                    <label for="{{ form.Verified_By.id_for_label }}" class="form-label">Verified By</label>
                     {{ form.Verified_By }} {% for error in form.Verified_By.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.author.id_for_label }}"
-                      class="form-label"
-                      >Author</label
-                    >
+                    <label for="{{ form.author.id_for_label }}" class="form-label">Author</label>
                     {{ form.author }} {% for error in form.author.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Photo_Id.id_for_label }}"
-                      class="form-label"
-                      >Photo ID Type</label
-                    >
+                    <label for="{{ form.Photo_Id.id_for_label }}" class="form-label">Photo ID Type</label>
                     {{ form.Photo_Id }} {% for error in form.Photo_Id.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label
-                      for="{{ form.Photo_Id_No.id_for_label }}"
-                      class="form-label"
-                      >Photo ID Number</label
-                    >
+                    <label for="{{ form.Photo_Id_No.id_for_label }}" class="form-label">Photo ID Number</label>
                     {{ form.Photo_Id_No }} {% for error in form.Photo_Id_No.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                   </div>
                   <div class="col-12 mb-3">
-                    <label
-                      for="{{ form.Major_Medical_Issues.id_for_label }}"
-                      class="form-label"
-                      >Major Medical Issues</label
-                    >
+                    <label for="{{ form.Major_Medical_Issues.id_for_label }}" class="form-label">Major Medical
+                      Issues</label>
                     {{ form.Major_Medical_Issues }} {% for error in form.Major_Medical_Issues.errors %}
                     <div class="text-danger">{{ error }}</div>
                     {% endfor %}
@@ -539,29 +519,104 @@
 <script>
   // Add Font Awesome if not already included
   if (!document.querySelector('link[href*="font-awesome"]')) {
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
     link.href =
-      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    document.head.appendChild(link)
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css";
+    document.head.appendChild(link);
   }
+
+  // Webcam functionality
+  document.addEventListener("DOMContentLoaded", function () {
+    const startBtn = document.getElementById("start-webcam");
+    const stopBtn = document.getElementById("stop-webcam");
+    const captureBtn = document.getElementById("capture-photo");
+    const video = document.getElementById("webcam-video");
+    const canvas = document.getElementById("webcam-canvas");
+    const preview = document.getElementById("captured-preview");
+    const webcamUI = document.getElementById("webcam-ui");
+    const fileInput = document.querySelector('input[type="file"]');
+    const imageDataInput = document.getElementById("image_data");
+    let stream = null;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+        video.srcObject = stream;
+        webcamUI.style.display = "block";
+        startBtn.style.display = "none";
+      } catch (err) {
+        console.error("Error accessing webcam:", err);
+        alert(
+          "Could not access camera. Please make sure you have given permission."
+        );
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        video.srcObject = null;
+      }
+      webcamUI.style.display = "none";
+      startBtn.style.display = "inline-block";
+    }
+
+    if (startBtn) {
+      startBtn.addEventListener("click", startCamera);
+      stopBtn.addEventListener("click", stopCamera);
+
+      captureBtn.addEventListener("click", function () {
+        const context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg");
+        preview.src = dataUrl;
+        preview.style.display = "block";
+
+        // Store the base64 data to our hidden input
+        imageDataInput.value = dataUrl;
+
+        // Attempt to convert to a file for the form
+        fetch(dataUrl)
+          .then((res) => res.blob())
+          .then((blob) => {
+            const file = new File([blob], "client_capture.jpg", {
+              type: "image/jpeg",
+            });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+          });
+
+        stopCamera();
+      });
+    }
+  });
 
   // Form validation enhancement
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.querySelector("form")
-    const submitButton = form.querySelector('button[type="submit"]')
+    const form = document.querySelector("form");
+    const submitButton = form.querySelector('button[type="submit"]');
 
-    form.addEventListener("submit", function (e) {
-      if (!form.checkValidity()) {
-        e.preventDefault()
-        e.stopPropagation()
-      } else {
-        submitButton.innerHTML =
-          '<i class="fas fa-spinner fa-spin me-2"></i>Processing...'
-        submitButton.disabled = true
-      }
-      form.classList.add("was-validated")
-    })
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          e.stopPropagation();
+        } else {
+          submitButton.innerHTML =
+            '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+          submitButton.disabled = true;
+        }
+        form.classList.add("was-validated");
+      });
+    }
   })
 </script>
 {% endblock %}

@@ -17,10 +17,10 @@ class Staff(models.Model):
     Officer_Name = models.CharField(max_length=100)
     Designation = models.CharField(max_length=100)
     Salary = models.FloatField()
-    def save(self, force_insert=False, force_update=False,*args,**kawgrs):
+    def save(self, *args, **kwargs):
         self.Officer_Name = self.Officer_Name.upper()
         self.Designation = self.Designation.upper()
-        super(Staff, self).save(force_insert, force_update,*args,**kawgrs)    
+        super(Staff, self).save(*args, **kwargs)    
 
     def __str__(self):
         return self.Officer_Name
@@ -84,7 +84,7 @@ class Clients(models.Model):
 
     def __str__(self):
        return self.Name+" - "+str(self.pk)
-    def save(self, force_insert=False, force_update=False,*args,**kawgrs):
+    def save(self, *args, **kwargs):
         self.Name = self.Name.upper()
         self.Photo_Id_No = self.Photo_Id_No.upper()
         # permissions = Permission.objects.get(codename='view_client')
@@ -103,7 +103,7 @@ class Clients(models.Model):
             if self.Image and self.Image.name != 'pics/avatar.png':
                 self.Image = compress_image(self.Image)
 
-        super(Clients, self).save(force_insert, force_update,*args, **kawgrs)      
+        super(Clients, self).save(*args, **kwargs)      
 
 
 

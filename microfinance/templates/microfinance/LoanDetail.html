@@ -142,6 +142,21 @@
 </style>
 <div class="container-fluid py-4">
   <!-- Success/Error Messages -->
+  <!-- Django Messages -->
+  {% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+    <div
+      class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"
+      role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Client-side Messages -->
   <div id="messageContainer" class="mb-3" style="display: none;">
     <div id="messageAlert" class="alert alert-dismissible fade show" role="alert">
       <span id="messageText"></span>
@@ -348,6 +363,334 @@
             </div>
           </div>
 
+          <!-- Process Transaction Hub -->
+          <style>
+            /* Override global nav-link styles from base_layout for these tabs specifically */
+            #transactionTabs .nav-link {
+              color: #6c757d !important;
+              /* Muted gray for inactive */
+            }
+
+            #transactionTabs .nav-link:hover {
+              color: #198754 !important;
+              /* Green on hover */
+              background-color: #f8f9fa !important;
+            }
+
+            #transactionTabs .nav-link.active {
+              color: #198754 !important;
+              /* Green for active */
+              background-color: #fff !important;
+            }
+
+            /* Sticky Headers for all tables */
+            .table-responsive thead th {
+              position: sticky;
+              top: 0;
+              z-index: 10;
+              box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Explicit backgrounds to prevent transparency when scrolling */
+            .table-success thead th {
+              background-color: #d1e7dd !important;
+              color: #0f5132 !important;
+            }
+
+            .table-danger thead th {
+              background-color: #f8d7da !important;
+              color: #842029 !important;
+            }
+
+            .table-warning thead th {
+              background-color: #fff3cd !important;
+              color: #664d03 !important;
+            }
+
+            .table-light thead th,
+            .bg-light thead th {
+              background-color: #f8f9fa !important;
+              color: #6c757d !important;
+            }
+          </style>
+          <div class="card shadow-lg border-0 mb-4 overflow-hidden">
+            <div class="card-header bg-white p-0">
+              <ul class="nav nav-tabs nav-fill" id="transactionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button
+                    class="nav-link active py-3 fw-bold text-success border-0 border-bottom border-3 border-success"
+                    id="installment-tab" data-bs-toggle="tab" data-bs-target="#installment" type="button" role="tab"
+                    style="border-radius: 0;">
+                    <i class="fas fa-money-bill-wave me-2"></i>Installment
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link py-3 fw-bold text-muted border-0" id="penalty-tab" data-bs-toggle="tab"
+                    data-bs-target="#penalty" type="button" role="tab" style="border-radius: 0;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Penalty
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link py-3 fw-bold text-muted border-0" id="waiver-tab" data-bs-toggle="tab"
+                    data-bs-target="#waiver" type="button" role="tab" style="border-radius: 0;">
+                    <i class="fas fa-gift me-2"></i>Waiver & Loyalty
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-body p-4 bg-light">
+              <div class="tab-content" id="transactionTabsContent">
+
+                <!-- Installment Tab -->
+                <div class="tab-pane fade show active" id="installment" role="tabpanel">
+                  <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                      <div class="text-center mb-4">
+                        <div class="avatar-circle bg-success-subtle text-success mx-auto mb-3"
+                          style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                          <i class="fas fa-wallet fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Make Installment Payment</h5>
+                        <p class="text-muted small">Record a regular loan installment payment</p>
+                      </div>
+
+                      <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                          <form method="POST" class="payment-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="pay" value="true">
+
+                            <div class="mb-3">
+                              <label for="amount"
+                                class="form-label fw-bold small text-muted text-uppercase">Amount</label>
+                              <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                    class="fas fa-rupee-sign text-success"></i></span>
+                                <input type="number" step="0.01" class="form-control border-start-0 ps-0" id="amount"
+                                  name="amount" required placeholder="0.00" />
+                              </div>
+                            </div>
+
+                            <div class="mb-4">
+                              <label for="date_paid" class="form-label fw-bold small text-muted text-uppercase">Date
+                                Paid</label>
+                              <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                    class="fas fa-calendar-alt text-success"></i></span>
+                                <input type="date" class="form-control border-start-0 ps-0" id="date_paid"
+                                  name="date_paid" value="{{ Today|date:'Y-m-d' }}" />
+                              </div>
+                            </div>
+
+                            <button type="submit" name="pay" class="btn btn-success btn-lg w-100 shadow-sm submit-btn">
+                              <i class="fas fa-check-circle me-2"></i>Record Payment
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Penalty Tab -->
+                <div class="tab-pane fade" id="penalty" role="tabpanel">
+                  <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                      <div class="text-center mb-4">
+                        <div class="avatar-circle bg-warning-subtle text-warning mx-auto mb-3"
+                          style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                          <i class="fas fa-gavel fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Record Penalty Payment</h5>
+                        <p class="text-muted small">Process payment for accrued penalties</p>
+                      </div>
+
+                      <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                          <form method="POST" class="penalty-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="penalty" value="true">
+
+                            <div class="mb-3">
+                              <label class="form-label fw-bold small text-muted text-uppercase">Penalty Amount</label>
+                              <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                    class="fas fa-rupee-sign text-warning"></i></span>
+                                <input type="number" step="0.01" name="Penalty_Paid"
+                                  class="form-control border-start-0 ps-0" required placeholder="0.00" />
+                              </div>
+                            </div>
+
+                            <div class="mb-4">
+                              <label class="form-label fw-bold small text-muted text-uppercase">Date Paid</label>
+                              <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                    class="fas fa-calendar-alt text-warning"></i></span>
+                                <input type="date" name="date_paid" class="form-control border-start-0 ps-0"
+                                  value="{{ Today|date:'Y-m-d' }}" />
+                              </div>
+                            </div>
+
+                            <button type="submit" name="penalty"
+                              class="btn btn-warning btn-lg w-100 text-dark shadow-sm submit-btn">
+                              <i class="fas fa-check-circle me-2"></i>Record Penalty
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Waiver Tab -->
+                <div class="tab-pane fade" id="waiver" role="tabpanel">
+                  {% if Loyalty_Msg %}
+                  <div class="alert alert-info border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                      <div class="fs-4 me-3 text-info"><i class="fas fa-lightbulb"></i></div>
+                      <div>
+                        <h6 class="fw-bold mb-1">Loyalty Suggestion</h6>
+                        <p class="mb-0 small">{{ Loyalty_Msg }} (Rebate: ₹{{ Loyalty_Bonus }})</p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <div class="row g-4">
+                    <div class="col-lg-5">
+                      <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                          <h6 class="fw-bold mb-4 text-info text-uppercase small ls-1"><i
+                              class="fas fa-plus-circle me-2"></i>Apply New Waiver</h6>
+                          <form method="POST" class="waiver-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="record_waiver" value="true">
+
+                            <div class="mb-3">
+                              <label class="form-label small text-muted">Waiver Type</label>
+                              <select name="waiver_type" class="form-select form-select-lg bg-light border-0">
+                                <option value="1">Penalty Waiver</option>
+                                <option value="2">Interest/Loyalty Waiver</option>
+                              </select>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                              <div class="col-6">
+                                <label class="form-label small text-muted">Amount</label>
+                                <div class="input-group">
+                                  <span class="input-group-text bg-light border-0"><i
+                                      class="fas fa-rupee-sign"></i></span>
+                                  <input type="number" step="0.01" name="waived_amount"
+                                    class="form-control bg-light border-0" required placeholder="0.00">
+                                </div>
+                              </div>
+                              <div class="col-6">
+                                <label class="form-label small text-muted">Date</label>
+                                <input type="date" name="waived_date" class="form-control bg-light border-0"
+                                  value="{{ today|date:'Y-m-d' }}">
+                              </div>
+                            </div>
+
+                            <div class="mb-4">
+                              <label class="form-label small text-muted">Reason</label>
+                              <textarea name="reason" class="form-control bg-light border-0" rows="2"
+                                placeholder="e.g. Early closure reward"></textarea>
+                            </div>
+
+                            <button type="submit" name="record_waiver"
+                              class="btn btn-info text-white w-100 shadow-sm submit-btn">
+                              Apply Waiver
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-7">
+                      <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-0">
+                          <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0 text-muted small text-uppercase">Audit Trail</h6>
+                            <span class="badge bg-white text-muted border">{{ All_Waivers|length }} Records</span>
+                          </div>
+                          <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0">
+                              <thead class="bg-light sticky-top">
+                                <tr class="small text-muted text-uppercase">
+                                  <th class="ps-4">Date</th>
+                                  <th>Type</th>
+                                  <th>Amount</th>
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody class="border-top-0">
+                                {% for w in All_Waivers %}
+                                <tr>
+                                  <td class="ps-4 small">{{ w.Date_Applied|date:"M d, Y" }}<br><span
+                                      class="text-muted extra-small">{{ w.Reason|truncatechars:15 }}</span></td>
+                                  <td>
+                                    {% if w.Waiver_Type == 1 %}
+                                    <span
+                                      class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Penalty</span>
+                                    {% else %}
+                                    <span
+                                      class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">Loyalty</span>
+                                    {% endif %}
+                                  </td>
+                                  <td class="fw-bold text-dark">₹{{ w.Amount|floatformat:0 }}</td>
+                                  <td class="text-end pe-4">
+                                    <form method="POST" onsubmit="return confirm('Delete this waiver entry?');"
+                                      style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="waiver_id" value="{{ w.pk }}">
+                                      <button type="submit" name="delete_waiver"
+                                        class="btn btn-sm btn-light text-danger rounded-circle"
+                                        style="width: 32px; height: 32px;">
+                                        <i class="fas fa-trash-alt"></i>
+                                      </button>
+                                    </form>
+                                  </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                  <td colspan="4" class="text-center py-4 text-muted small">No waivers applied yet</td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <script>
+            // Simple tab switching logic for better UX (optional if bootstrap js handles it well)
+            document.addEventListener('DOMContentLoaded', function () {
+              var triggerTabList = [].slice.call(document.querySelectorAll('#transactionTabs button'));
+              triggerTabList.forEach(function (triggerEl) {
+                var tabTrigger = new bootstrap.Tab(triggerEl);
+                triggerEl.addEventListener('click', function (event) {
+                  event.preventDefault();
+                  tabTrigger.show();
+
+                  // Update styling for active state
+                  triggerTabList.forEach(btn => {
+                    btn.classList.remove('text-success', 'border-bottom', 'border-3', 'border-success');
+                    btn.classList.add('text-muted', 'border-0');
+                  });
+                  this.classList.remove('text-muted', 'border-0');
+                  this.classList.add('text-success', 'border-bottom', 'border-3', 'border-success');
+                });
+              });
+            });
+          </script>
           <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
             <table class="table table-bordered table-striped align-middle">
               <thead class="table-success">
@@ -390,153 +733,6 @@
           </div>
           <div class="d-flex flex-wrap gap-2 mb-3">
             <a href="{% url 'microfinance:addinstallment' pk=Loan.pk %}" class="btn btn-primary">Add Installment</a>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="card card-body mb-3">
-                <h5 class="mb-3">Make a Payment</h5>
-                <form method="POST">
-                  {% csrf_token %}
-                  <div class="mb-3">
-                    <label for="amount" class="form-label">Amount:</label>
-                    <input type="number" step="0.01" class="form-control" id="amount" name="amount" required />
-                  </div>
-                  <div class="mb-3">
-                    <label for="date_paid" class="form-label">Date Paid:</label>
-                    <input type="date" class="form-control" id="date_paid" name="date_paid"
-                      value="{{ Today|date:'Y-m-d' }}" />
-                  </div>
-                  <button type="submit" name="pay" class="btn btn-success w-100">
-                    Pay Installment
-                  </button>
-                </form>
-              </div>
-            </div>
-            <!-- Loyalty & Waiver Management -->
-            <div class="card shadow-sm mb-4 border-0">
-              <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary"><i class="fas fa-gift me-2"></i>Loyalty & Waiver Management</h5>
-              </div>
-              <div class="card-body">
-                {% if Loyalty_Msg %}
-                <div class="alert alert-info border-0 shadow-sm mb-4"
-                  style="background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);">
-                  <div class="d-flex align-items-center">
-                    <div class="bg-info text-white rounded-circle p-2 me-3">
-                      <i class="fas fa-certificate"></i>
-                    </div>
-                    <div>
-                      <h6 class="mb-0 text-info fw-bold">Loyalty Bonus Suggestion</h6>
-                      <p class="mb-0 small">{{ Loyalty_Msg }} <br><strong>Suggested Rebate: ₹{{ Loyalty_Bonus
-                          }}</strong></p>
-                    </div>
-                  </div>
-                </div>
-                {% endif %}
-
-                <div class="row g-4">
-                  <!-- Pay Penalty -->
-                  <div class="col-md-6 border-end">
-                    <form method="POST" class="p-2">
-                      {% csrf_token %}
-                      <h6 class="mb-3 text-warning fw-bold">Record Penalty Payment</h6>
-                      <div class="mb-3">
-                        <label class="form-label small">Amount Paid:</label>
-                        <input type="number" step="0.01" name="Penalty_Paid" class="form-control" required
-                          placeholder="0.00">
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label small">Date Paid:</label>
-                        <input type="date" name="date_paid" class="form-control" value="{{ today|date:'Y-m-d' }}">
-                      </div>
-                      <button type="submit" name="penalty" class="btn btn-warning w-100">
-                        Record Payment
-                      </button>
-                    </form>
-                  </div>
-
-                  <!-- Apply Waiver -->
-                  <div class="col-md-6">
-                    <form method="POST" class="p-2">
-                      {% csrf_token %}
-                      <h6 class="mb-3 text-info fw-bold">Apply Waiver / Credit Note</h6>
-                      <div class="mb-3">
-                        <label class="form-label small">Waiver Type:</label>
-                        <select name="waiver_type" class="form-select">
-                          <option value="1">Penalty Waiver</option>
-                          <option value="2">Interest/Loyalty Waiver</option>
-                        </select>
-                      </div>
-                      <div class="row g-2 mb-3">
-                        <div class="col-6">
-                          <label class="form-label small">Amount:</label>
-                          <input type="number" step="0.01" name="waived_amount" class="form-control" required
-                            placeholder="0.00">
-                        </div>
-                        <div class="col-6">
-                          <label class="form-label small">Date:</label>
-                          <input type="date" name="waived_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
-                        </div>
-                      </div>
-                      <div class="mb-3">
-                        <input type="text" name="reason" class="form-control"
-                          placeholder="Reason (e.g., 'Early closure reward')">
-                      </div>
-                      <button type="submit" name="record_waiver" class="btn btn-info text-white w-100">
-                        Apply Waiver
-                      </button>
-                    </form>
-                  </div>
-                </div>
-
-                <!-- Waiver Audit Trail -->
-                {% if All_Waivers %}
-                <div class="mt-4 pt-3 border-top">
-                  <h6 class="small text-uppercase text-muted fw-bold mb-3">Waiver Audit Trail</h6>
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                      <thead class="bg-light">
-                        <tr class="small text-muted">
-                          <th>Date</th>
-                          <th>Type</th>
-                          <th>Reason</th>
-                          <th class="text-end">Amount</th>
-                          <th class="text-center">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for w in All_Waivers %}
-                        <tr class="small">
-                          <td>{{ w.Date_Applied|date:"M d, Y" }}</td>
-                          <td>
-                            {% if w.Waiver_Type == 1 %}
-                            <span class="badge bg-info-subtle text-info border border-info-subtle">Penalty</span>
-                            {% else %}
-                            <span
-                              class="badge bg-success-subtle text-success border border-success-subtle">Loyalty</span>
-                            {% endif %}
-                          </td>
-                          <td class="text-muted">{{ w.Reason|default:"-" }}</td>
-                          <td class="text-end fw-bold">₹{{ w.Amount|floatformat:2 }}</td>
-                          <td class="text-center">
-                            <form method="POST" onsubmit="return confirm('Delete this waiver entry?');"
-                              style="display:inline;">
-                              {% csrf_token %}
-                              <input type="hidden" name="waiver_id" value="{{ w.pk }}">
-                              <button type="submit" name="delete_waiver" class="btn btn-sm btn-link text-danger p-0">
-                                <i class="fas fa-trash-alt"></i>
-                              </button>
-                            </form>
-                          </td>
-                        </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                {% endif %}
-              </div>
-            </div>
           </div>
 
 
@@ -925,6 +1121,47 @@
         console.log('Penalty form submitted, showing loading state');
       });
     }
+
+    // Prevent multiple form submissions
+    // Handle all forms with submit buttons
+    const forms = document.querySelectorAll('.payment-form, .penalty-form, .waiver-form');
+
+    forms.forEach(form => {
+      let isSubmitting = false;
+
+      form.addEventListener('submit', function (e) {
+        if (isSubmitting) {
+          e.preventDefault();
+          return false;
+        }
+
+        const submitBtn = this.querySelector('.submit-btn');
+        if (submitBtn) {
+          isSubmitting = true;
+          const originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+          // Use style/class to visually disable instead of attribute to ensure submission works
+          submitBtn.style.pointerEvents = 'none';
+          submitBtn.classList.add('disabled');
+
+          // Re-enable after 5 seconds as a fallback
+          setTimeout(() => {
+            isSubmitting = false;
+            submitBtn.innerHTML = originalText;
+            submitBtn.style.pointerEvents = 'auto';
+            submitBtn.classList.remove('disabled');
+          }, 5000);
+        }
+      });
+
+      // Also prevent Enter key spam
+      form.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && isSubmitting) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    });
   });
 
   function deletePayment(paymentId) {

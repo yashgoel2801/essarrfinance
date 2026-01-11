@@ -1,136 +1,198 @@
 {% extends 'base_layout.html' %}
 {% block content %}
-<style>    
-    .form-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
+<style>
+  .form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: 15px;
+    border-left: 4px solid #667eea;
+  }
+
+  .section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  /* Fix for phone input fields */
+  input[type="tel"],
+  input[name*="Phone"],
+  input[name*="phone"] {
+    border-radius: 10px !important;
+    border: 2px solid #e9ecef !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.3s ease !important;
+    font-size: 0.95rem !important;
+  }
+
+  input[type="tel"]:focus,
+  input[name*="Phone"]:focus,
+  input[name*="phone"]:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+  }
+
+  /* Fix for select dropdown */
+  select {
+    border-radius: 10px !important;
+    border: 2px solid #e9ecef !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.3s ease !important;
+    font-size: 0.95rem !important;
+  }
+
+  select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+  }
+
+  .btn-primary {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(45deg, #5a6fd8, #6a4190);
+  }
+
+  .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+
+  .text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  @media (max-width: 768px) {
     .form-section {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: rgba(248, 249, 250, 0.5);
-        border-radius: 15px;
-        border-left: 4px solid #667eea;
+      padding: 1rem;
     }
-    
+
     .section-title {
-        color: #495057;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1.1rem;
+      font-size: 1rem;
     }
-    
-    .form-control, .form-select {
-        border-radius: 10px;
-        border: 2px solid #e9ecef;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-        font-size: 0.95rem;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-    
-    /* Fix for phone input fields */
-    input[type="tel"], input[name*="Phone"], input[name*="phone"] {
-        border-radius: 10px !important;
-        border: 2px solid #e9ecef !important;
-        padding: 0.75rem 1rem !important;
-        transition: all 0.3s ease !important;
-        font-size: 0.95rem !important;
-    }
-    
-    input[type="tel"]:focus, input[name*="Phone"]:focus, input[name*="phone"]:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
-    }
-    
-    /* Fix for select dropdown */
-    select {
-        border-radius: 10px !important;
-        border: 2px solid #e9ecef !important;
-        padding: 0.75rem 1rem !important;
-        transition: all 0.3s ease !important;
-        font-size: 0.95rem !important;
-    }
-    
-    select:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
-    }
-    
+
     .btn-primary {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        border: none;
-        border-radius: 10px;
-        padding: 1rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        font-size: 1rem;
+      padding: 0.75rem 1.5rem;
     }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        background: linear-gradient(45deg, #5a6fd8, #6a4190);
+  }
+
+  @media (max-width: 576px) {
+    .form-card {
+      border-radius: 15px;
+      margin: 0 0.5rem;
     }
-    
-    .form-label {
-        font-weight: 500;
-        color: #495057;
-        margin-bottom: 0.5rem;
+
+    .form-section {
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
     }
-    
-    .text-danger {
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    }
-    
-    .form-text {
-        font-size: 0.875rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-    }
-    
-    textarea {
-        min-height: 100px;
-        resize: vertical;
-    }
-    
-    @media (max-width: 768px) {
-        .form-section {
-            padding: 1rem;
-        }
-        
-        .section-title {
-            font-size: 1rem;
-        }
-        
-        .btn-primary {
-            padding: 0.75rem 1.5rem;
-        }
-    }
-    
-    @media (max-width: 576px) {
-        .form-card {
-            border-radius: 15px;
-            margin: 0 0.5rem;
-        }
-        
-        .form-section {
-            padding: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-    }
+  }
+
+  /* Webcam Styles */
+  .webcam-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 1rem auto;
+    background: #000;
+    border-radius: 15px;
+    overflow: hidden;
+    display: none;
+  }
+
+  #webcam-video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .webcam-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  #captured-preview {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 10px;
+    margin-top: 10px;
+    display: none;
+    border: 2px solid #667eea;
+  }
+
+  .camera-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #667eea;
+    transition: all 0.3s ease;
+  }
+
+  .camera-btn:hover {
+    background: #fff;
+    transform: scale(1.1);
+  }
 </style>
 
 <div class="container py-4">
@@ -143,11 +205,11 @@
             Add Guarantor
           </h3>
         </div>
-        
+
         <div class="card-body p-4">
           <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             {% csrf_token %}
-            
+
             <!-- Personal Information Section -->
             <div class="form-section">
               <h5 class="section-title">
@@ -156,18 +218,39 @@
               </h5>
               <div class="row g-3">
                 {% for field in form %}
-                  {% if field.name == 'Guarantor_Name' or field.name == 'Guarantor_Father_Name' or field.name == 'Guarantor_Mother_Name' or field.name == 'Guarantor_Image' %}
-                  <div class="col-md-6 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
+{% if field.name == 'Guarantor_Name' or field.name == 'Guarantor_Father_Name' or field.name == 'Guarantor_Mother_Name' or field.name == 'Image' %}
+                <div class="col-md-6 mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.name == 'Image' %}
+                  <div class="mt-2">
+                    <button type="button" id="start-webcam" class="btn btn-sm btn-outline-info">
+                      <i class="fas fa-camera me-1"></i> Use Webcam
+                    </button>
+                    <div id="webcam-ui" class="webcam-container">
+                      <video id="webcam-video" autoplay playsinline></video>
+                      <canvas id="webcam-canvas" style="display:none;"></canvas>
+                      <div class="webcam-controls">
+                        <button type="button" id="capture-photo" class="camera-btn" title="Capture Photo">
+                          <i class="fas fa-circle fa-2x"></i>
+                        </button>
+                        <button type="button" id="stop-webcam" class="btn btn-sm btn-danger ms-2">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                    <img id="captured-preview" alt="Preview">
+                    <input type="hidden" name="image_data" id="image_data">
                   </div>
                   {% endif %}
+                  {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
+                  {% endif %}
+                  {% for error in field.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>
@@ -180,18 +263,18 @@
               </h5>
               <div class="row g-3">
                 {% for field in form %}
-                  {% if field.name == 'Guarantor_Local_Address' or field.name == 'Guarantor_Permanent_Address' or field.name == 'Guarantor_Office_Address' %}
-                  <div class="col-md-6 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                  </div>
+{% if field.name == 'Guarantor_Local_Address' or field.name == 'Guarantor_Permanent_Address' or field.name == 'Guarantor_Office_Address' %}
+                <div class="col-md-6 mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
                   {% endif %}
+                  {% for error in field.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>
@@ -204,18 +287,18 @@
               </h5>
               <div class="row g-3">
                 {% for field in form %}
-                  {% if field.name == 'Guarantor_Occupation' or field.name == 'Guarantor_Designation' %}
-                  <div class="col-md-6 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                  </div>
+                {% if field.name == 'Guarantor_Occupation' or field.name == 'Guarantor_Designation' %}
+                <div class="col-md-6 mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
                   {% endif %}
+                  {% for error in field.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>
@@ -228,18 +311,18 @@
               </h5>
               <div class="row g-3">
                 {% for field in form %}
-                  {% if field.name == 'Guarantor_Phone_no' or field.name == 'Guarantor_Phone_no2' %}
-                  <div class="col-md-6 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                  </div>
+                {% if field.name == 'Guarantor_Phone_no' or field.name == 'Guarantor_Phone_no2' %}
+                <div class="col-md-6 mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
                   {% endif %}
+                  {% for error in field.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>
@@ -252,22 +335,22 @@
               </h5>
               <div class="row g-3">
                 {% for field in form %}
-                  {% if field.name == 'Guarantor_Security_Docs' %}
-                  <div class="col-12 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                  </div>
+                {% if field.name == 'Guarantor_Security_Docs' %}
+                <div class="col-12 mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
                   {% endif %}
+                  {% for error in field.errors %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>
-            
+
             <div class="text-center mt-4">
               <button type="submit" class="btn btn-primary btn-lg px-5">
                 <i class="fas fa-save me-2"></i>
@@ -282,29 +365,95 @@
 </div>
 
 <script>
-// Add Font Awesome if not already included
-if (!document.querySelector('link[href*="font-awesome"]')) {
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-  document.head.appendChild(link);
-}
+  // Add Font Awesome if not already included
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+    document.head.appendChild(link);
+  }
 
-// Form validation enhancement
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form');
-  const submitButton = form.querySelector('button[type="submit"]');
-  
-  form.addEventListener('submit', function(e) {
-    if (!form.checkValidity()) {
-      e.preventDefault();
-      e.stopPropagation();
-    } else {
-      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-      submitButton.disabled = true;
+  // Webcam functionality
+  document.addEventListener('DOMContentLoaded', function () {
+    const startBtn = document.getElementById('start-webcam');
+    const stopBtn = document.getElementById('stop-webcam');
+    const captureBtn = document.getElementById('capture-photo');
+    const video = document.getElementById('webcam-video');
+    const canvas = document.getElementById('webcam-canvas');
+    const preview = document.getElementById('captured-preview');
+    const webcamUI = document.getElementById('webcam-ui');
+    const fileInput = document.querySelector('input[type="file"]');
+    const imageDataInput = document.getElementById('image_data');
+    let stream = null;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+        video.srcObject = stream;
+        webcamUI.style.display = 'block';
+        startBtn.style.display = 'none';
+      } catch (err) {
+        console.error("Error accessing webcam:", err);
+        alert("Could not access camera. Please make sure you have given permission.");
+      }
     }
-    form.classList.add('was-validated');
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+      webcamUI.style.display = 'none';
+      startBtn.style.display = 'inline-block';
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    stopBtn.addEventListener('click', stopCamera);
+
+    captureBtn.addEventListener('click', function () {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+
+      // Store the base64 data to our hidden input
+      imageDataInput.value = dataUrl;
+
+      // Attempt to convert to a file for the form
+      fetch(dataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "webcam_capture.jpg", {type: "image/jpeg"});
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInput.files = dataTransfer.files;
+        });
+
+      stopCamera();
+    });
   });
-});
+
+  // Form validation enhancement
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          e.stopPropagation();
+        } else {
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+          submitButton.disabled = true;
+        }
+        form.classList.add('was-validated');
+      });
+    }
+  });
 </script>
 {% endblock %}

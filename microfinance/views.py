@@ -18,6 +18,8 @@ from datetime import datetime
 from django.contrib.auth.models import Permission
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
+import base64
+from django.core.files.base import ContentFile
 
 import requests
 import json
@@ -55,7 +57,18 @@ def Add_Client(request):
     
     Today = datetime.now()
     if request.method == 'POST':
-        print(request.POST)
+        # Don't print request.POST as it may contain large base64 image data
+        
+        # Handle base64 image from webcam if standard upload is missing
+        if not request.FILES.get('Image') and request.POST.get('image_data'):
+            try:
+                format, imgstr = request.POST.get('image_data').split(';base64,')
+                ext = format.split('/')[-1]
+                data = ContentFile(base64.b64decode(imgstr), name='webcam_capture.' + ext)
+                request.FILES['Image'] = data
+            except Exception as e:
+                print(f"Error processing webcam image: {e}")
+
         form=AddClient(request.POST,request.FILES)
         
         if form.is_valid():
@@ -70,6 +83,8 @@ def Add_Client(request):
                     password=password,
                 )
                 user.user_permissions.add(permissions)
+            else:
+                user = User.objects.get(username=username)
             # Link the user to the client
             instance.ClientUser = user
             instance.author = request.user # Set the author to the current user
@@ -157,6 +172,16 @@ def Add_Loan(request,pk, sk):
 @login_required(login_url="/accounts/login/")
 def Add_Guarantor(request,pk):
     if request.method == 'POST':
+        # Handle base64 image from webcam if standard upload is missing
+        if not request.FILES.get('Image') and request.POST.get('image_data'):
+            try:
+                format, imgstr = request.POST.get('image_data').split(';base64,')
+                ext = format.split('/')[-1]
+                data = ContentFile(base64.b64decode(imgstr), name='guarantor_webcam.' + ext)
+                request.FILES['Image'] = data
+            except Exception as e:
+                print(f"Error processing guarantor webcam image: {e}")
+
         form=AddGuarantor(request.POST,request.FILES)
         if form.is_valid():
             instance=form.save(commit=False)
@@ -228,7 +253,7 @@ def Client_Detail(request,pk):
             return HttpResponseForbidden("You are not authorized to view client details.")
 
     Account = get_object_or_404(Accounts, Client=Client)
-    Loan = Loans.objects.filter(Account =Account).distinct()
+    Loan = Loans.objects.filter(Account=Account).distinct().order_by('Status', '-Loan_Date')
     guarantors = Guarantors.objects.filter(loans__Account=Account).distinct()
 
     if request.method == "POST" :
@@ -403,10 +428,14 @@ def Loan_Detail(request,pk):
         if 'status' in request.POST:    #To change the current status
             status = bool(request.POST.get('Status'))
             Loan.Status =status
-            Loan.save()              
+            Loan.save()
+            messages.success(request, 'Loan status updated successfully!')
+            return redirect('microfinance:loandetail', pk=pk)
         
         if "pay" in request.POST:   #Code to add amount paid 
             pay_installment(request,Loan,Payment,DatePaid)
+            messages.success(request, 'Installment payment recorded successfully!')
+            return redirect('microfinance:loandetail', pk=pk)
 
         if "penalty" in request.POST:
             PenaltyObjects =Penalties.filter(Status = False).order_by("Date_Started")
@@ -435,6 +464,8 @@ def Loan_Detail(request,pk):
                 PenaltyObjects[PenaltyIndx].save()
                 Amount_Paid-=PenaltyObjects[PenaltyIndx].Penalty_Calc
                 PenaltyIndx+=1
+            messages.success(request, 'Penalty payment recorded successfully!')
+            return redirect('microfinance:loandetail', pk=pk)
         
         if "record_waiver" in request.POST:
             Amount = float(request.POST.get('waived_amount', 0))
@@ -452,7 +483,8 @@ def Loan_Detail(request,pk):
                 )
                 waiver_rec.save()
                 print(f"Recorded waiver of {Amount} (Type {WType}) for loan {Loan.pk}")
-                return redirect(request.path)
+                messages.success(request, 'Waiver applied successfully!')
+                return redirect('microfinance:loandetail', pk=pk)
 
         if "delete_waiver" in request.POST:
             waiver_id = request.POST.get('waiver_id')
@@ -462,7 +494,8 @@ def Loan_Detail(request,pk):
                 print(f"Deleted waiver {waiver_id} for loan {Loan.pk}")
             except Waiver.DoesNotExist:
                 print(f"Waiver {waiver_id} not found")
-            return redirect(request.path)
+                messages.error(request, 'Waiver not found.')
+            return redirect('microfinance:loandetail', pk=pk)
 
         # Handle payment editing
         if "edit_payment" in request.POST:
@@ -1573,7 +1606,7 @@ def EditClient(request,pk):
 def Client_Detail_Pdf(request,pk):    
     Client =Clients.objects.get(pk=pk)
     Account =Accounts.objects.get(Client=Client)
-    Loan = Loans.objects.filter(Account =Account).distinct()
+    Loan = Loans.objects.filter(Account=Account).distinct().order_by('Status', '-Loan_Date')
 
     if request.method == "POST":
         
