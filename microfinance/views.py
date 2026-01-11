@@ -78,7 +78,17 @@ def Add_Client(request):
             newobj = Accounts(Client=instance)
             permissions = Permission.objects.get(codename='client_view')
             username = ''.join(filter(str.isdigit, str(form.cleaned_data['Phone_no1'])))
-            password = instance.Name[:4]+ form.cleaned_data['Photo_Id_No'][-4:]
+            
+            # Robust password generation
+            name_part = instance.Name.replace(" ", "").upper()[:4]
+            photo_id = form.cleaned_data.get('Photo_Id_No', '')
+            if photo_id:
+                id_part = str(photo_id)[-4:]
+            else:
+                id_part = username[-4:]
+            
+            password = name_part + id_part
+
             if not User.objects.filter(username=username).exists():
                 user = User.objects.create_user(
                     username=username,
