@@ -196,7 +196,7 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     
     # Bulk fetch Installment Totals
     inst_loan_ids = installment_section_loan_ids
-    payment_loan_ids = penalty_section_loan_ids # For Payment data below
+    payment_loan_ids = list(set(installment_section_loan_ids + penalty_section_loan_ids)) # For Payment data below - include ALL loans
     # Bulk fetch Penalty Payments Within Date Range
     payment_data = Payments.objects.filter(
         Loan_id__in=payment_loan_ids,
