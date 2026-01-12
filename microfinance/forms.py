@@ -94,11 +94,32 @@ class AddGuarantorDocs(forms.ModelForm):
         fields= ['Image']
         
 class AddExpenditures(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(AddExpenditures, self).__init__(*args, **kwargs)
+        from .models import ExpenseCategory
+        try:
+            categories = list(ExpenseCategory.objects.all().values_list('name', 'name'))
+            self.fields['Category'] = forms.ChoiceField(
+                choices=categories, 
+                widget=forms.Select(attrs={'class': 'form-select', 'id': 'category_select'})
+            )
+        except Exception:
+            pass # handle migration cases
+
     class Meta:
         model=models.Expenditures
         fields= '__all__'
         widgets = {
-            'Date': forms.DateInput(attrs={'type': 'date'})
+            'Date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            # Category widget is handled in __init__
+            'Amount': forms.NumberInput(attrs={'class': 'form-control', 'placehoder': 'Enter Amount'}),
+            'To': forms.Select(attrs={'class': 'form-select'}),
+            'From': forms.Select(attrs={'class': 'form-select'}),
+            'Remark': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Optional remarks'}),
+        }
+        labels = {
+            'To': 'Paid To (Officer/Payee)',
+            'From': 'Paid By (Source)',
         }
 
 

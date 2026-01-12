@@ -95,6 +95,17 @@
                 style="font-weight: 600; font-size:22px">{{total_penalty_waived|floatformat:1}}</b></span>
         <Br><span style="color: #28a745;">Total Interest Waived: <b
                 style="font-weight: 600; font-size:22px">{{total_interest_waived|floatformat:1}}</b></span>
+        <br>
+        <div class="mt-2 pt-2 border-top">
+            <span style="color: #dc3545;">Total Expenses: <b
+                    style="font-weight: 600; font-size:22px">{{total_expenses|floatformat:1}}</b></span>
+            <span style="font-size: 16px; color: #6c757d; margin-left: 10px;">
+                ({% for cat in category_expenses %}{{ cat.Category }}: {{ cat.total|floatformat:1 }}{% if not forloop.last %}, {% endif %}{% endfor %})
+            </span>
+            <br>
+            <span style="color: #0d6efd;">Net Cash In Hand: <b
+                    style="font-weight: 600; font-size:22px">{{net_collection|floatformat:1}}</b></span>
+        </div>
 
 
 

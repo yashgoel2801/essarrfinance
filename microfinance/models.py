@@ -25,10 +25,17 @@ class Staff(models.Model):
     def __str__(self):
         return self.Officer_Name
 
+class ExpenseCategory(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Expenditures(models.Model):
+    Category = models.CharField(max_length=50, default='Other')
     Amount = models.FloatField()
-    To = models.ForeignKey(Staff,related_name='to',default=1,on_delete=models.PROTECT)
-    From = models.ForeignKey(Staff,related_name='by',default=1,on_delete=models.PROTECT)
+    To = models.ForeignKey(Staff, related_name='to', on_delete=models.PROTECT, null=True, blank=True)
+    From = models.ForeignKey(Staff, related_name='by', on_delete=models.PROTECT, null=True, blank=True)
     Date = models.DateField(default=timezone.now)
     Remark = models.TextField(blank=True)    
 
@@ -233,6 +240,8 @@ class Penalty(models.Model):
        return str(self.Date_Started) +" - "+str(self.Loan.pk)  
     class Meta:
         ordering = ['Loan_id','Date_Started']
+
+
 
 
 PAYMENT_TYPE = (

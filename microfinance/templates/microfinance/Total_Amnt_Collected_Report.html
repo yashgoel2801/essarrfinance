@@ -11,7 +11,8 @@
       <span class="badge bg-warning text-dark me-2">Penalties: {{grand_totals.pen|floatformat:1}}</span>
       <span class="badge bg-info text-dark me-2">File Charges: {{grand_totals.fc|floatformat:1}}</span>
       <span class="badge bg-success me-2">Waivers: {{grand_totals.waivers|floatformat:1}}</span>
-      <span class="badge bg-dark">Grand Total: {{grand_totals.total|floatformat:1}}</span>
+      <span class="badge bg-danger me-2">Expenses: {{grand_totals.expenses|floatformat:1}}</span>
+      <span class="badge bg-dark">Net Cash: {{grand_totals.net_cash|floatformat:1}}</span>
     </div>
   </div>
 
@@ -145,30 +146,83 @@
   <div class="alert alert-info">No collections found for this date.</div>
   {% endfor %}
 
+  {% if expenditures %}
+  <div class="card mb-4 border-danger shadow-sm">
+    <div class="card-header bg-danger text-white">
+      <h4 class="mb-0">Expenditures Breakdown</h4>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        {% for cat in category_expenses %}
+        <div class="col-md-3 mb-2">
+          <div class="p-2 border rounded text-center bg-light">
+            <div class="small text-muted text-uppercase">{{cat.Category}}</div>
+            <div class="fw-bold">₹{{cat.total|floatformat:1}}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-striped align-middle">
+           <thead class="table-danger">
+             <tr>
+               <th>Category</th>
+               <th>Paid To</th>
+               <th>Paid From</th>
+               <th>Amount</th>
+               <th>Remark</th>
+             </tr>
+           </thead>
+           <tbody>
+             {% for exp in expenditures %}
+             <tr>
+               <td><span class="badge bg-secondary">{{exp.Category}}</span></td>
+               <td>{{exp.To.Officer_Name|default:"-"}}</td>
+               <td>{{exp.From.Officer_Name|default:"-"}}</td>
+               <td>₹{{exp.Amount}}</td>
+               <td><small>{{exp.Remark}}</small></td>
+             </tr>
+             {% endfor %}
+           </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {% if report_data %}
   <div class="card bg-dark text-white">
     <div class="card-body">
       <h4 class="mb-3">Grand Totals</h4>
       <div class="row text-center">
-        <div class="col-md-3">
+        <div class="col-md">
           <h6>Installments</h6>
           <h3>{{grand_totals.inst|floatformat:1}}</h3>
         </div>
-        <div class="col-md-3">
+        <div class="col-md">
           <h6>Penalties</h6>
           <h3>{{grand_totals.pen|floatformat:1}}</h3>
         </div>
-        <div class="col-md-2">
+        <div class="col-md">
           <h6>File Charges</h6>
           <h3>{{grand_totals.fc|floatformat:1}}</h3>
         </div>
-        <div class="col-md-2">
+        <div class="col-md">
           <h6 class="text-success">Waivers</h6>
           <h3 class="text-success">{{grand_totals.waivers|floatformat:1}}</h3>
         </div>
-        <div class="col-md-2">
-          <h6 class="text-warning">Total Collected</h6>
-          <h2 class="text-warning">{{grand_totals.total|floatformat:1}}</h2>
+        <div class="col-md">
+          <h6 class="text-warning">Total Coll.</h6>
+          <h3 class="text-warning">{{grand_totals.total|floatformat:1}}</h3>
+        </div>
+        <div class="col-md">
+          <h6 class="text-danger">Expenses</h6>
+          <h3 class="text-danger">{{grand_totals.expenses|floatformat:1}}</h3>
+        </div>
+        <div class="col-md">
+          <h6 class="text-info">Net Cash</h6>
+          <h2 class="text-info">{{grand_totals.net_cash|floatformat:1}}</h2>
         </div>
       </div>
     </div>

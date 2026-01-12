@@ -297,6 +297,18 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         else:
             Payment_Status[loan_id] = 'pending'
     
+    # --- Expense Calculation START ---
+    from microfinance.models import Expenditures
+    
+    expenses_query = Expenditures.objects.filter(Date__range=[start, end])
+    
+    if Staff_pk != 0:
+        expenses_query = expenses_query.filter(To_id=Staff_pk)
+        
+    total_expenses = expenses_query.aggregate(Sum('Amount'))['Amount__sum'] or 0
+    category_expenses = expenses_query.values('Category').annotate(total=Sum('Amount')).order_by('Category')
+    # --- Expense Calculation END ---
+
     print('5',datetime.now(local_timezone).strftime("%Y-%m-%d %H:%M:%S"))
     return render(request,'microfinance/Officerwise_Total_Finance_And_Collection_Report.html',{
         'start':start,
@@ -318,4 +330,7 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         'total_penalty_waived': total_penalty_waived_display,
         'total_interest_waived': total_interest_waived_display,
         'payment_status': Payment_Status,
+        'total_expenses': total_expenses,
+        'category_expenses': category_expenses,
+        'net_collection': totalAmntCollected + totalPenaltyCollected + totalFileChargeCollected - total_expenses
     })

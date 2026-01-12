@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.shortcuts import render,redirect, get_object_or_404
+from django.urls import reverse
 from .import forms
 from .forms import AddExpenditures,AddGuarantor,AddStaff,AddClient,AddDocs,AddLoan,AddGuarantorDocs,EditClientDetail,EditLoanDetail,EditInstallmentDetail,AddInstallments
 from .forms import ClientSearchForm
@@ -11,7 +12,7 @@ from datetime import datetime, time, timedelta,date
 from dateutil.relativedelta import relativedelta
 from search_views.search import SearchListView,BaseFilter
 from django.utils.dateparse import parse_date
-from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField
+from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField, Avg
 from django.template import loader
 from datetime import date
 from datetime import datetime
@@ -224,20 +225,100 @@ def Add_Guarantor_Docs(request,pk,sk):
 
 @login_required(login_url="/accounts/login/")
 def Add_Expense(request):
-    if request.user.is_superuser:    
-        if request.method == 'POST':
-            Date = request.POST.get('Month')
-            form=AddExpenditures(request.POST,request.FILES)
-            Expense = Expenditures.objects.filter(Date__month=Date,Date__year=timezone.now().date().year).order_by('Date','-Amount')
-            if form.is_valid():
-                form.save()
-            return render(request,'microfinance/Add_Expense.html',{'form':form,'expense':Expense})
-        else: 
-            Expense = Expenditures.objects.filter(Date__month=timezone.now().date().month,Date__year=timezone.now().date().year).order_by('Date','-Amount')
-            form=AddExpenditures()     
-            return render(request,'microfinance/Add_Expense.html',{'form':form,'expense':Expense})
-    else:
+    if not request.user.is_superuser:
         return HttpResponse('you dont have access to this page. Contact admin')
+
+    form = AddExpenditures()
+    
+    # Initialize filter params
+    filter_type = request.GET.get('filter_type', 'month')
+    selected_month = timezone.now().date().month
+    current_year = timezone.now().date().year
+    specific_date = ''
+    start_date = ''
+    end_date = ''
+
+    # Handle filters
+    try:
+        if filter_type == 'month':
+            if 'Month' in request.GET:
+                selected_month = int(request.GET.get('Month'))
+            if 'year' in request.GET:
+                current_year = int(request.GET.get('year'))
+            Expense = Expenditures.objects.filter(
+                Date__month=selected_month,
+                Date__year=current_year
+            ).order_by('Date', '-Amount')
+
+        elif filter_type == 'date':
+            specific_date = request.GET.get('specific_date', '')
+            if specific_date:
+                Expense = Expenditures.objects.filter(Date=specific_date).order_by('-Amount')
+            else:
+                Expense = Expenditures.objects.none()
+
+        elif filter_type == 'range':
+            start_date = request.GET.get('start_date', '')
+            end_date = request.GET.get('end_date', '')
+            if start_date and end_date:
+                Expense = Expenditures.objects.filter(Date__range=[start_date, end_date]).order_by('Date', '-Amount')
+            else:
+                Expense = Expenditures.objects.none()
+        else:
+             Expense = Expenditures.objects.none()
+
+    except ValueError:
+        Expense = Expenditures.objects.none()
+
+    if request.method == 'POST':
+        if 'Amount' in request.POST:
+            form = AddExpenditures(request.POST, request.FILES)
+            if form.is_valid():
+                instance = form.save()
+                messages.success(request, 'Expense added successfully!')
+                # Redirect to prevent double submission (PRG Pattern)
+                base_url = reverse('microfinance:addexpense')
+                return redirect(f"{base_url}?filter_type=month&Month={instance.Date.month}&year={instance.Date.year}")
+            else:
+                messages.error(request, 'Error adding expense. Please check the form.')
+    
+    # Calculate dynamic totals
+    total_amount = Expense.aggregate(Sum('Amount'))['Amount__sum'] or 0
+    category_totals = Expense.values('Category').annotate(total=Sum('Amount')).order_by('Category')
+
+    context = {
+        'form': form, 
+        'expense': Expense,
+        'selected_month': selected_month,
+        'current_year': current_year,
+        'filter_type': filter_type,
+        'specific_date': specific_date,
+        'start_date': start_date,
+        'end_date': end_date,
+        'total_amount': total_amount,
+        'category_totals': category_totals,
+    }
+    return render(request, 'microfinance/Add_Expense.html', context)
+
+@login_required(login_url="/accounts/login/")
+def Add_Expense_Category(request):
+    if not request.user.is_superuser:
+         return HttpResponseForbidden()
+         
+    if request.method == 'POST':
+        category_name = request.POST.get('category_name')
+        if category_name:
+            from .models import ExpenseCategory
+            # Normalize name
+            category_name = category_name.strip().title()
+            obj, created = ExpenseCategory.objects.get_or_create(name=category_name)
+            if created:
+                messages.success(request, f"Category '{category_name}' added.")
+            else:
+                messages.info(request, f"Category '{category_name}' already exists.")
+        
+    # Redirect back to Add Expense page
+    return redirect('microfinance:addexpense')
 
         
 @login_required(login_url="/accounts/login/")
@@ -1597,6 +1678,14 @@ def Total_Amount_Collected_Report(request):
         entry['totals']['waivers'] += waiver.Amount
         grand_totals['waivers'] += waiver.Amount
 
+    # Process Expenditures
+    expenditures = Expenditures.objects.filter(Date=Date).select_related('To', 'From')
+    total_daily_expenses = expenditures.aggregate(Sum('Amount'))['Amount__sum'] or 0
+    category_expenses = expenditures.values('Category').annotate(total=Sum('Amount')).order_by('Category')
+    
+    grand_totals['expenses'] = total_daily_expenses
+    grand_totals['net_cash'] = grand_totals['total'] - total_daily_expenses
+
     # Convert to list and sort
     report_data = sorted(grouped_data.values(), key=lambda x: x['officer'].Officer_Name)
     
@@ -1604,6 +1693,8 @@ def Total_Amount_Collected_Report(request):
         'Date': Date,
         'report_data': report_data,
         'grand_totals': grand_totals,
+        'expenditures': expenditures,
+        'category_expenses': category_expenses,
         'filec': file_charges # Keep for backward compat if specialized tag uses it
     })
 
@@ -2832,6 +2923,194 @@ def dashboard(request):
     for item in frequency_distribution:
         item['frequency_label'] = frequency_labels.get(item['Frequency'], 'Unknown')
     
+    # === FINANCIAL HEALTH METRICS ===
+    
+    # 1. Total Revenue (Interest + File Charges + Penalties)
+    total_revenue = safe_float(interest_earned_period) + safe_float(file_charges_period) + safe_float(penalty_collected_period)
+    
+    # 2. Expenses for the period
+    period_expenses = Expenditures.objects.filter(
+        Date__range=[start_date, end_date]
+    ).aggregate(total=Sum('Amount'))['total'] or 0
+    period_expenses = safe_float(period_expenses)
+    
+    # Calculate expense breakdown by category
+    expense_by_category = Expenditures.objects.filter(
+        Date__range=[start_date, end_date]
+    ).values('Category').annotate(total=Sum('Amount'))
+    
+    # 3. Net Profit and Profit Margin
+    net_profit = total_revenue - period_expenses
+    net_profit_margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
+    
+    # 4. ROI Percentage
+    total_disbursed_period = sum(loan.Principle_Amount for loan in period_loans)
+    total_disbursed_period = safe_float(total_disbursed_period)
+    roi_percentage = (total_revenue / total_disbursed_period * 100) if total_disbursed_period > 0 else 0
+    
+    # 5. Total loan amount disbursed in period
+    total_loan_amount_period = total_disbursed_period
+    
+    # === RISK METRICS ===
+    
+    # 6. Default Rate (percentage of loans that are defaulting)
+    total_active_loans_count = active_loans.count()
+    default_rate = (total_defaulters / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+    
+    # 7. Recovery Rate (percentage of loans performing well)
+    # A loan is "performing" if it has no overdue installments
+    loans_with_overdue = set(
+        Installments.objects.filter(
+            Loan__in=active_loans,
+            Date_Due__lt=today,
+            Date_Paid__isnull=True,
+            Installment_Due__gt=0
+        ).values_list('Loan_id', flat=True)
+    )
+    performing_loans = total_active_loans_count - len(loans_with_overdue)
+    recovery_rate = (performing_loans / total_active_loans_count * 100) if total_active_loans_count > 0 else 0
+    
+    # 8. PAR 30+ (Portfolio at Risk - loans overdue by 30+ days)
+    par_30_date = today - timedelta(days=30)
+    par_30_plus_installments = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due__lt=par_30_date,
+        Date_Paid__isnull=True,
+        Installment_Due__gt=0
+    )
+    
+    # Get unique loans that are 30+ days overdue
+    par_30_plus_loan_ids = set(par_30_plus_installments.values_list('Loan_id', flat=True))
+    
+    # Calculate outstanding balance for these loans
+    par_30_plus = 0
+    for loan_id in par_30_plus_loan_ids:
+        loan = active_loans.get(pk=loan_id)
+        loan_total = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        loan_paid = Payments.objects.filter(
+            Loan_id=loan_id,
+            Payment_Type=1
+        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        
+        # Subtract waivers
+        loan_waivers = Waiver.objects.filter(
+            Loan_id=loan_id,
+            Waiver_Type=2  # Interest waivers
+        ).aggregate(total=Sum('Amount'))['total'] or 0
+        
+        outstanding = loan_total - loan_paid - loan_waivers
+        par_30_plus += max(outstanding, 0)
+    
+    par_30_plus = safe_float(par_30_plus)
+    par_30_plus_rate = (par_30_plus / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+    
+    # 9. Write-off Rate (completed loans that weren't fully recovered)
+    completed_loans = Loans.objects.filter(Status=True)  # Closed loans
+    total_completed_count = completed_loans.count()
+    
+    write_off_count = 0
+    for loan in completed_loans:
+        loan_total = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        loan_paid = Payments.objects.filter(
+            Loan=loan,
+            Payment_Type=1
+        ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
+        
+        loan_waivers = Waiver.objects.filter(
+            Loan=loan,
+            Waiver_Type=2
+        ).aggregate(total=Sum('Amount'))['total'] or 0
+        
+        # If loan wasn't fully recovered (allowing small rounding errors)
+        if (loan_total - loan_paid - loan_waivers) > 10:
+            write_off_count += 1
+    
+    write_off_rate = (write_off_count / total_completed_count * 100) if total_completed_count > 0 else 0
+    
+    # 10. Average Interest Rate
+    avg_interest_rate = active_loans.aggregate(
+        avg=Avg('Intrest_Rate')
+    )['avg'] or 0
+    avg_interest_rate = safe_float(avg_interest_rate)
+    
+    # === WAIVER METRICS ===
+    
+    # Total waivers in the period
+    period_waivers = Waiver.objects.filter(
+        Loan__in=active_loans,
+        Date_Applied__range=[start_date, end_date]
+    )
+    
+    total_interest_waived = period_waivers.filter(
+        Waiver_Type=2
+    ).aggregate(total=Sum('Amount'))['total'] or 0
+    
+    total_penalty_waived = period_waivers.filter(
+        Waiver_Type=1
+    ).aggregate(total=Sum('Amount'))['total'] or 0
+    
+    total_waivers = safe_float(total_interest_waived) + safe_float(total_penalty_waived)
+    
+    # === TODAY'S DUE INSTALLMENTS ===
+    
+    todays_installments = Installments.objects.filter(
+        Loan__in=active_loans,
+        Date_Due=today,
+        Installment_Due__gt=0
+    ).select_related('Loan__Account__Client', 'Loan__Loan_Collector')
+    
+    # Group by client
+    todays_due_dict = {}
+    for inst in todays_installments:
+        client = inst.Loan.Account.Client
+        client_id = client.pk
+        
+        if client_id not in todays_due_dict:
+            todays_due_dict[client_id] = {
+                'client': client,
+                'total_due': 0,
+                'loans_count': 0,
+                'collector': inst.Loan.Loan_Collector,
+                'loan_id': inst.Loan.pk
+            }
+        
+        todays_due_dict[client_id]['total_due'] += inst.Installment_Due
+        todays_due_dict[client_id]['loans_count'] += 1
+    
+    todays_due_data = list(todays_due_dict.values())
+    todays_due_data.sort(key=lambda x: x['total_due'], reverse=True)
+    
+    total_due_today = sum(d['total_due'] for d in todays_due_data)
+    
+    # === LOAN SIZE DISTRIBUTION ===
+    
+    # Categorize loans by size
+    loan_size_categories = [
+        {'min': 0, 'max': 10000, 'label': 'Small (< ₹10k)'},
+        {'min': 10000, 'max': 50000, 'label': 'Medium (₹10k-50k)'},
+        {'min': 50000, 'max': 100000, 'label': 'Large (₹50k-100k)'},
+        {'min': 100000, 'max': float('inf'), 'label': 'Very Large (> ₹100k)'},
+    ]
+    
+    loan_size_distribution = []
+    for category in loan_size_categories:
+        loans_in_category = active_loans.filter(
+            Principle_Amount__gte=category['min'],
+            Principle_Amount__lt=category['max']
+        )
+        
+        count = loans_in_category.count()
+        amount = loans_in_category.aggregate(total=Sum('Principle_Amount'))['total'] or 0
+        percentage = (amount / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+        
+        if count > 0:  # Only include categories with loans
+            loan_size_distribution.append({
+                'category': category['label'],
+                'count': count,
+                'amount': safe_float(amount),
+                'percentage': percentage
+            })
+    
     context = {
         # Date filter context
         'selected_range': selected_range,
@@ -2871,6 +3150,40 @@ def dashboard(request):
         'avg_loan_amount': avg_loan_amount,
         'total_active_loans': total_active_loans,
         'frequency_distribution': frequency_distribution,
+        
+        # Financial Health Metrics
+        'total_revenue': total_revenue,
+        'roi_percentage': round(roi_percentage, 2),
+        'net_profit_margin': round(net_profit_margin, 2),
+        'net_profit': net_profit,
+        'avg_interest_rate': round(avg_interest_rate, 2),
+        
+        # Risk Metrics
+        'total_active_loans_count': total_active_loans_count,
+        'default_rate': round(default_rate, 2),
+        'recovery_rate': round(recovery_rate, 2),
+        'performing_loans': performing_loans,
+        'par_30_plus': par_30_plus,
+        'par_30_plus_rate': round(par_30_plus_rate, 2),
+        'write_off_rate': round(write_off_rate, 2),
+        'total_completed_count': total_completed_count,
+        
+        # Expense Metrics
+        'period_expenses': period_expenses,
+        'expense_by_category': expense_by_category,
+        
+        # Waiver Metrics
+        'total_waivers': total_waivers,
+        'total_interest_waived': safe_float(total_interest_waived),
+        'total_penalty_waived': safe_float(total_penalty_waived),
+        
+        # Today's Due
+        'todays_due_data': todays_due_data,
+        'total_due_today': safe_float(total_due_today),
+        
+        # Loan Distribution
+        'loan_size_distribution': loan_size_distribution,
+        'total_loan_amount_period': total_loan_amount_period,
         
         # Current date
         'today': today,

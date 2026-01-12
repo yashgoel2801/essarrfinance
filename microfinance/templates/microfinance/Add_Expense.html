@@ -4,7 +4,12 @@
     <div class="col-12 col-md-8 col-lg-6">
       <div class="card shadow-sm mb-4">
         <div class="card-body">
-          <h3 class="mb-3">Add New Expense</h3>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+             <h3 class="mb-0">Add New Expense</h3>
+             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus"></i> New Category
+             </button>
+          </div>
           <form method="POST" autocomplete="off">
             {% csrf_token %}
             {% for field in form %}
@@ -23,32 +28,192 @@
           </form>
         </div>
       </div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Expense Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'microfinance:addexpensecategory' %}" method="POST">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="mb-3">
+                <label for="category_name" class="form-label">Category Name</label>
+                <input type="text" class="form-control" id="category_name" name="category_name" required placeholder="e.g., Rent, Electricity">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add Category</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
       <div class="card shadow-sm">
         <div class="card-header">
           <h4 class="mb-0">Expenses</h4>
         </div>
         <div class="card-body">
-          <form method="POST" action="{% url 'microfinance:addexpense' %}" class="mb-3 d-flex align-items-end gap-2">
+          <form method="GET" action="{% url 'microfinance:addexpense' %}" class="mb-3 d-flex align-items-end gap-2">
             {% csrf_token %}
-            <div class="flex-grow-1">
-              <label for="month" class="form-label">Select Month</label>
-              <select name="Month" class="form-select" id="month">
-                {% for i in "0123456789AB"|make_list %}
-                {% if forloop.counter <= 12 %}
-                <option value="{{ forloop.counter }}" {% if forloop.counter == expense.first.Date.month %}selected{% endif %}>
-                  {{ forloop.counter|month_name }}
-                </option>
-                {% endif %}
-                {% endfor %}
-              </select>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                 <label class="form-label">Filter Type</label>
+                 <select name="filter_type" class="form-select" id="filter_type" onchange="toggleFilters()">
+                    <option value="month" {% if filter_type == 'month' %}selected{% endif %}>Monthly</option>
+                    <option value="date" {% if filter_type == 'date' %}selected{% endif %}>Specific Date</option>
+                    <option value="range" {% if filter_type == 'range' %}selected{% endif %}>Date Range</option>
+                 </select>
+              </div>
+
+              <!-- Monthly Filter -->
+              <div class="col-md-3 filter-group" id="month_group">
+                <label class="form-label">Month</label>
+                <select name="Month" class="form-select">
+                  <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+                  <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+                  <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+                  <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+                  <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+                  <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+                  <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+                  <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+                  <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+                  <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+                  <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+                  <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+                </select>
+              </div>
+              <div class="col-md-3 filter-group" id="year_group">
+                <label class="form-label">Year</label>
+                <input type="number" name="year" class="form-control" value="{{ current_year }}" min="2000" max="2100">
+              </div>
+
+              <!-- Specific Date Filter -->
+              <div class="col-md-6 filter-group d-none" id="date_group">
+                  <label class="form-label">Select Date</label>
+                  <input type="date" name="specific_date" class="form-control" value="{{ specific_date }}">
+              </div>
+
+              <!-- Date Range Filter -->
+              <div class="col-md-3 filter-group d-none" id="start_date_group">
+                  <label class="form-label">Start Date</label>
+                  <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+              </div>
+              <div class="col-md-3 filter-group d-none" id="end_date_group">
+                  <label class="form-label">End Date</label>
+                  <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+              </div>
+
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-secondary w-100">Apply Filter</button>
+              </div>
             </div>
-            <button type="submit" class="btn btn-secondary flex-shrink-0">View Monthly Expenses</button>
+
+            <script>
+                function toggleFilters() {
+                    const type = document.getElementById('filter_type').value;
+                    const groups = {
+                        'month': ['month_group', 'year_group'],
+                        'date': ['date_group'],
+                        'range': ['start_date_group', 'end_date_group']
+                    };
+
+                    // Hide all first
+                    document.querySelectorAll('.filter-group').forEach(el => el.classList.add('d-none'));
+
+                    // Show selected
+                    groups[type].forEach(id => {
+                        const el = document.getElementById(id);
+                        if(el) el.classList.remove('d-none');
+                    });
+                }
+                // Run on load
+                document.addEventListener('DOMContentLoaded', toggleFilters);
+            </script>
           </form>
+
+            <!-- Stats Overview -->
+            <div class="stats-overview mb-4">
+              <div class="row g-3">
+                <!-- Grand Total Card -->
+                <div class="col-12 col-lg-4">
+                  <div class="card h-100 border-0 shadow-sm bg-primary text-white overflow-hidden position-relative">
+                    <div class="card-body p-4 position-relative" style="z-index: 2;">
+                      <h6 class="text-white-50 text-uppercase mb-2 ls-1 font-monospace">Grand Total</h6>
+                      <h2 class="display-6 fw-bold mb-0 text-white">₹{{ total_amount|floatformat:2 }}</h2>
+                    </div>
+                    <!-- Decorative background element -->
+                    <div class="position-absolute bottom-0 end-0 opacity-10" style="font-size: 5rem; transform: translate(20%, 20%); line-height: 1;">
+                      <i class="fas fa-wallet"></i>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Category Breakdown -->
+                <div class="col-12 col-lg-8">
+                  <div class="card h-100 border-0 shadow-sm bg-white overflow-hidden">
+                    <div class="card-header bg-white border-0 pt-3 pb-0">
+                      <h6 class="text-muted text-uppercase mb-0 small ls-1 fw-bold">Category Breakdown</h6>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="d-flex flex-nowrap overflow-auto pb-2 category-scroll-container">
+                        {% for cat in category_totals %}
+                        <div class="category-pill-card me-3 text-center">
+                          <div class="mb-1 text-muted text-uppercase tiny-text fw-bold">{{ cat.Category }}</div>
+                          <div class="h5 fw-bold mb-0 text-dark">₹{{ cat.total|floatformat:0 }}</div>
+                        </div>
+                        {% empty %}
+                        <div class="text-muted small py-2">No category data available</div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <style>
+              .ls-1 { letter-spacing: 1px; }
+              .tiny-text { font-size: 0.65rem; }
+              .category-pill-card {
+                min-width: 130px;
+                padding: 12px 15px;
+                background: #f8f9fa;
+                border-radius: 12px;
+                transition: transform 0.2s, background 0.2s;
+                border: 1px solid #edf2f7;
+              }
+              .category-pill-card:hover {
+                background: #f1f3f5;
+                transform: translateY(-2px);
+              }
+              .category-scroll-container::-webkit-scrollbar {
+                height: 4px;
+              }
+              .category-scroll-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+              }
+              .category-scroll-container::-webkit-scrollbar-thumb {
+                background: #cbd5e0;
+                border-radius: 10px;
+              }
+              .category-scroll-container::-webkit-scrollbar-thumb:hover {
+                background: #a0aec0;
+              }
+            </style>
+
           <div class="table-responsive">
             <table class="table table-bordered table-striped">
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Category</th>
                   <th>To</th>
                   <th>From</th>
                   <th>Amount</th>
@@ -59,16 +224,21 @@
                 {% for e in expense %}
                 <tr>
                   <td>{{e.Date}}</td>
-                  <td>{{e.To}}</td>
-                  <td>{{e.From}}</td>
+                  <td><span class="badge bg-info text-dark">{{e.Category}}</span></td>
+                  <td>{{e.To|default:"-"}}</td>
+                  <td>{{e.From|default:"-"}}</td>
                   <td>{{e.Amount}}</td>
-                  <td>{{e.remark}}</td>
+                  <td>{{e.Remark}}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="5" class="text-center">No expenses found for this month.</td>
+                  <td colspan="6" class="text-center">No expenses found for this selection.</td>
                 </tr>
                 {% endfor %}
+                <tr class="table-secondary fw-bold">
+                  <td colspan="4" class="text-end">Total:</td>
+                  <td colspan="2">₹{{ total_amount|floatformat:2 }}</td>
+                </tr>
               </tbody>
             </table>
           </div>

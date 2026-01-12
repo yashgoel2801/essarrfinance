@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^docs/(?P<pk>\d+)/$', views.Add_Docs,name="adddocs"),
     url(r'ClientDetails/(?P<pk>\d+)$', views.Client_Detail ,name="clientdetail"),
     url(r'^Expenditure/$', views.Add_Expense,name="addexpense"),
+    url(r'^Expenditure/AddCategory/$', views.Add_Expense_Category, name="addexpensecategory"),
     url(r'^All-Expenditure/$', views.AllExpense,name="allexpense"),
     url(r'^Reports/$', views.Reports,name="reports"),
     # url(r'^Report-Officer&Freq/$', views.Officer_And_Frequency_Wise_Report,name="report1"),
