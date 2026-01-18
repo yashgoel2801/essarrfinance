@@ -1,7 +1,7 @@
 {%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}{% load payment_tags %}
 <style>
     body {
-        width: 21cm !important;
+        width: 100% !important;
     }
     
     ul {
@@ -54,11 +54,8 @@
         height: 80%;
     }
     
-    caption {
-        background-color: yellow;
-        font-size: 18px;
-        text-transform: uppercase;
-        font-weight: 900;
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
     }
 </style>
 <style>

@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^Total-Amount-Collected/$', views.Total_Amount_Collected_Report,name="report5"), 
     url(r'^All-Client_List/$', views.All_Clients_List,name="report6"), 
     url(r'^Week_Chart/$', views.Week_Chart_List,name="report7"), 
+    url(r'^Month_Chart/$', views.Month_Chart_List,name="report8"), 
     url(r'^GuarantorDocs/(?P<pk>\d+)/$', views.ViewGuarantorDocs,name="viewguarantordocs"),
     url(r'^ClientDocs/(?P<pk>\d+)/$', views.ViewClientDocs,name="viewdocs"),
     url(r'SMS/$', views.SMSselect,name="smsselect"),

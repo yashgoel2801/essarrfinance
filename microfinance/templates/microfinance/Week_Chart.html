@@ -1,7 +1,7 @@
 {%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}{% load payment_tags %}
 <style>
     body {
-        width: 21cm !important;
+        width: 100% !important;
     }
     
     ul {
@@ -54,11 +54,8 @@
         height: 80%;
     }
     
-    caption {
-        background-color: yellow;
-        font-size: 18px;
-        text-transform: uppercase;
-        font-weight: 900;
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
     }
 </style>
 <style>
@@ -76,16 +73,20 @@
 
     <div>
         <table>
-            <caption>Monday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Monday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 0 %}
             <tr>
 
@@ -112,16 +113,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>Tuesday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Tuesday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 1 %}
             <tr>
 
@@ -148,16 +153,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>Wednesday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Wednesday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 2 %}
             <tr>
 
@@ -185,16 +194,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>Thursday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Thursday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 3 %}
             <tr>
 
@@ -220,16 +233,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>Friday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Friday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 4 %}
             <tr>
 
@@ -255,16 +272,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>saturday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Saturday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 5 %}
             <tr>
 
@@ -290,16 +311,20 @@
 <div class="weeks" style="page-break-before: always;">
     <div>
         <table>
-            <caption>sunday</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Sunday</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%} {%if l.installments_set.first.Date_Due.weekday == 6 %}
             <tr>
 
