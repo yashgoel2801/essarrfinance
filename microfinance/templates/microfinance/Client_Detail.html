@@ -117,6 +117,110 @@
     background: #999;
   }
 </style>
+
+{% if is_client_view %}
+<style>
+  /* Mobile-friendly styles for client view */
+  @media (max-width: 768px) {
+    /* Larger touch targets */
+    .btn {
+      min-height: 44px;
+      font-size: 16px;
+      padding: 12px 20px;
+    }
+
+    /* Simplified header */
+    .container-fluid {
+      padding: 10px !important;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    /* Card spacing */
+    .card {
+      margin-bottom: 15px;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    /* Larger client image */
+    .col-auto img {
+      width: 100px !important;
+      height: 100px !important;
+    }
+
+    /* Stack buttons vertically */
+    .d-flex.flex-wrap.gap-2 {
+      flex-direction: column !important;
+    }
+
+    .d-flex.flex-wrap.gap-2 form {
+      width: 100%;
+    }
+
+    .d-flex.flex-wrap.gap-2 .btn {
+      width: 100%;
+    }
+
+    /* Simplify loan table for mobile */
+    .table-responsive {
+      font-size: 14px;
+    }
+
+    .table th, .table td {
+      padding: 10px 5px;
+      font-size: 14px;
+    }
+
+    /* Hide less important columns on mobile */
+    .table th:nth-child(2), /* A/c No */
+    .table td:nth-child(2),
+    .table th:nth-child(3), /* Date Created */
+    .table td:nth-child(3),
+    .table th:nth-child(6), /* Reminder */
+    .table td:nth-child(6) {
+      display: none;
+    }
+
+    /* Make loan details more prominent */
+    .loan-row-active {
+      border-left: 6px solid #17a2b8 !important;
+    }
+
+    /* Larger status badges */
+    .badge {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    /* Hide client profile and guarantor sections on mobile for clients */
+    .row.mt-4.mb-5 {
+      display: none;
+    }
+
+    /* Better spacing for loan cards */
+    .card-header h5 {
+      font-size: 1.2rem;
+    }
+  }
+
+  /* Tablet adjustments */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .btn {
+      min-height: 40px;
+    }
+
+    .table {
+      font-size: 15px;
+    }
+  }
+</style>
+{% endif %}
+
 <div class="container-fluid py-4">
   <h2 class="mb-4 text-center">Client Details</h2>
   <div class="row gy-4">

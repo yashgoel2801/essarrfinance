@@ -140,6 +140,114 @@
     background: #555;
   }
 </style>
+
+{% if is_client_view %}
+<style>
+  /* Mobile-friendly styles for client view */
+  @media (max-width: 768px) {
+    /* Larger touch targets */
+    .btn {
+      min-height: 44px;
+      font-size: 16px;
+      padding: 12px 20px;
+    }
+
+    /* Simplified header */
+    .container-fluid {
+      padding: 10px !important;
+    }
+
+    /* Hide toggle button for clients on mobile */
+    .col-12.mb-3 {
+      display: none;
+    }
+
+    /* Hide borrower sidebar on mobile for clients */
+    #leftSidebar {
+      display: none !important;
+    }
+
+    /* Make right content full width */
+    #rightContent {
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* Simplify tables */
+    .table-responsive {
+      font-size: 14px;
+    }
+
+    .table th, .table td {
+      padding: 8px 4px;
+      font-size: 13px;
+    }
+
+    /* Hide less important columns in installment table */
+    .table thead tr th:nth-child(5), /* Amount Balance */
+    .table tbody tr td:nth-child(5) {
+      display: none;
+    }
+
+    /* Hide less important columns in penalty table */
+    .table-danger thead tr th:nth-child(2), /* Date Started */
+    .table-danger tbody tr td:nth-child(2),
+    .table-danger thead tr th:nth-child(3), /* Date Ended */
+    .table-danger tbody tr td:nth-child(3),
+    .table-danger thead tr th:nth-child(4), /* Amount */
+    .table-danger tbody tr td:nth-child(4),
+    .table-danger thead tr th:nth-child(6), /* Waived */
+    .table-danger tbody tr td:nth-child(6),
+    .table-danger thead tr th:nth-child(7), /* Status */
+    .table-danger tbody tr td:nth-child(7),
+    .table-danger thead tr th:nth-child(10), /* Actions */
+    .table-danger tbody tr td:nth-child(10) {
+      display: none;
+    }
+
+    /* Card spacing */
+    .card {
+      margin-bottom: 15px;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    /* Better spacing for headers */
+    h3, h4 {
+      font-size: 1.3rem;
+    }
+
+    /* Larger badges */
+    .badge {
+      font-size: 13px;
+      padding: 6px 10px;
+    }
+
+    /* Stack last payment info */
+    .last-payment-card .row {
+      flex-direction: column;
+    }
+
+    .last-payment-card .col-md-4 {
+      margin-top: 10px;
+    }
+  }
+
+  /* Tablet adjustments */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .btn {
+      min-height: 40px;
+    }
+
+    .table {
+      font-size: 14px;
+    }
+  }
+</style>
+{% endif %}
+
 <div class="container-fluid py-4">
   <!-- Success/Error Messages -->
   <!-- Django Messages -->

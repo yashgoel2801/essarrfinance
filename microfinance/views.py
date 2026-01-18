@@ -334,6 +334,9 @@ def Client_Detail(request,pk):
     # Retrieve the Client object, or return 404 if not found
     Client = get_object_or_404(Clients, pk=pk)
 
+    # Check if the user is a client (not staff)
+    is_client_view = not request.user.is_staff
+    
     # Check if the user is a superuser
     if not request.user.is_superuser:
         # If not a superuser, check if the logged-in user is associated with this client
@@ -346,7 +349,13 @@ def Client_Detail(request,pk):
             return HttpResponseForbidden("You are not authorized to view client details.")
 
     Account = get_object_or_404(Accounts, Client=Client)
-    Loan = Loans.objects.filter(Account=Account).distinct().order_by('Status', '-Loan_Date')
+    
+    # For client users, show only active loans (Status=False)
+    if is_client_view:
+        Loan = Loans.objects.filter(Account=Account, Status=False).distinct().order_by('-Loan_Date')
+    else:
+        Loan = Loans.objects.filter(Account=Account).distinct().order_by('Status', '-Loan_Date')
+    
     guarantors = Guarantors.objects.filter(loans__Account=Account).distinct()
 
     if request.method == "POST" :
@@ -359,7 +368,7 @@ def Client_Detail(request,pk):
             loan.reminder=rem
             loan.save()
 
-            return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
+            return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors, 'is_client_view': is_client_view})
         elif "delete_loan" in request.POST:
             loan_id = request.POST.get('loan_id')
             if loan_id:
@@ -379,7 +388,7 @@ def Client_Detail(request,pk):
             return redirect('microfinance:clientdetail', pk=pk)
         return redirect('microfinance:addguarantor', pk=pk)
     else:
-        return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors})
+        return render(request,'microfinance/Client_Detail.html',{'Client':Client,'Account':Account,'Loan':Loan,'Guarantors':guarantors, 'is_client_view': is_client_view})
 
 
 
@@ -1091,6 +1100,7 @@ def Loan_Detail(request,pk):
             'total_penalty_waived': total_penalty_waived,
             'total_interest_waived': total_interest_waived,
             'all_waivers': all_waivers_for_totals,
+            'is_client_view': not request.user.is_staff,
         }
         
         return render(request, 'microfinance/LoanDetail.html', context)
