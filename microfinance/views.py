@@ -1873,27 +1873,54 @@ def Week_Chart_List(request):
                 else:   
                     x|= lon.filter(pk=j.pk)  
                     
+    today_date = datetime.now().date()
     if x:   
         for l in x:
-        
-            Def1 = Def1 + l.installments_set.first().Installment_Due
-            totalPending =0
-            inst =Installments.objects.filter(Loan=l).filter(Q(Date_Paid__lte=datetime.now())|Q(Date_Due__lte=datetime.now())).distinct()
-            for i in inst:
-                            
-                totalPending  = totalPending + (i.Installment_Due - i.Installment_Paid)
+            first_inst = l.installments_set.first()
+            if first_inst:
+                Def1 = Def1 + first_inst.Installment_Due
+            
+            # Robust Pending Calculation
+            totalPending = 0
+            due_insts = Installments.objects.filter(Loan=l, Date_Due__lte=today_date).order_by('Date_Due')
+            total_paid_agg = Payments.objects.filter(Loan=l, Payment_Type=1, Date_Paid__lte=today_date).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum']
+            total_paid = total_paid_agg if total_paid_agg else 0
+            
+            for i in due_insts:
+                amount_to_cover = i.Installment_Due
+                used_amount = min(total_paid, amount_to_cover)
+                total_paid -= used_amount
+                pending = amount_to_cover - used_amount
+                totalPending += pending
+
             dic2[l.pk]=totalPending
             Def2 = Def2 + totalPending
             if totalPending<= 0:
                 x=x.exclude(pk=l.pk)
     for l in Loan:
+        first_inst = l.installments_set.first()
+        if first_inst:
+            Dic1[int(first_inst.Date_Due.weekday())] = Dic1[int(first_inst.Date_Due.weekday())] + first_inst.Installment_Due
 
-        Dic1[int(l.installments_set.first().Date_Due.weekday())] = Dic1[int(l.installments_set.first().Date_Due.weekday())] + l.installments_set.first().Installment_Due
-        totalPending =0
-        inst =Installments.objects.filter(Loan=l).filter(Q(Date_Paid__lte=datetime.now())|Q(Date_Due__lte=datetime.now())).distinct()
-        for i in inst:
-            Dic2[int(i.Date_Due.weekday())] =Dic2[int(i.Date_Due.weekday())] + (i.Installment_Due-i.Installment_Paid)             
-            totalPending  = totalPending + (i.Installment_Due - i.Installment_Paid)
+        # Robust Pending Calculation
+        totalPending = 0
+        due_insts = Installments.objects.filter(Loan=l, Date_Due__lte=today_date).order_by('Date_Due')
+        total_paid_agg = Payments.objects.filter(Loan=l, Payment_Type=1, Date_Paid__lte=today_date).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum']
+        total_paid = total_paid_agg if total_paid_agg else 0
+        
+        for i in due_insts:
+            amount_to_cover = i.Installment_Due
+            used_amount = min(total_paid, amount_to_cover)
+            total_paid -= used_amount
+            pending = amount_to_cover - used_amount
+            
+            if pending > 0:
+                weekday_idx = int(i.Date_Due.weekday())
+                # Ensure we don't index out of bounds just in case, though weekday() is 0-6
+                if 0 <= weekday_idx <= 6:
+                     Dic2[weekday_idx] = Dic2[weekday_idx] + pending
+                totalPending += pending
+
         dic[l.pk]=totalPending
     
     if int(Weekday) == 0:               
