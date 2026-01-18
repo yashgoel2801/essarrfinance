@@ -1,4 +1,4 @@
-{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}
+{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}{% load payment_tags %}
 <style>
     body {
         width: 21cm !important;
@@ -96,8 +96,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -132,8 +132,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -168,8 +168,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -205,8 +205,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -240,8 +240,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -275,8 +275,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 
@@ -310,8 +310,8 @@
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr>{%endif%} {%endfor%}
             <tr style="background-color: aqua;">
 

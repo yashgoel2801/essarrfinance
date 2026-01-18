@@ -1897,6 +1897,7 @@ def Week_Chart_List(request):
             Def2 = Def2 + totalPending
             if totalPending<= 0:
                 x=x.exclude(pk=l.pk)
+    TotalPendingSum = 0
     for l in Loan:
         first_inst = l.installments_set.first()
         if first_inst:
@@ -1916,18 +1917,30 @@ def Week_Chart_List(request):
             
             if pending > 0:
                 weekday_idx = int(i.Date_Due.weekday())
-                # Ensure we don't index out of bounds just in case, though weekday() is 0-6
                 if 0 <= weekday_idx <= 6:
                      Dic2[weekday_idx] = Dic2[weekday_idx] + pending
                 totalPending += pending
 
         dic[l.pk]=totalPending
+        TotalPendingSum += totalPending
+    
+    day_mapping = {
+        2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday', 1: 'Sunday'
+    }
+    # Fallback to python weekday if 0-6 used (0=Mon)
+    if int(Weekday) in [0, 1, 2, 3, 4, 5, 6] and int(Weekday) not in day_mapping:
+         # Assuming user might pass 0 for Monday if using python notation, but db filter uses correct one.
+         # Let's just handle standard week_day (1=Sun...7=Sat) or Python (0=Mon...6=Sun).
+         # Given the code uses __week_day, it's likely 1-7.
+         # But if Weekday comes as 0 for "All"...
+         pass
+
+    DayName = day_mapping.get(int(Weekday), 'Week Day')
     
     if int(Weekday) == 0:               
-        return render(request,'microfinance/Week_Chart.html',{'Loan':Loan,'dic':dic,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2})
+        return render(request,'microfinance/Week_Chart.html',{'Loan':Loan,'dic':dic,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2, 'TotalPendingSum': TotalPendingSum})
     else:
-        
-        return render(request,'microfinance/week_chart2.html',{'Loan':Loan,'dic':dic,'dic2':dic2,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2,'Def1':Def1,'Def2':Def2,'lon':x})
+        return render(request,'microfinance/week_chart2.html',{'Loan':Loan,'dic':dic,'dic2':dic2,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2,'Def1':Def1,'Def2':Def2,'lon':x, 'TotalPendingSum': TotalPendingSum, 'DayName': DayName})
    
 
 

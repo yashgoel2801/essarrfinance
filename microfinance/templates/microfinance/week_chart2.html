@@ -1,4 +1,4 @@
-{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}
+{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load lastpaid %}{% load lastamntpaid %}{% load payment_tags %}
 <style>
     body {
         width: 21cm !important;
@@ -76,18 +76,20 @@
 
     <div>
         <table>
-            <caption>
-                {%if Loan.first.installments_set.first.Date_Due.weekday == 0 %}Monday{%elif Loan.first.installments_set.first.Date_Due.weekday == 1 %}Tuesday{%elif Loan.first.installments_set.first.Date_Due.weekday == 2 %}Wednesday{%elif Loan.first.installments_set.first.Date_Due.weekday == 3 %}Thursday{%elif Loan.first.installments_set.first.Date_Due.weekday == 4 %}Friday{%elif Loan.first.installments_set.first.Date_Due.weekday == 5 %}Saturday{%elif Loan.first.installments_set.first.Date_Due.weekday == 6 %}
-Sunday{%endif%}</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">{{ DayName }}</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in Loan%}
             <tr>
 
@@ -98,14 +100,14 @@ Sunday{%endif%}</caption>
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr> {%endfor%}
             <tr style="background-color: aqua;">
 
                 <td colspan="4">Total Amt To Be Coll.: {{Total|keyvalue:Loan.first.installments_set.first.Date_Due.weekday|floatformat:1}}</td>
 
-                <td colspan="5">Total Amnt. Pending: {{TotalPen|keyvalue:Loan.first.installments_set.first.Date_Due.weekday|floatformat:1}}</td>
+                <td colspan="5">Total Amnt. Pending: {{ TotalPendingSum|floatformat:1 }}</td>
             </tr>
         </table>
     </div>
@@ -116,17 +118,20 @@ Sunday{%endif%}</caption>
 
     <div>
         <table>
-            <caption>
-                Defaulters</caption>
-            <th>A/c No.</th>
-            <th>L Id</th>
-            <th>Img</th>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Inst.</th>
-            <th>Total Amt Pending</th>
-            <th>Date Paid</th>
-            <th>Amnt Paid</th>
+            <tr style="background-color: yellow;">
+                 <td colspan="9" style="text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase;">Defaulters</td>
+            </tr>
+            <tr>
+                <th>A/c No.</th>
+                <th>L Id</th>
+                <th>Img</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Inst.</th>
+                <th>Total Amt Pending</th>
+                <th>Date Paid</th>
+                <th>Amnt Paid</th>
+            </tr>
             {%for l in lon%}
             <tr>
 
@@ -137,8 +142,8 @@ Sunday{%endif%}</caption>
                 <td>{{l.Account.Client.Phone_no1}}</td>
                 <td>{{l.installments_set.first.Installment_Due|floatformat:1}}</td>
                 <td>{{dic2|keyvalue:l.pk|floatformat:1}}</td>
-                <td>{{l.installments_set|lastpaid|date:"d/m "}}</td>
-                <td>{{l.installments_set|lastamntpaid}}</td>
+                <td>{% last_payment_date l %}</td>
+                <td>{% last_payment_amount l %}</td>
             </tr> {%endfor%}
             <tr style="background-color: aqua;">
 
