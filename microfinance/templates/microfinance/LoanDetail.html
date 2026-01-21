@@ -418,7 +418,14 @@
     <div class="col-lg-9 col-md-8" id="rightContent">
       <div class="card shadow-sm mb-4 installment-table-section">
         <div class="card-body">
-          <h3 class="mb-4"><i class="fas fa-list me-2"></i>Installment Details</h3>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="fas fa-list me-2"></i>Installment Details</h3>
+            {% if request.user.is_staff and not Loan.Status %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#closeLoanModal">
+              <i class="fas fa-lock me-2"></i>Close Loan
+            </button>
+            {% endif %}
+          </div>
 
           <!-- Last Payment Information -->
           <div class="row mb-4">
@@ -1411,4 +1418,75 @@
     }
   });
 </script>
+
+<!-- Close Loan Confirmation Modal -->
+{% if request.user.is_staff %}
+<div class="modal fade" id="closeLoanModal" tabindex="-1" aria-labelledby="closeLoanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="closeLoanModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Close Loan Confirmation
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning border-0 shadow-sm mb-3">
+          <div class="d-flex align-items-start">
+            <div class="fs-4 me-3 text-warning">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-1">Warning: This action cannot be undone!</h6>
+              <p class="mb-0 small">Closing this loan will mark it as completed and prevent further transactions.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="fw-bold">Loan Summary:</h6>
+          <table class="table table-sm table-bordered">
+            <tbody>
+              <tr>
+                <th class="bg-light" style="width: 50%;">Loan ID:</th>
+                <td><span class="badge bg-success">{{ Loan.pk }}</span></td>
+              </tr>
+              <tr>
+                <th class="bg-light">Client Name:</th>
+                <td>{{ Client.Name }}</td>
+              </tr>
+              <tr>
+                <th class="bg-light">Principal Amount:</th>
+                <td>₹{{ Loan.Principle_Amount|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <th class="bg-light">Total Pending:</th>
+                <td><strong class="text-warning">₹{{ Total_Pending|floatformat:2 }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <p class="text-muted small mb-0">
+          <i class="fas fa-info-circle me-1"></i>
+          Please ensure all payments have been recorded and verified before closing this loan.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>Cancel
+        </button>
+        <form method="POST" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="close_loan" value="true">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-lock me-2"></i>Yes, Close Loan
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {%endblock%}

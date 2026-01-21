@@ -49,9 +49,19 @@ def Add_Officer(request):
         form=AddStaff(request.POST,request.FILES)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Staff member added successfully!')
+            return redirect('microfinance:addofficer')
+        else:
+            messages.error(request, 'Error adding staff member. Please check the form.')
     else: 
-        form=AddStaff()     
-    return render(request,'microfinance/Add_Officer.html',{'form':form})
+        form=AddStaff()
+    
+    # Fetch all staff members for display
+    StaffList = Staff.objects.all().order_by('Officer_Name')
+    
+    return render(request,'microfinance/Add_Officer.html',{'form':form, 'StaffList': StaffList})
+
+
 
 @login_required(login_url="/accounts/login/")
 def Add_Client(request):
@@ -271,7 +281,65 @@ def Add_Expense(request):
         Expense = Expenditures.objects.none()
 
     if request.method == 'POST':
-        if 'Amount' in request.POST:
+        # Handle expense editing
+        if 'edit_expense' in request.POST:
+            expense_id = request.POST.get('expense_id')
+            try:
+                expense = Expenditures.objects.get(pk=expense_id)
+                expense.Date = request.POST.get('Date')
+                expense.Category = request.POST.get('Category')
+                expense.Amount = float(request.POST.get('Amount'))
+                
+                # Handle To and From fields (can be empty)
+                to_id = request.POST.get('To')
+                from_id = request.POST.get('From')
+                
+                if to_id and to_id.strip():
+                    try:
+                        expense.To = Staff.objects.get(pk=int(to_id))
+                    except (Staff.DoesNotExist, ValueError):
+                        expense.To = None
+                else:
+                    expense.To = None
+                
+                if from_id and from_id.strip():
+                    try:
+                        expense.From = Staff.objects.get(pk=int(from_id))
+                    except (Staff.DoesNotExist, ValueError):
+                        expense.From = None
+                else:
+                    expense.From = None
+                
+                expense.Remark = request.POST.get('Remark', '')
+                expense.save()
+                messages.success(request, 'Expense updated successfully!')
+                
+                # Redirect to maintain filter state
+                base_url = reverse('microfinance:addexpense')
+                return redirect(f"{base_url}?filter_type={filter_type}&Month={selected_month}&year={current_year}")
+            except Expenditures.DoesNotExist:
+                messages.error(request, 'Expense not found.')
+            except Exception as e:
+                messages.error(request, f'Error updating expense: {str(e)}')
+        
+        # Handle expense deletion
+        elif 'delete_expense' in request.POST:
+            expense_id = request.POST.get('expense_id')
+            try:
+                expense = Expenditures.objects.get(pk=expense_id)
+                expense.delete()
+                messages.success(request, 'Expense deleted successfully!')
+                
+                # Redirect to maintain filter state
+                base_url = reverse('microfinance:addexpense')
+                return redirect(f"{base_url}?filter_type={filter_type}&Month={selected_month}&year={current_year}")
+            except Expenditures.DoesNotExist:
+                messages.error(request, 'Expense not found.')
+            except Exception as e:
+                messages.error(request, f'Error deleting expense: {str(e)}')
+        
+        # Handle adding new expense
+        elif 'Amount' in request.POST:
             form = AddExpenditures(request.POST, request.FILES)
             if form.is_valid():
                 instance = form.save()
@@ -299,6 +367,7 @@ def Add_Expense(request):
         'category_totals': category_totals,
     }
     return render(request, 'microfinance/Add_Expense.html', context)
+
 
 @login_required(login_url="/accounts/login/")
 def Add_Expense_Category(request):
@@ -537,6 +606,18 @@ def Loan_Detail(request,pk):
             Loan.Status =status
             Loan.save()
             messages.success(request, 'Loan status updated successfully!')
+            return redirect('microfinance:loandetail', pk=pk)
+        
+        # Handle close loan request (admin only)
+        if 'close_loan' in request.POST:
+            if not request.user.is_staff:
+                messages.error(request, 'You do not have permission to close loans.')
+                return redirect('microfinance:loandetail', pk=pk)
+            
+            # Set loan status to True (closed)
+            Loan.Status = True
+            Loan.save()
+            messages.success(request, f'Loan #{Loan.pk} has been successfully closed.')
             return redirect('microfinance:loandetail', pk=pk)
         
         if "pay" in request.POST:   #Code to add amount paid 

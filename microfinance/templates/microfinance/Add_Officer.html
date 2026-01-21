@@ -1,29 +1,168 @@
 {%extends 'base_layout.html'%} {%block content%}
-<div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h3 class="mb-4">Add Officer</h3>
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Add Staff Form -->
+    <div class="col-lg-4 mb-4">
+      <div class="card card-modern shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-user-plus me-2"></i>Add New Staff
+          </h5>
+        </div>
+        <div class="card-body p-4">
           <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             {% csrf_token %}
+            
             {% for field in form %}
             <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                {{ field.label }}
+                {% if field.field.required %}
+                <span class="text-danger">*</span>
+                {% endif %}
+              </label>
               {{ field }}
               {% if field.help_text %}
-              <div class="form-text">{{ field.help_text }}</div>
+              <div class="form-text small text-muted">{{ field.help_text }}</div>
               {% endif %}
               {% for error in field.errors %}
-              <div class="text-danger">{{ error }}</div>
+              <div class="text-danger small mt-1">
+                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+              </div>
               {% endfor %}
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary w-100">Add Officer</button>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm">
+                <i class="fas fa-save me-2"></i>Save Staff Member
+              </button>
+              <button type="reset" class="btn btn-link w-100 mt-2 text-muted text-decoration-none small">
+                <i class="fas fa-undo me-1"></i>Reset Form
+              </button>
+            </div>
           </form>
         </div>
       </div>
     </div>
+
+    <!-- Staff List Table -->
+    <div class="col-lg-8">
+      <!-- Success/Error Messages -->
+      {% if messages %}
+      <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+          <i class="fas {% if message.tags == 'error' %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %} me-2"></i>
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-dark">
+              <i class="fas fa-users-cog me-2 text-primary"></i>Current Staff Members
+            </h5>
+            <span class="badge bg-primary rounded-pill">{{ StaffList|length }} Total</span>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-modern table-hover mb-0">
+              <thead>
+                <tr>
+                  <th class="ps-4">Name</th>
+                  <th>Designation</th>
+                  <th>Monthly Salary</th>
+                  <th class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for staff in StaffList %}
+                <tr>
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle me-3">
+                        {{ staff.Officer_Name|truncatechars:1|upper }}
+                      </div>
+                      <span class="fw-bold">{{ staff.Officer_Name }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <span class="badge bg-light text-dark border">{{ staff.Designation }}</span>
+                  </td>
+                  <td class="py-3 fw-bold text-success">
+                    ₹{{ staff.Salary|floatformat:2 }}
+                  </td>
+                  <td class="text-end pe-4 py-3">
+                    <button class="btn btn-sm btn-outline-primary action-btn me-1" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger action-btn" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center py-5 text-muted">
+                    <i class="fas fa-user-slash fa-3x mb-3 d-block opacity-25"></i>
+                    No staff members found. Add your first staff member using the form on the left.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% if StaffList %}
+        <div class="card-footer bg-light border-0 py-3">
+          <div class="row align-items-center">
+            <div class="col text-muted small">
+              <i class="fas fa-info-circle me-1"></i> Staff names are automatically capitalized upon saving.
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
+
+<style>
+  .avatar-circle {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  .form-control:focus {
+    background-color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  }
+
+  /* Table row animation */
+  tbody tr {
+    transition: all 0.2s ease;
+  }
+  
+  tbody tr:hover {
+    background-color: rgba(76, 175, 80, 0.03) !important;
+  }
+</style>
+
 {%endblock%}

@@ -17,24 +17,69 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 
   <style>
+    /* ===========================
+       DESIGN SYSTEM - Global Styles
+       =========================== */
+    
     :root {
+      /* Primary Colors */
       --primary-color: #4caf50;
       --primary-hover: #45a049;
+      --primary-light: rgba(76, 175, 80, 0.1);
+      
+      /* Secondary Colors */
+      --secondary-color: #667eea;
+      --secondary-dark: #764ba2;
+      
+      /* Status Colors */
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      
+      /* Neutral Colors */
       --dark: #333;
+      --gray-100: #f8f9fa;
+      --gray-200: #e9ecef;
+      --gray-300: #dee2e6;
+      --gray-600: #6c757d;
+      
+      /* Shadows */
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 20px;
+      
+      /* Transitions */
+      --transition-base: all 0.3s ease;
+      --transition-fast: all 0.2s ease;
     }
 
+    /* ===========================
+       Base Styles
+       =========================== */
+    
     body {
       font-family: "Inter", sans-serif;
-      background-color: #f8f9fa;
+      background-color: var(--gray-100);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
+    /* ===========================
+       Navigation Styles
+       =========================== */
+    
     .navbar {
       background-color: var(--dark);
       padding: 0.5rem 1rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-sm);
     }
 
     .navbar-brand {
@@ -57,8 +102,8 @@
     .nav-link {
       color: rgba(255, 255, 255, 0.85) !important;
       padding: 0.75rem 1rem !important;
-      transition: all 0.3s ease;
-      border-radius: 4px;
+      transition: var(--transition-base);
+      border-radius: var(--radius-sm);
       margin: 0 0.25rem;
     }
 
@@ -77,8 +122,8 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white !important;
       padding: 0.5rem 1rem;
-      border-radius: 4px;
-      transition: all 0.3s ease;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-base);
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -95,16 +140,77 @@
       padding: 2rem 0;
     }
 
-    /* Form styles */
-    .form-control {
-      border-radius: 6px;
-      border: 1px solid #dee2e6;
-      padding: 0.75rem;
+    /* ===========================
+       Card Styles
+       =========================== */
+    
+    .card {
+      border-radius: var(--radius-lg);
+      border: none;
+      transition: var(--transition-base);
     }
 
-    .form-control:focus {
+    .card-modern {
+      transition: var(--transition-base);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .card-modern:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md) !important;
+    }
+
+    .stat-card {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stat-card .icon-bg {
+      position: absolute;
+      right: -10px;
+      bottom: -10px;
+      font-size: 5rem;
+      opacity: 0.1;
+    }
+
+    .card-header {
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    }
+
+    /* ===========================
+       Form Styles
+       =========================== */
+    
+    .form-control,
+    .form-select {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-300);
+      padding: 0.75rem;
+      transition: var(--transition-fast);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+      box-shadow: 0 0 0 0.2rem var(--primary-light);
+    }
+
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+
+    /* ===========================
+       Button Styles
+       =========================== */
+    
+    .btn {
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+      transition: var(--transition-fast);
     }
 
     .btn-primary {
@@ -115,6 +221,138 @@
     .btn-primary:hover {
       background-color: var(--primary-hover);
       border-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: var(--transition-fast);
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* ===========================
+       Table Styles
+       =========================== */
+    
+    .table-modern {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .table-modern thead {
+      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+      color: white;
+    }
+
+    .table-modern tbody tr {
+      transition: var(--transition-fast);
+    }
+
+    .table-modern tbody tr:hover {
+      background: var(--gray-100);
+    }
+
+    /* ===========================
+       Badge & Tag Styles
+       =========================== */
+    
+    .category-badge {
+      padding: 6px 12px;
+      border-radius: var(--radius-xl);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .badge {
+      border-radius: var(--radius-sm);
+    }
+
+    /* ===========================
+       Filter Section Styles
+       =========================== */
+    
+    .filter-section {
+      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .filter-section .form-label {
+      color: rgba(255,255,255,0.9);
+      font-weight: 500;
+    }
+
+    .filter-section .form-control,
+    .filter-section .form-select {
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .filter-section .form-control:focus,
+    .filter-section .form-select:focus {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+      color: white;
+    }
+
+    .filter-section .form-control::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .filter-section .form-select option {
+      background: var(--secondary-color);
+      color: white;
+    }
+
+    /* ===========================
+       Alert Styles
+       =========================== */
+    
+    .alert {
+      border-radius: var(--radius-md);
+      border: none;
+    }
+
+    /* ===========================
+       Modal Styles
+       =========================== */
+    
+    .modal-content {
+      border-radius: var(--radius-lg);
+      border: none;
+    }
+
+    .modal-header {
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    /* ===========================
+       Utility Classes
+       =========================== */
+    
+    .shadow-custom {
+      box-shadow: var(--shadow-md);
+    }
+
+    .gradient-primary {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    }
+
+    .gradient-purple {
+      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
     }
 
     /* Container padding */
@@ -124,6 +362,10 @@
       padding-right: 1rem;
     }
 
+    /* ===========================
+       Responsive Styles
+       =========================== */
+    
     @media (max-width: 768px) {
       .navbar-brand {
         font-size: 1.1rem;
@@ -131,6 +373,10 @@
 
       .nav-link {
         padding: 0.5rem 0.75rem !important;
+      }
+
+      .stat-card .icon-bg {
+        font-size: 3rem;
       }
     }
   </style>
@@ -157,6 +403,16 @@
             </a>
           </li>
           {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a class="nav-link {% if 'Expenditure' in request.path %}active{% endif %}" href="{% url 'microfinance:addexpense' %}">
+              <i class="fas fa-wallet me-1"></i> Expenses
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'add_officer' in request.path %}active{% endif %}" href="{% url 'microfinance:addofficer' %}">
+              <i class="fas fa-user-tie me-1"></i> Add Staff
+            </a>
+          </li>
           <li class="nav-item">
             <a class="nav-link {% if request.path == '/Reports/' %}active{% endif %}" href="/Reports/">
               <i class="fas fa-chart-line me-1"></i> Reports
