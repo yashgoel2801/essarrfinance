@@ -12,7 +12,7 @@ from datetime import datetime, time, timedelta,date
 from dateutil.relativedelta import relativedelta
 from search_views.search import SearchListView,BaseFilter
 from django.utils.dateparse import parse_date
-from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField, Avg, Max
+from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField, Avg, Max, ProtectedError
 from django.template import loader
 from datetime import date
 from datetime import datetime
@@ -45,6 +45,7 @@ def sendPostRequest(reqUrl, apiKey, secretKey, useType, phoneNo, senderId, textM
 # Create your views here.
 @login_required(login_url="/accounts/login/")
 def Add_Officer(request):
+    form = AddStaff()
     if request.method == 'POST':
         # Handle staff editing
         if 'edit_staff' in request.POST:
@@ -72,9 +73,33 @@ def Add_Officer(request):
                 return redirect('microfinance:addofficer')
             except Staff.DoesNotExist:
                 messages.error(request, 'Staff member not found.')
+            except ProtectedError:
+                messages.error(request, 'Cannot delete this staff member because they are assigned to loans or expenses. Please reassign their tasks first.')
             except Exception as e:
                 messages.error(request, f'Error deleting staff member: {str(e)}')
         
+        # Handle loan reassignment
+        elif 'reassign_loans' in request.POST:
+            from_staff_id = request.POST.get('from_staff_id')
+            to_staff_id = request.POST.get('to_staff_id')
+            try:
+                from_staff = Staff.objects.get(pk=from_staff_id)
+                to_staff = Staff.objects.get(pk=to_staff_id)
+                
+                # Update all loans (active and closed) for this officer to clear PROTECT constraints
+                updated_count = Loans.objects.filter(Loan_Collector=from_staff).update(Loan_Collector=to_staff)
+                
+                # Also handle expenses if any (To/From)
+                Expenditures.objects.filter(To=from_staff).update(To=to_staff)
+                Expenditures.objects.filter(From=from_staff).update(From=to_staff)
+                
+                messages.success(request, f'Successfully reassigned {updated_count} loans and all linked expenses to {to_staff.Officer_Name}.')
+                return redirect('microfinance:addofficer')
+            except Staff.DoesNotExist:
+                messages.error(request, 'One or both staff members not found.')
+            except Exception as e:
+                messages.error(request, f'Error reassigning loans: {str(e)}')
+
         # Handle adding new staff
         else:
             form = AddStaff(request.POST, request.FILES)
@@ -84,11 +109,14 @@ def Add_Officer(request):
                 return redirect('microfinance:addofficer')
             else:
                 messages.error(request, 'Error adding staff member. Please check the form.')
-    else: 
-        form = AddStaff()
     
-    # Fetch all staff members for display
-    StaffList = Staff.objects.all().order_by('Officer_Name')
+    # Fetch all staff members with detailed counts
+    StaffList = Staff.objects.annotate(
+        active_loans_count=Count('loans', filter=Q(loans__Status=False), distinct=True),
+        total_loans_count=Count('loans', distinct=True),
+        to_expenses_count=Count('to', distinct=True),
+        from_expenses_count=Count('by', distinct=True)
+    ).order_by('Officer_Name')
     
     return render(request, 'microfinance/Add_Officer.html', {'form': form, 'StaffList': StaffList})
 
