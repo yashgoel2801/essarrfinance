@@ -10,6 +10,12 @@ class AddStaff(forms.ModelForm):
     class Meta:
         model=models.Staff
         fields=['Officer_Name','Designation','Salary']
+    
+    def __init__(self, *args, **kwargs):
+        super(AddStaff, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})
+
 
 
 class AddClient(forms.ModelForm):

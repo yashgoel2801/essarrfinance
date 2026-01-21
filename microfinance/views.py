@@ -46,20 +46,52 @@ def sendPostRequest(reqUrl, apiKey, secretKey, useType, phoneNo, senderId, textM
 @login_required(login_url="/accounts/login/")
 def Add_Officer(request):
     if request.method == 'POST':
-        form=AddStaff(request.POST,request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Staff member added successfully!')
-            return redirect('microfinance:addofficer')
+        # Handle staff editing
+        if 'edit_staff' in request.POST:
+            staff_id = request.POST.get('staff_id')
+            try:
+                staff = Staff.objects.get(pk=staff_id)
+                staff.Officer_Name = request.POST.get('Officer_Name')
+                staff.Designation = request.POST.get('Designation')
+                staff.Salary = float(request.POST.get('Salary'))
+                staff.save()
+                messages.success(request, 'Staff member updated successfully!')
+                return redirect('microfinance:addofficer')
+            except Staff.DoesNotExist:
+                messages.error(request, 'Staff member not found.')
+            except Exception as e:
+                messages.error(request, f'Error updating staff member: {str(e)}')
+        
+        # Handle staff deletion
+        elif 'delete_staff' in request.POST:
+            staff_id = request.POST.get('staff_id')
+            try:
+                staff = Staff.objects.get(pk=staff_id)
+                staff.delete()
+                messages.success(request, 'Staff member deleted successfully!')
+                return redirect('microfinance:addofficer')
+            except Staff.DoesNotExist:
+                messages.error(request, 'Staff member not found.')
+            except Exception as e:
+                messages.error(request, f'Error deleting staff member: {str(e)}')
+        
+        # Handle adding new staff
         else:
-            messages.error(request, 'Error adding staff member. Please check the form.')
+            form = AddStaff(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Staff member added successfully!')
+                return redirect('microfinance:addofficer')
+            else:
+                messages.error(request, 'Error adding staff member. Please check the form.')
     else: 
-        form=AddStaff()
+        form = AddStaff()
     
     # Fetch all staff members for display
     StaffList = Staff.objects.all().order_by('Officer_Name')
     
-    return render(request,'microfinance/Add_Officer.html',{'form':form, 'StaffList': StaffList})
+    return render(request, 'microfinance/Add_Officer.html', {'form': form, 'StaffList': StaffList})
+
 
 
 
