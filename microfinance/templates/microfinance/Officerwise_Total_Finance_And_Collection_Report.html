@@ -1,229 +1,266 @@
 {%extends 'base_layout.html'%} {%block content%}
 {% load keyvalue %}
 
-<style>
-    div {
-        background-color: transparent;
-    }
+<div class="container-fluid py-4">
+    <!-- Header Summary Section -->
+    <div class="row g-3 mb-4">
+        <!-- Collection Stats -->
+        <div class="col-12 col-md-3">
+            <div class="card stat-card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body position-relative">
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Collection</h6>
+                    <h3 class="mb-0 fw-bold">₹{{ amntcollected|floatformat:2 }}</h3>
+                    <i class="fas fa-money-bill-wave icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card stat-card border-0 shadow-sm bg-purple text-white">
+                <div class="card-body position-relative">
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Financed</h6>
+                    <h3 class="mb-0 fw-bold">₹{{ amntfinanced|floatformat:2 }}</h3>
+                    <i class="fas fa-coins icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card stat-card border-0 shadow-sm bg-success text-white">
+                <div class="card-body position-relative">
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Amnt To Be Collec.</h6>
+                    <h3 class="mb-0 fw-bold">₹{{ amnttobecollected|floatformat:2 }}</h3>
+                    <i class="fas fa-hand-holding-usd icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card stat-card border-0 shadow-sm bg-info text-white">
+                <div class="card-body position-relative">
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Penalty Collected</h6>
+                    <h3 class="mb-0 fw-bold">₹{{ penaltycollected|floatformat:2 }}</h3>
+                    <i class="fas fa-exclamation-circle icon-bg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    table {
-        border-collapse: collapse;
-        margin-top: 0;
-        top: 0;
-        width: 100%;
-        text-align: center;
-    }
+    <!-- Secondary Summary -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6 border-end">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-light rounded-circle me-3">
+                            <i class="fas fa-file-invoice-dollar text-primary"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0">Total File Charges Collected</p>
+                            <h4 class="mb-0 fw-bold">₹{{ filecollected|floatformat:2 }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 ps-md-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-0">Report Range</p>
+                            <h6 class="mb-0 fw-bold">{{ start }} to {{ end }}</h6>
+                        </div>
+                        <form action="{% url 'microfinance:pdf3'%}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="from" value="{{start}}">
+                            <input type="hidden" name="to" value="{{end}}">
+                            <input type="hidden" name="name" value="{{Staff}}">
+                            <input type="hidden" name="loan" value="{{Freq}}">
+                            <button type="submit" class="btn btn-danger btn-sm px-4 shadow-sm">
+                                <i class="fas fa-file-pdf me-2"></i>Download PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    .phnno,
-    .loanamnt {
-        text-align: center;
-    }
+    <!-- Main Collections Table -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fas fa-clipboard-list me-2 text-primary"></i>Finance and Collection Report
+                <small class="text-muted fs-6 ms-2">(Active Loans Only)</small>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-modern table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">S.No</th>
+                            <th>Loan ID</th>
+                            <th>Customer Name</th>
+                            <th>Amount Paid</th>
+                            <th>Last Pay Date</th>
+                            <th>To Be Collected</th>
+                            <th>Penalty Pending</th>
+                            <th>Status</th>
+                            <th class="pe-3">Officer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in Collection_Data %}
+                        <tr>
+                            <td class="ps-3">{{ forloop.counter }}</td>
+                            <td><span class="badge bg-light text-dark border">#{{ item.loan.pk }}</span></td>
+                            <td>
+                                <a href="{% url 'microfinance:clientdetail' pk=item.loan.Account.Client.pk %}" class="fw-bold text-decoration-none text-dark">
+                                    {{ item.loan.Account.Client.Name }}
+                                </a>
+                            </td>
+                            <td class="fw-bold text-success">
+                                ₹{{ item.collected|floatformat:2 }}
+                            </td>
+                            <td class="text-muted small">
+                                {% if item.last_pay %}
+                                    <i class="fas fa-calendar-check me-1 text-success"></i>{{ item.last_pay|date:"M d, Y" }}
+                                {% else %}
+                                    <span class="text-muted-50">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold">
+                                ₹{{ item.to_be_collected|floatformat:2 }}
+                            </td>
+                            <td class="{% if item.pending_penalty > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                                ₹{{ item.pending_penalty|floatformat:2 }}
+                            </td>
+                            <td>
+                                {% if item.status == 'advance' %}
+                                    <span class="badge bg-success-soft text-success border-success-subtle px-2">Advance</span>
+                                {% elif item.status == 'on_track' %}
+                                    <span class="badge bg-primary-soft text-primary border-primary-subtle px-2">On Track</span>
+                                {% elif item.status == 'pending' %}
+                                    <span class="badge bg-warning-soft text-warning border-warning-subtle px-2">Pending</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted px-2">None</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3">
+                                <span class="small">{{ item.loan.Loan_Collector.Officer_Name }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">No collection records found for this period.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if Collection_Data %}
+                    <tfoot class="table-light border-top">
+                        <tr class="fw-bold fs-6">
+                            <td colspan="3" class="text-end ps-3">TOTALS:</td>
+                            <td class="text-success">₹{{ amntcollected|floatformat:2 }}</td>
+                            <td>-</td>
+                            <td>₹{{ amnttobecollected|floatformat:2 }}</td>
+                            <td colspan="3">-</td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
 
-    thead {
-        text-align: center;
-        text-transform: capitalize;
-    }
-
-    th,
-    td {
-        text-align: center !important;
-        padding: 8px;
-        text-align: justify;
-    }
-
-    tr:nth-child(even) {
-        background-color: #f2f2f2
-    }
-
-    th {
-        background-color: #4CAF50;
-        color: white;
-    }
-
-    #table-wrapper {
-        position: relative;
-    }
-
-    #table-scroll {
-        height: 10px;
-        overflow: auto;
-        margin-top: 0;
-    }
-
-    #table-wrapper {
-        position: relative;
-        top: 0;
-    }
-
-    #table-scroll {
-        height: 150px;
-        overflow: auto;
-        margin-top: 0;
-    }
-
-    input[type=submit] {
-        width: 20%;
-    }
-
-    body {
-        counter-reset: Serial;
-        /* Set the Serial counter to 0 */
-    }
-
-    table {
-        border-collapse: separate;
-    }
-
-    tr td:first-child:before {
-        counter-increment: Serial;
-        /* Increment the Serial counter */
-        content: counter(Serial);
-        /* Display the counter */
-    }
-</style>
-<div class="loanees">
-
-    <h3 style="font-family: Arial, Helvetica, sans-serif;">
-        <Br>Total Amnt To Be Collected: <b
-            style="font-weight: 600; font-size:22px">{{amnttobecollected|floatformat:1}}</b>
-        <br> Total Collection on Date : {{Date}} : <b
-            style="font-weight: 600; font-size:22px">{{amntcollected|floatformat:1}}</b>
-        <Br>Total File Charge Collection: <b
-            style="font-weight: 600; font-size:22px">{{filecollected|floatformat:1}}</b>
-        <Br>Total Penalty Collection: <b style="font-weight: 600; font-size:22px">{{penaltycollected|floatformat:1}}</b>
-        <Br><span style="color: #28a745;">Total Penalty Waived: <b
-                style="font-weight: 600; font-size:22px">{{total_penalty_waived|floatformat:1}}</b></span>
-        <Br><span style="color: #28a745;">Total Interest Waived: <b
-                style="font-weight: 600; font-size:22px">{{total_interest_waived|floatformat:1}}</b></span>
-        <br>
-        <div class="mt-2 pt-2 border-top">
-            <span style="color: #dc3545;">Total Expenses: <b
-                    style="font-weight: 600; font-size:22px">{{total_expenses|floatformat:1}}</b></span>
-            <span style="font-size: 16px; color: #6c757d; margin-left: 10px;">
-                ({% for cat in category_expenses %}{{ cat.Category }}: {{ cat.total|floatformat:1 }}{% if not forloop.last %}, {% endif %}{% endfor %})
-            </span>
-            <br>
-            <span style="color: #0d6efd;">Net Cash In Hand: <b
-                    style="font-weight: 600; font-size:22px">{{net_collection|floatformat:1}}</b></span>
+    <!-- Secondary Tables Section -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Penalty Collection Detail</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>Customer</th>
+                                    <th>Penalty Paid</th>
+                                    <th class="pe-3">Officer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in Penalty_Data %}
+                                <tr>
+                                    <td class="ps-3">#{{ item.loan.pk }}</td>
+                                    <td>{{ item.loan.Account.Client.Name }}</td>
+                                    <td class="fw-bold text-danger">₹{{ item.paid|floatformat:2 }}</td>
+                                    <td class="pe-3">{{ item.loan.Loan_Collector.Officer_Name }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No penalty payments.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
-
-
-
-    </h3>
-    <form action="{% url 'microfinance:pdf3'%}" method="POST" style="float: right;font-size:16px;width:65%">
-        {% csrf_token %}
-        <input type="text" name="from" value="{{start}}" style="display:none">
-        <input type="text" name="to" value="{{end}}" style="display:none">
-        <input type="text" name="name" value="{{Staff}}" style="display:none">
-        <input type="text" name="loan" value="{{Freq}}" style="display:none">
-        <input type="submit" value="PDF" style="width: 25%;">
-    </form>
-    <div id="table-wrapper">
-        <table id="table_row_total" style="margin-bottom: 20px;">
-            <thead>
-                <tr>
-                    <th>S.No</th>
-                    <th>ID</th>
-                    <th>Name </th>
-                    <th>Amount Paid</th>
-                    <th>Amnt To Be Collec.</th>
-                    <th>Status</th>
-                    <th>Loan Officer</th>
-
-                </tr>
-            </thead>
-            <tbody>
-                {%for loanee in Loan%}
-                <tr>
-                    <td></td>
-                    <td>{{loanee.pk}}</td>
-                    <td>
-                        <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}}
-                        </a>
-                    </td>
-                    <td>
-                        {{amnt_collected|keyvalue:loanee.pk|keyvalue:"Amount_Paid__sum"}}</td>
-                    <td>{{amnt_to_be_collected|keyvalue:loanee.pk|keyvalue:"Installment_Due__sum"}}</td>
-                    <td>
-                        {% with status=payment_status|keyvalue:loanee.pk %}
-                        {% if status == 'advance' %}
-                        <span class="badge bg-success">Paid in Advance</span>
-                        {% elif status == 'on_track' %}
-                        <span class="badge bg-primary">On Track</span>
-                        {% elif status == 'pending' %}
-                        <span class="badge bg-warning text-dark">Pending</span>
-                        {% else %}
-                        <span class="badge bg-secondary">-</span>
-                        {% endif %}
-                        {% endwith %}
-                    </td>
-                    <td>{{loanee.Loan_Collector.Officer_Name}}</td>
-
-
-
-                </tr>
-
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h4 style="margin-top: 20px;">Penalty</h4>
-        <table id="table_row_total_penalty" style="margin-bottom: 20px;">
-            <thead>
-                <tr>
-                    <th>S.No</th>
-                    <th>ID</th>
-                    <th>Name </th>
-                    <th>Penalty Paid</th>
-                    <th>Penalty To Be Collected</th>
-                    <th>Loan Officer</th>
-                </tr>
-            </thead>
-            <tbody>
-                {%for loanee in Loan2%}
-                <tr>
-                    <td></td>
-                    <td>{{loanee.pk}}</td>
-                    <td>
-                        <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}}
-                        </a>
-                    </td>
-                    <td>{{penalty_collected|keyvalue:loanee.pk|keyvalue:"Amount_Paid__sum"}}</td>
-                    <td>{{penalty_to_be_collected|keyvalue:loanee.pk}}</td>
-                    <td>{{loanee.Loan_Collector.Officer_Name}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h4 style="margin-top: 20px;">File Charge</h4>
-        <table id="table_row_total_filecharge" style="margin-bottom: 10px;">
-            <thead>
-                <tr>
-                    <th>S.No</th>
-                    <th>ID</th>
-                    <th>Name </th>
-                    <th>File Charge Paid</th>
-                    <th>Loan Officer</th>
-                </tr>
-            </thead>
-            <tbody>
-                {%for loanee in Loan3%}
-                <tr>
-                    <td></td>
-                    <td>{{loanee.pk}}</td>
-                    <td>
-                        <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}}
-                        </a>
-                    </td>
-                    <td>{{file_charge|keyvalue:loanee.pk}}</td>
-                    <td>{{loanee.Loan_Collector.Officer_Name}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-file-invoice me-2 text-info"></i>File Charge Collection Detail</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 small">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>Customer</th>
+                                    <th>Charge Paid</th>
+                                    <th class="pe-3">Officer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in File_Charge_Data %}
+                                <tr>
+                                    <td class="ps-3">#{{ item.loan.pk }}</td>
+                                    <td>{{ item.loan.Account.Client.Name }}</td>
+                                    <td class="fw-bold text-info">₹{{ item.charge|floatformat:2 }}</td>
+                                    <td class="pe-3">{{ item.loan.Loan_Collector.Officer_Name }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No new finance entries.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Status Badge Soft Colors */
+    .bg-success-soft { background-color: rgba(40, 167, 69, 0.1); }
+    .bg-primary-soft { background-color: rgba(0, 123, 255, 0.1); }
+    .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
+    
+    .bg-purple {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .table-modern thead th {
+        background: linear-gradient(to right, #667eea, #764ba2);
+        color: white;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 12px 8px;
+    }
+
+    .table-modern tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+</style>
+
 {% endblock %}

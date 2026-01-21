@@ -12,7 +12,7 @@ from datetime import datetime, time, timedelta,date
 from dateutil.relativedelta import relativedelta
 from search_views.search import SearchListView,BaseFilter
 from django.utils.dateparse import parse_date
-from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField, Avg
+from django.db.models import Q,Sum, Count, Subquery, OuterRef, F, Case, When, ExpressionWrapper, FloatField, Avg, Max
 from django.template import loader
 from datetime import date
 from datetime import datetime
@@ -1533,60 +1533,112 @@ def Total_Finance_And_Collection_pdf(request):
 
 @login_required(login_url="/accounts/login/")
 def Officerwise_Total_Finance_And_Collection_Report(request):
-    Staff_pk=int(request.POST.get('name'))
-    Frequency=int(request.POST.get('loan'))
-    start=request.POST.get('from')
-    end=request.POST.get('to')
-    if(start == '' or end == ''):
-        return render(request,'microfinance/error/report_datenull.html')
-    sdate = parse_date(start)
-    edate =parse_date(end)
+    Staff_pk = int(request.POST.get('name'))
+    Frequency = int(request.POST.get('loan'))
+    start = request.POST.get('from')
+    end = request.POST.get('to')
     
-    Today= datetime.now()
-    if Staff_pk != 0 and Frequency != 0: 
-        Loan = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Frequency=Frequency).filter(Q(installments__Date_Paid__range=[start,end])|Q(installments__Date_Due__range=[start,end])).distinct().order_by("id")
-        Loan2 = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Frequency=Frequency).filter(penalty__Penalty_Paid_Date__range=[start,end]).distinct().order_by("id")
-        Loan3 =Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Frequency=Frequency).filter(Loan_Date__range=[start,end]).distinct()
- 
-    if Staff_pk == 0 and Frequency !=0:
-        Loan = Loans.objects.filter(Frequency=Frequency).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).filter(Q(installments__Date_Paid__range=[start,end])|Q(installments__Date_Due__range=[start,end])).distinct().order_by("id")
-        Loan2 = Loans.objects.filter(Frequency=Frequency).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).filter(penalty__Penalty_Paid_Date__range=[start,end]).distinct().order_by("id")
-        Loan3 =Loans.objects.filter(Frequency=Frequency).filter(Loan_Date__range=[start,end]).distinct()
-
-    if Staff_pk !=0 and Frequency ==0:
-        Loan = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Q(installments__Date_Paid__range=[start,end])|Q(installments__Date_Due__range=[start,end])).distinct().order_by("id")
-        Loan2 = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(penalty__Penalty_Paid_Date__range=[start,end]).distinct().order_by("id")
-        Loan3 =Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Loan_Date__range=[start,end]).distinct()
-
-    if Staff_pk == 0 and Frequency == 0:
-        Loan = Loans.objects.filter(Q(installments__Date_Paid__range=[start,end])|Q(installments__Date_Due__range=[start,end])).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).distinct().order_by("id")
-        Loan2 = Loans.objects.filter(penalty__Penalty_Paid_Date__range=[start,end]).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).distinct().order_by("id")
-        Loan3 =Loans.objects.filter(Loan_Date__range=[start,end]).distinct()
-
-    AmntCollected =PenaltyCollected=File_ChargeCollected =AmntToBeCollected= 0
-    Amnt_Collected = {}
-    Penalty_Collected = {}
-    File_Charge={}
-    Amnt_To_Be_Collected = {}
+    if not start or not end:
+        return render(request, 'microfinance/error/report_datenull.html')
     
+    # Base queries for active loans only
+    base_loans = Loans.objects.filter(Status=False)
+    
+    if Staff_pk != 0:
+        base_loans = base_loans.filter(Loan_Collector_id=Staff_pk)
+    else:
+        base_loans = base_loans.exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10)
         
-    for i in Loan3:
-        File_Charge[i.pk] = i.Principle_Amount*i.File_Charge_Percent/100
-        File_ChargeCollected = File_ChargeCollected + File_Charge[i.pk]
-    for i in Loan:
-        # Use Payments model for collected amounts
-        Amnt_Collected[i.pk] = Payments.objects.filter(Loan=i, Payment_Type=1, Date_Paid__range=[start,end]).aggregate(Sum('Amount_Paid'))
-        Amnt_To_Be_Collected[i.pk] = Installments.objects.filter(Loan=i).filter(Date_Due__range=[start,end]).distinct().aggregate(Sum('Installment_Due'))
-        if Amnt_Collected[i.pk]["Amount_Paid__sum"]:
-            AmntCollected = AmntCollected + Amnt_Collected[i.pk]["Amount_Paid__sum"]
-        if Amnt_To_Be_Collected[i.pk]["Installment_Due__sum"]:
-            AmntToBeCollected = AmntToBeCollected + Amnt_To_Be_Collected[i.pk]["Installment_Due__sum"] 
-    for i in Loan2:
-        # Use Payments model for penalty payments
-        Penalty_Collected[i.pk]=Payments.objects.filter(Loan=i, Payment_Type=2, Date_Paid__range=[start,end]).aggregate(Sum('Amount_Paid'))
-        if Penalty_Collected[i.pk]["Amount_Paid__sum"]:
-            PenaltyCollected = PenaltyCollected + Penalty_Collected[i.pk]["Amount_Paid__sum"]
-    return render(request,'microfinance/Officerwise_Total_Finance_And_Collection_Report.html',{'start':start,'end':end,'Staff':Staff_pk,'amnt_collected':Amnt_Collected,'Loan':Loan,'Loan3':Loan3,'Loan2':Loan2,'amntcollected':AmntCollected,'amnttobecollected':AmntToBeCollected,'amnt_to_be_collected':Amnt_To_Be_Collected,'penalty_collected':Penalty_Collected,'penaltycollected':PenaltyCollected,'file_charge':File_Charge,'filecollected':File_ChargeCollected})
+    if Frequency != 0:
+        base_loans = base_loans.filter(Frequency=Frequency)
+
+    # 1. Main collection data (Loans with activity or due dates in range)
+    Loan_QS = base_loans.filter(
+        Q(installments__Date_Paid__range=[start, end]) | 
+        Q(installments__Date_Due__range=[start, end])
+    ).distinct().order_by("id")
+    
+    # 2. Loans with penalty payments in range
+    Loan2 = base_loans.filter(
+        penalty__Penalty_Paid_Date__range=[start, end]
+    ).distinct().order_by("id")
+    
+    # 3. New loans registered in range
+    Loan3 = base_loans.filter(
+        Loan_Date__range=[start, end]
+    ).distinct()
+
+    AmntCollected = PenaltyCollected = File_ChargeCollected = AmntToBeCollected = 0
+    
+    # Build detailed data list for the main table to avoid template lookup issues
+    Collection_Data = []
+    for loan in Loan_QS:
+        # Amount paid in range
+        payments = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__range=[start, end])
+        collected = payments.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        AmntCollected += collected
+        
+        # Last payment date in range
+        last_pay = payments.aggregate(Max('Date_Paid'))['Date_Paid__max']
+        
+        # Amount expected to be collected (Installments due in range)
+        to_be_collected = Installments.objects.filter(Loan=loan, Date_Due__range=[start, end]).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        AmntToBeCollected += to_be_collected
+        
+        # Total Pending Penalty (whole loan)
+        penalties = Penalty.objects.filter(Loan=loan, Status=False)
+        pending_penalty = sum((p.Penalty_Calc - p.Penalty_Paid - p.Waived_Amount) for p in penalties)
+        
+        # Determine Status
+        if collected > to_be_collected:
+            status = 'advance'
+        elif collected == to_be_collected and to_be_collected > 0:
+            status = 'on_track'
+        elif collected < to_be_collected:
+            status = 'pending'
+        else:
+            status = 'no_activity'
+
+        Collection_Data.append({
+            'loan': loan,
+            'collected': collected,
+            'to_be_collected': to_be_collected,
+            'last_pay': last_pay,
+            'pending_penalty': max(0, pending_penalty),
+            'status': status
+        })
+
+    # Sub-tables data
+    Penalty_Data = []
+    for loan in Loan2:
+        penalty_paid = Payments.objects.filter(Loan=loan, Payment_Type=2, Date_Paid__range=[start, end]).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        PenaltyCollected += penalty_paid
+        Penalty_Data.append({'loan': loan, 'paid': penalty_paid})
+
+    File_Charge_Data = []
+    for loan in Loan3:
+        charge = loan.Principle_Amount * loan.File_Charge_Percent / 100
+        File_ChargeCollected += charge
+        File_Charge_Data.append({'loan': loan, 'charge': charge})
+
+    context = {
+        'start': start,
+        'end': end,
+        'Staff': Staff_pk,
+        'Freq': Frequency,
+        'Collection_Data': Collection_Data,
+        'Penalty_Data': Penalty_Data,
+        'File_Charge_Data': File_Charge_Data,
+        'amntcollected': AmntCollected,
+        'amnttobecollected': AmntToBeCollected,
+        'penaltycollected': PenaltyCollected,
+        'filecollected': File_ChargeCollected,
+        'Date': datetime.now().date(),
+    }
+    
+    return render(request, 'microfinance/Officerwise_Total_Finance_And_Collection_Report.html', context)
+
+
 
 
 @login_required(login_url="/accounts/login/")
