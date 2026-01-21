@@ -1569,8 +1569,8 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     if not start or not end:
         return render(request, 'microfinance/error/report_datenull.html')
     
-    # Base queries for active loans only
-    base_loans = Loans.objects.filter(Status=False)
+    # Base queries for all loans with activity in range
+    base_loans = Loans.objects.all()
     
     if Staff_pk != 0:
         base_loans = base_loans.filter(Loan_Collector_id=Staff_pk)
@@ -1586,9 +1586,10 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         Q(installments__Date_Due__range=[start, end])
     ).distinct().order_by("id")
     
-    # 2. Loans with penalty payments in range
+    # 2. Loans with penalty payments in range (source of truth: Payments table)
     Loan2 = base_loans.filter(
-        penalty__Penalty_Paid_Date__range=[start, end]
+        payments__Payment_Type=2,
+        payments__Date_Paid__range=[start, end]
     ).distinct().order_by("id")
     
     # 3. New loans registered in range
@@ -1681,14 +1682,21 @@ def Officerwise_Total_Finance_And_Collection_pdf(request):
     edate =parse_date(end)
     dd = [sdate + timedelta(days=x) for x in range((edate-sdate).days + 1)]
     Today= datetime.now()
-    if Staff_pk != 0 and Frequency != 0: 
-        Loan = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Frequency=Frequency).filter(Q(installments__Date_Due__range=[start,end])|Q(installments__Date_Paid__range=[start,end])).distinct().order_by("id").filter(Status=False)
-    if Staff_pk == 0 and Frequency !=0:
-        Loan = Loans.objects.filter(Frequency=Frequency).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).filter(Q(installments__Date_Due__range=[start,end])|Q(installments__Date_Paid__range=[start,end])).distinct().order_by("id").filter(Status=False)
-    if Staff_pk !=0 and Frequency ==0:
-        Loan = Loans.objects.filter(Loan_Collector_id=Staff_pk).filter(Q(installments__Date_Due__range=[start,end])|Q(installments__Date_Paid__range=[start,end])).distinct().order_by("id").filter(Status=False)
-    if Staff_pk == 0 and Frequency == 0:
-        Loan = Loans.objects.filter(Q(installments__Date_Due__range=[start,end])|Q(installments__Date_Paid__range=[start,end])).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10).distinct().order_by("id").filter(Status=False)
+    base_loans = Loans.objects.all()
+    if Staff_pk != 0:
+        base_loans = base_loans.filter(Loan_Collector_id=Staff_pk)
+    else:
+        base_loans = base_loans.exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10)
+        
+    if Frequency != 0:
+        base_loans = base_loans.filter(Frequency=Frequency)
+
+    # Filter loans that have activity or due dates in range
+    Loan = base_loans.filter(
+        Q(installments__Date_Due__range=[start,end]) | 
+        Q(installments__Date_Paid__range=[start,end]) |
+        Q(payments__Date_Paid__range=[start,end])
+    ).distinct().order_by("id")
     Installment =Installments.objects.filter(Q(Date_Due__range=[start,end])|Q(Date_Paid__range=[start,end])).filter(Loan__in=Loan).order_by("Loan")
     Installment2 = Installments.objects.filter(Date_Due__range=[start,end]).filter(Loan__in=Loan)
     Installment5 = Installments.objects.filter(Date_Paid__range=[start,end]).filter(Loan__in=Loan)
@@ -1722,8 +1730,15 @@ def Officerwise_Total_Finance_And_Collection_pdf(request):
     for payment in Payments_Inst:
         Total_Intrest_Collected = Total_Intrest_Collected + payment.Amount_Paid * payment.Loan.Intrest_Rate/100
         Total_Amnt_Collected = Total_Amnt_Collected + payment.Amount_Paid
-    return render(request,'microfinance/pdfs/Officerwise_Total_Finance_And_Collection_pdf.html',{'Dic':Dic,'Dic2':Dic2,'loans':Loan,'insts':Installment,'dates':dd,'totalinst':Total_Amnt_Collected,
-    'start':start,'end':end,'intrestrec':Total_Intrest_Collected,'Freq':Frequency,'Staff':Staff_pk})
+    # Calculate penalty collection for PDF header
+    Total_Penalty_Collected = Payments.objects.filter(Date_Paid__range=[start,end], Payment_Type=2, Amount_Paid__gt=0, Loan__in=Loan).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+
+    return render(request,'microfinance/pdfs/Officerwise_Total_Finance_And_Collection_pdf.html',{
+        'Dic':Dic,'Dic2':Dic2,'loans':Loan,'insts':Installment,'dates':dd,
+        'totalinst':Total_Amnt_Collected,
+        'penaltycollected': Total_Penalty_Collected,
+        'start':start,'end':end,'intrestrec':Total_Intrest_Collected,'Freq':Frequency,'Staff':Staff_pk
+    })
 
 @login_required(login_url="/accounts/login/")
 def All_Clients_List(request):

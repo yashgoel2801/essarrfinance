@@ -292,7 +292,7 @@
                   <td>{{ e.Remark|truncatechars:30 }}</td>
                   <td class="text-center">
                     <button class="btn btn-sm btn-outline-primary action-btn me-1" 
-                            onclick="editExpense({{ e.pk }}, '{{ e.Date|date:'Y-m-d' }}', '{{ e.Category }}', {{ e.To.pk|default:'null' }}, {{ e.From.pk|default:'null' }}, {{ e.Amount }}, '{{ e.Remark|escapejs }}')"
+                            onclick="editExpense({{ e.pk }}, '{{ e.Date|date:'Y-m-d' }}', '{{ e.Category|escapejs }}', {{ e.To_id|default:'null' }}, {{ e.From_id|default:'null' }}, {{ e.Amount }}, '{{ e.Remark|escapejs }}')"
                             title="Edit">
                       <i class="fas fa-edit"></i>
                     </button>

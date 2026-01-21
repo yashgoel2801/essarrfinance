@@ -136,7 +136,7 @@
                     {% endif %}
                     {% endwith %}
                     <button class="btn btn-sm btn-outline-primary action-btn me-1" 
-                            onclick="editStaff({{ staff.pk }}, '{{ staff.Officer_Name|escapejs }}', '{{ staff.Designation|escapejs }}', {{ staff.Salary }})"
+                            onclick="editStaff({{ staff.pk }}, '{{ staff.Officer_Name|escapejs }}', '{{ staff.Designation|escapejs }}', {{ staff.Salary|default:0 }})"
                             title="Edit">
                       <i class="fas fa-edit"></i>
                     </button>

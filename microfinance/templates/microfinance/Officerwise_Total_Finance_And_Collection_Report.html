@@ -96,11 +96,10 @@
                             <th class="ps-3">S.No</th>
                             <th>Loan ID</th>
                             <th>Customer Name</th>
-                            <th>Amount Paid</th>
-                            <th>Last Pay Date</th>
+                            <th>Collection Detail</th>
                             <th>To Be Collected</th>
                             <th>Penalty Pending</th>
-                            <th>Status</th>
+                            <th>Amount Overdue</th>
                             <th class="pe-3">Officer</th>
                         </tr>
                     </thead>
@@ -115,14 +114,14 @@
                                 </a>
                             </td>
                             <td class="fw-bold text-success">
-                                ₹{{ item.collected|floatformat:2 }}
-                            </td>
-                            <td class="text-muted small">
-                                {% if item.last_pay %}
-                                    <i class="fas fa-calendar-check me-1 text-success"></i>{{ item.last_pay|date:"M d, Y" }}
-                                {% else %}
-                                    <span class="text-muted-50">-</span>
-                                {% endif %}
+                                <div>₹{{ item.collected|floatformat:2 }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">
+                                    {% if item.last_pay %}
+                                        Last: {{ item.last_pay|date:"M d" }}
+                                    {% else %}
+                                        No Pay
+                                    {% endif %}
+                                </div>
                             </td>
                             <td class="fw-bold">
                                 ₹{{ item.to_be_collected|floatformat:2 }}
@@ -130,16 +129,8 @@
                             <td class="{% if item.pending_penalty > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
                                 ₹{{ item.pending_penalty|floatformat:2 }}
                             </td>
-                            <td>
-                                {% if item.status == 'advance' %}
-                                    <span class="badge bg-success-soft text-success border-success-subtle px-2">Advance</span>
-                                {% elif item.status == 'on_track' %}
-                                    <span class="badge bg-primary-soft text-primary border-primary-subtle px-2">On Track</span>
-                                {% elif item.status == 'pending' %}
-                                    <span class="badge bg-warning-soft text-warning border-warning-subtle px-2">Pending</span>
-                                {% else %}
-                                    <span class="badge bg-light text-muted px-2">None</span>
-                                {% endif %}
+                            <td class="{% if item.overdue_amount > 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
+                                ₹{{ item.overdue_amount|floatformat:2 }}
                             </td>
                             <td class="pe-3">
                                 <span class="small">{{ item.loan.Loan_Collector.Officer_Name }}</span>

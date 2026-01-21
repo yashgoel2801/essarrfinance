@@ -41,6 +41,7 @@
         Officer: {%if Staff == 0 %}All{%else%}{{loans.last.Loan_Collector.Officer_Name}}{%endif%} &nbsp;&nbsp;Frequency:{% if Freq == 1 %} Daily {% elif Freq == 0 %}All{% elif Freq == 2 %} Weekly {% else %}Monthly{%endif%}<br> Total Amount Collected :
         {{totalinst}}
         <br> Total Intrest Collected : {{intrestrec}}
+        <br> Total Penalty Collected : {{penaltycollected|floatformat:2}}
     </div>
     <style>
         div #table-wrapper {
