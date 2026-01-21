@@ -1607,8 +1607,8 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         collected = payments.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         AmntCollected += collected
         
-        # Last payment date in range
-        last_pay = payments.aggregate(Max('Date_Paid'))['Date_Paid__max']
+        # Last payment date (any type, overall up to end date)
+        last_pay = Payments.objects.filter(Loan=loan, Date_Paid__lte=end).aggregate(Max('Date_Paid'))['Date_Paid__max']
         
         # Amount expected to be collected (Installments due in range)
         to_be_collected = Installments.objects.filter(Loan=loan, Date_Due__range=[start, end]).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
@@ -1618,15 +1618,15 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         penalties = Penalty.objects.filter(Loan=loan, Status=False)
         pending_penalty = sum((p.Penalty_Calc - p.Penalty_Paid - p.Waived_Amount) for p in penalties)
         
-        # Determine Status
-        if collected > to_be_collected:
-            status = 'advance'
-        elif collected == to_be_collected and to_be_collected > 0:
-            status = 'on_track'
-        elif collected < to_be_collected:
-            status = 'pending'
-        else:
-            status = 'no_activity'
+        # Calculate Overdue Amount as per USER request
+        # 1. Total due till end date
+        total_due_till_end = Installments.objects.filter(Loan=loan, Date_Due__lte=end).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        # 2. Total paid till end date
+        total_paid_till_end = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__lte=end).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        # 3. Cumulative overdue
+        cumulative_overdue = max(0, total_due_till_end - total_paid_till_end)
+        # 4. Final overdue capped at range to_be_collected
+        overdue_amount = min(cumulative_overdue, to_be_collected)
 
         Collection_Data.append({
             'loan': loan,
@@ -1634,7 +1634,7 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
             'to_be_collected': to_be_collected,
             'last_pay': last_pay,
             'pending_penalty': max(0, pending_penalty),
-            'status': status
+            'overdue_amount': overdue_amount
         })
 
     # Sub-tables data

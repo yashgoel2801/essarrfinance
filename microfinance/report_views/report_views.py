@@ -142,8 +142,8 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         collected = payments.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         totalAmntCollected += collected
         
-        # Last payment date in range
-        last_pay = payments.aggregate(Max('Date_Paid'))['Date_Paid__max']
+        # Last payment date (any type, overall up to end date)
+        last_pay = Payments.objects.filter(Loan=loan, Date_Paid__lte=end).aggregate(Max('Date_Paid'))['Date_Paid__max']
         
         # Amount expected in range (Installments due)
         to_be_collected = Installments.objects.filter(Loan=loan, Date_Due__range=[start, end]).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
