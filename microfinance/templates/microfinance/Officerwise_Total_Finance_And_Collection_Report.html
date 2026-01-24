@@ -115,6 +115,9 @@
                             </td>
                             <td class="fw-bold text-success">
                                 <div>₹{{ item.collected|floatformat:2 }}</div>
+                                {% if item.penalty_paid_in_range > 0 %}
+                                <div class="text-danger" style="font-size: 0.75rem;">+ Pen: ₹{{ item.penalty_paid_in_range|floatformat:2 }}</div>
+                                {% endif %}
                                 <div class="text-muted" style="font-size: 0.75rem;">
                                     {% if item.last_pay %}
                                         Last: {{ item.last_pay|date:"M d" }}
@@ -159,7 +162,6 @@
     </div>
 
     <!-- Closed Loans Collections Table -->
-    {% if Closed_Collection_Data %}
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0 fw-bold text-dark">
@@ -194,6 +196,9 @@
                             </td>
                             <td class="fw-bold text-success">
                                 <div>₹{{ item.collected|floatformat:2 }}</div>
+                                {% if item.penalty_paid_in_range > 0 %}
+                                <div class="text-danger" style="font-size: 0.75rem;">+ Pen: ₹{{ item.penalty_paid_in_range|floatformat:2 }}</div>
+                                {% endif %}
                                 <div class="text-muted" style="font-size: 0.75rem;">
                                     {% if item.last_pay %}
                                         Last: {{ item.last_pay|date:"M d" }}
@@ -215,13 +220,16 @@
                                 <span class="small">{{ item.loan.Loan_Collector.Officer_Name }}</span>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">No closed loan collection records found for this period.</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-    {% endif %}
 
     <!-- Secondary Tables Section -->
     <div class="row g-4">

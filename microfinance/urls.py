@@ -56,7 +56,7 @@ urlpatterns = [
     url(r'^report/officer-and-freq/$', Officer_And_Frequency_Wise_Report,name="report1"),
     url(r'^pdf/officer-and-freq/$', Officer_And_Frequency_Wise_pdf,name="pdf1"),
 
-    url(r'^report/officerwise-total-finance-and-collection/$', Officerwise_Total_Finance_And_Collection_Report,name="report"), 
+    url(r'^report/officerwise-total-finance-and-collection/$', views.Officerwise_Total_Finance_And_Collection_Report,name="report"), 
 
     url(r'^dashboard/$', views.dashboard, name="dashboard")
 ]

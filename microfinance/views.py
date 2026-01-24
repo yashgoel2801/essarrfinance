@@ -1449,14 +1449,15 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     if Frequency != 0:
         base_loans = base_loans.filter(Frequency=Frequency)
 
-    # 1. Main collection data (Active loans OR Closed loans with collection payments in range)
+    # 1. Main collection data (Active loans OR Closed loans with ANY payments in range)
     # Refactor: Ensure Payment dates from Payment table only.
+    # Updated: Includes loans with Penalty payments even if closed.
     Loan_QS = base_loans.filter(
         Q(installments__Date_Due__range=[start, end]) |
-        Q(payments__Payment_Type=1, payments__Date_Paid__range=[start, end])
+        Q(payments__Date_Paid__range=[start, end])
     ).filter(
         Q(Status=False) |
-        Q(payments__Payment_Type=1, payments__Date_Paid__range=[start, end])
+        Q(payments__Date_Paid__range=[start, end])
     ).distinct().order_by("id")
     
     # 2. Loans with penalty payments in range (source of truth: Payments table)
@@ -1477,10 +1478,14 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     Closed_Collection_Data = []
     
     for loan in Loan_QS:
-        # Amount paid in range (Source: Payments)
-        payments = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__range=[start, end])
-        collected = payments.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        # Amount paid in range (Source: Payments Type 1)
+        payments_1 = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__range=[start, end])
+        collected = payments_1.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         AmntCollected += collected
+
+        # Penalty paid in range (Source: Payments Type 2)
+        payments_2 = Payments.objects.filter(Loan=loan, Payment_Type=2, Date_Paid__range=[start, end])
+        penalty_collected_in_range = payments_2.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         
         # Last payment date (Source: Payments)
         last_pay = Payments.objects.filter(Loan=loan, Date_Paid__lte=end).aggregate(Max('Date_Paid'))['Date_Paid__max']
@@ -1495,17 +1500,19 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         total_p_waived = Waiver.objects.filter(Loan=loan, Waiver_Type=1).aggregate(Sum('Amount'))['Amount__sum'] or 0
         pending_penalty = max(0, total_p_calc - total_p_paid - total_p_waived)
         
-        # Calculate Overdue Amount (Pending till date)
-        # 1. Total due till end date (Source: Installments)
-        total_due_till_end = Installments.objects.filter(Loan=loan, Date_Due__lte=end).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
-        # 2. Total paid till end date (Source: Payments)
-        total_paid_till_end = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__lte=end).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        # Calculate Overdue Amount (Pending till TODAY)
+        today_date = datetime.now().date()
+        # 1. Total due till TODAY (Source: Installments)
+        total_due_till_now = Installments.objects.filter(Loan=loan, Date_Due__lte=today_date).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        # 2. Total paid till TODAY (Source: Payments)
+        total_paid_till_now = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__lte=today_date).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         # 3. Amount Overdue
-        overdue_amount = max(0, total_due_till_end - total_paid_till_end)
+        overdue_amount = max(0, total_due_till_now - total_paid_till_now)
 
         data = {
             'loan': loan,
             'collected': collected,
+            'penalty_paid_in_range': penalty_collected_in_range,
             'to_be_collected': to_be_collected,
             'last_pay': last_pay,
             'pending_penalty': max(0, pending_penalty),
@@ -1587,11 +1594,11 @@ def Officerwise_Total_Finance_And_Collection_pdf(request):
     for l in Loan:
         Total_Amnt_Pending=0
         Amnt_Collected = 0
-        All =Installments.objects.all().filter(Loan =l).filter(Date_Due__lte=end).order_by('Date_Due')
-        # Calculate pending: Installment_Due minus payments made
-        total_due = sum(a.Installment_Due for a in All)
-        payments_made = Payments.objects.filter(Loan=l, Payment_Type=1, Date_Paid__lte=end).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
-        Total_Amnt_Pending = total_due - payments_made
+        # Overdue/Pending Calculation: Use Today's date to show current status
+        today_date = datetime.now().date()
+        total_due = Installments.objects.filter(Loan=l, Date_Due__lte=today_date).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        payments_made = Payments.objects.filter(Loan=l, Payment_Type=1, Date_Paid__lte=today_date).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        Total_Amnt_Pending = max(0, total_due - payments_made)
             
         Dic[l.pk]=Total_Amnt_Pending
         # Use Payments model for collected amounts
