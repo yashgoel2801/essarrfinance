@@ -1537,6 +1537,9 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         File_ChargeCollected += charge
         File_Charge_Data.append({'loan': loan, 'charge': charge})
 
+    # Calculate Total Financed (disbursed in this period)
+    Total_Amnt_Financed = Loan3.aggregate(Sum('Principle_Amount'))['Principle_Amount__sum'] or 0
+
     context = {
         'start': start,
         'end': end,
@@ -1548,6 +1551,7 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         'File_Charge_Data': File_Charge_Data,
         'amntcollected': AmntCollected,
         'amnttobecollected': AmntToBeCollected,
+        'amntfinanced': Total_Amnt_Financed,
         'penaltycollected': PenaltyCollected,
         'filecollected': File_ChargeCollected,
         'Date': datetime.now().date(),
