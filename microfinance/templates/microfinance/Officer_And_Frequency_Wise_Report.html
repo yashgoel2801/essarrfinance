@@ -1,173 +1,219 @@
-{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}
-
+{% extends 'base_layout.html' %}
+{% block content %}
+{% load static %}
+{% load keyvalue %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-    div {
-        background-color: transparent;
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        --secondary-gradient: linear-gradient(135deg, #6610f2 0%, #520dc2 100%);
+        --success-gradient: linear-gradient(135deg, #198754 0%, #146c43 100%);
+        --info-gradient: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+    }
+    .metric-card {
+        border: none;
+        border-radius: 12px;
+        color: white;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    .metric-card .icon-bg {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.2;
+        transform: rotate(-15deg);
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0px;
+    }
+    .metric-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+        margin-bottom: 5px;
     }
     
-    table {
-        border-collapse: collapse;
-        margin-top: 0;
-        top: 0;
+    /* Table Modern */
+    .table-modern {
         width: 100%;
-        text-align: center;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
     }
-    
-    .phnno,
-    .loanamnt {
-        text-align: center;
-    }
-    
-    thead {
-        text-align: center;
-        text-transform: capitalize;
-    }
-    
-    th,
-    td {
-        text-align: center !important;
-        padding: 8px;
-        text-align: justify;
-    }
-    
-    tr:nth-child(even) {
-        background-color: #f2f2f2
-    }
-    
-    th {
-        background-color: #4CAF50;
+    .table-modern thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
-    
-    #table-wrapper {
-        position: relative;
+    .table-modern th {
+        padding: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border: none;
+        text-align: center;
     }
-    
-    #table-scroll {
-        height: 10px;
-        overflow: auto;
-        margin-top: 0;
+    .table-modern td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        text-align: center;
     }
-    
-    #table-wrapper {
-        position: relative;
-        top: 0;
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
     }
-    
-    #table-scroll {
-        height: 150px;
-        overflow: auto;
-        margin-top: 0;
+    .table-modern tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.001);
+        transition: all 0.2s;
     }
-    
-    input[type=submit] {
-        width: 20%;
-    }
-    
-    body {
-        counter-reset: Serial;
-        /* Set the Serial counter to 0 */
-    }
-    
-    table {
-        border-collapse: separate;
-    }
-    
-    tr td:nth-child(2):before {
-        counter-increment: Serial;
-        /* Increment the Serial counter */
-        content: counter(Serial);
-        /* Display the counter */
+    .checkmark {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
     }
 </style>
-<div class="loanees">
-    <div style="display:flex; width: 95vw; margin:5px;padding:2.5px">
-        <form action="{% url 'microfinance:pdf1'%}" method="POST" style="width: 100%;">
-            {% csrf_token %} {%if Staff == 0%} <input type="text" name="name" value="0" style="display:none">{%else%}
-            <input type="text" name="name" value="{{loans.last.Loan_Collector.pk}}" style="display:none">{%endif%} {%if Frequency == 0%} <input type="text" name="loan" value="0" style="display:none">{%else%}
-            <input type="text" name="loan" value="{{loans.last.Frequency}}" style="display:none">{%endif%}<input type="text" name="status" value="{{loans.last.Status}}" style="display:none">
-            <input type="submit" value="PDF">
 
+<div class="container-fluid py-4" style="background-color: #f8f9fa;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-4 rounded shadow-sm">
+        <div>
+            <h4 class="mb-1 fw-bold text-dark">Officer & Frequency Report</h4>
+            <div class="text-muted small">
+                <span class="me-3"><i class="fas fa-user-tie me-2"></i>Officer: {% if Staff == 0 %}All{% else %}{{loans.first.Loan_Collector.Officer_Name}}{% endif %}</span>
+                <span class="me-3"><i class="fas fa-clock me-2"></i>Frequency: {% if Frequency == 1 %}Daily{% elif Frequency == 2 %}Weekly{% elif Frequency == 3 %}Monthly{% elif Frequency == 0 %}All{% endif %}</span>
+                <span><i class="far fa-calendar-alt me-2"></i>Date: {{Today}}</span>
+            </div>
+        </div>
+        <form action="{% url 'microfinance:pdf1' %}" method="POST">
+            {% csrf_token %}
+            {% if Staff == 0 %} <input type="hidden" name="name" value="0">{% else %}
+            <input type="hidden" name="name" value="{{loans.last.Loan_Collector.pk}}">{% endif %}
+            {% if Frequency == 0 %} <input type="hidden" name="loan" value="0">{% else %}
+            <input type="hidden" name="loan" value="{{loans.last.Frequency}}">{% endif %}
+            <input type="hidden" name="status" value="{{loans.last.Status}}">
+            
+            <button type="submit" class="btn btn-danger text-white px-4">
+                <i class="fas fa-file-pdf me-2"></i>Download PDF
+            </button>
+        </form>
     </div>
 
-
-    <h3>Officer : {%if Staff == 0%}All{%else%}{{loans.first.Loan_Collector.Officer_Name}}{%endif%} &nbsp Frequency : {%if Frequency == 1%}Daily{%elif Frequency == 2%}Weekly{%elif Frequency == 3%}Monthly{%elif Frequency == 0%}All{%endif%}
-        <br> Date : {{Today}}
-
-    </h3>
-    <div id="table-wrapper">
-        <table id="table_row_total">
-            <thead>
-                <tr>
-                    <th>Select All<input type="checkbox" id="select-all">
-                        <span class="checkmark"></span></th>
-                    <th>S.No</th>
-                    <th>Frequency</th>
-                    <th>Image</th>
-                    <th>Name </th>
-                    {% comment %} <th class="loanamnt">Phone NO</th> {% endcomment %}
-                    <th class="loanamnt" style="display:none">Total Amount</th>
-                    <th class="loanamnt">Installments</th>
-                    <th>No of Installments</th>
-                    <th class="phnno">First Due Date</th>
-                    <th>End Date</th>
-                    <th>Total Amt To Be Collected</th>
-                    <th>Total Amt Collected</th>
-                    <th>Total Amt Pending</th>
-                    <th>Total Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                {%for loanee in loans%}
-                <tr>
-                    <td> <input type="checkbox" id="{{loanee.pk}}" name="Check" value="{{loanee.pk}}"></td>
-                    <td></td>
-                    <td>{%if loanee.Frequency == 1%}Daily{%elif loanee.Frequency == 2%}Weekly{%elif loanee.Frequency == 3%}Monthly{%endif%}</td>
-                    <td><img src="{{loanee.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px"></td>
-                    <td>
-                        <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk%}">{{loanee.Account.Client.Name}} </a>
-                    </td>
-                    {% comment %} <td class="phnno">{{loanee.Account.Client.Phone_no1.raw_phone}}</td> {% endcomment %}
-                    <td id="total" style="display: none;">{{loanee.Total}}</td>
-                    <td>{{loanee.installments_set.first.Installment_Due|floatformat:2}}</td>
-                    <td id="noofinst"><span display>{{loanee.No_Of_Installments}}</span></td>
-                    <td style="display: none;" id="freq">{{loanee.Frequency}}</td>
-                    <td>{{loanee.First_Due_Date|date:"d/m/y"}}</td>
-                    <td>{{loanee.installments_set.last.Date_Due|date:"d/m/y"}}</td>
-
-                    <td> {{Total_amt_to_be_col_dic|keyvalue:loanee.pk}}</td>
-                    <td>{{Total_amt_col_dic|keyvalue:loanee.pk}}</td>
-                    <td>{{Total_Pen_dic|keyvalue:loanee.pk}}</td>
-                    <td>{{Total_bal_dic|keyvalue:loanee.pk}}</td>
-
-                </tr>
-                {% endfor %}
-                <tr>
-                    <th colspan="5">Total amnt To be Collected: {{Total_Amnt_to_be_Collected|floatformat:2}}
-                    </th>
-                    <th colspan="5">
-                        Total Amnt Pending: {{Total_Amnt_Pending|floatformat:2}} </th>
-                    <th colspan="5">
-                        Total Amnt Balance: {{Total_Amnt_Balance|floatformat:2}} </th>
-                </tr> 
-            </tbody>
-
-        </table>
-
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card metric-card" style="background: var(--success-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Total To Be Collected</div>
+                    <div class="metric-value">₹{{Total_Amnt_to_be_Collected|floatformat:2}}</div>
+                    <i class="fas fa-hand-holding-usd icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card metric-card" style="background: var(--secondary-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Total Amount Pending</div>
+                    <div class="metric-value">₹{{Total_Amnt_Pending|floatformat:2}}</div>
+                    <i class="fas fa-hourglass-half icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card metric-card" style="background: var(--warning-gradient); color: #000;">
+                <div class="card-body p-3">
+                    <div class="metric-label">Total Balance</div>
+                    <div class="metric-value">₹{{Total_Amnt_Balance|floatformat:2}}</div>
+                    <i class="fas fa-balance-scale icon-bg"></i>
+                </div>
+            </div>
+        </div>
     </div>
-    </form>
+
+    <!-- Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table-modern" id="table_row_total">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="select-all" class="form-check-input">
+                            </th>
+                            <th>S.No</th>
+                            <th>Freq</th>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Inst Amt</th>
+                            <th>No. Inst</th>
+                            <th>First Due</th>
+                            <th>End Date</th>
+                            <th>To Be Coll</th>
+                            <th>Collected</th>
+                            <th>Pending</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loanee in loans %}
+                        <tr>
+                            <td><input type="checkbox" id="{{loanee.pk}}" name="Check" value="{{loanee.pk}}" class="form-check-input"></td>
+                            <td>{{forloop.counter}}</td>
+                            <td>
+                                {% if loanee.Frequency == 1 %}<span class="badge bg-info text-dark">D</span>
+                                {% elif loanee.Frequency == 2 %}<span class="badge bg-warning text-dark">W</span>
+                                {% elif loanee.Frequency == 3 %}<span class="badge bg-primary">M</span>{% endif %}
+                            </td>
+                            <td>
+                                {% if loanee.Account.Client.Image %}
+                                <img src="{{loanee.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px; object-fit: cover;">
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-start">
+                                <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk %}" class="text-decoration-none text-dark">{{loanee.Account.Client.Name}}</a>
+                            </td>
+                            <td>₹{{loanee.installments_set.first.Installment_Due|floatformat:2}}</td>
+                            <td id="noofinst">{{loanee.No_Of_Installments}}</td>
+                            <td style="display:none;" id="freq">{{loanee.Frequency}}</td>
+                            <td>{{loanee.First_Due_Date|date:"d/m/y"}}</td>
+                            <td>{{loanee.installments_set.last.Date_Due|date:"d/m/y"}}</td>
+                            <td class="fw-bold">₹{{Total_amt_to_be_col_dic|keyvalue:loanee.pk}}</td>
+                            <td class="text-success">₹{{Total_amt_col_dic|keyvalue:loanee.pk}}</td>
+                            <td class="text-danger fw-bold">₹{{Total_Pen_dic|keyvalue:loanee.pk}}</td>
+                            <td>₹{{Total_bal_dic|keyvalue:loanee.pk}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-
-
 <script>
     jQuery('document').ready(function() {
-
         $table1 = jQuery('#table_row_total');
         $table1.find('tbody tr').each(function() {
-
             freq = jQuery(this).find("td[id='freq']").text()
-
             if (freq == 2) {
                 var noofinstall = Number(jQuery(this).find("td[id='noofinst']").text());
                 var rem;
@@ -187,15 +233,14 @@
             if (freq == 3) {
                 jQuery(this).find("td[id='noofinst']").append(' M');
             }
-
         });
     });
-</script>
-<script>
+
     document.getElementById('select-all').onclick = function() {
-        var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        var checkboxes = document.querySelectorAll('input[name="Check"]');
         for (var checkbox of checkboxes) {
             checkbox.checked = this.checked;
         }
     }
-</script> {% endblock %}
+</script>
+{% endblock %}

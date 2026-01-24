@@ -1,150 +1,180 @@
-{%extends 'base_layout.html'%} {%block content%}{%load static%} {%static "images" as baseUrl%}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-
+{% extends 'base_layout.html' %}
+{% block content %}
+{% load static %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-    table {
-        border-collapse: collapse;
-        width: 100%;
+    /* CSS from Officerwise Report */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        --secondary-gradient: linear-gradient(135deg, #6610f2 0%, #520dc2 100%);
+        --success-gradient: linear-gradient(135deg, #198754 0%, #146c43 100%);
+        --info-gradient: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
     }
-
-    th,
-    td {
-        text-align: left;
-        padding: 5px;
-        text-align: justify;
-    }
-
-    .loanees {
-        background-color: transparent;
-        margin: 0;
-        padding: 0;
-    }
-
-    tr:nth-child(even) {
-        background-color: #f2f2f2
-    }
-
-    th {
-        background-color: #4CAF50;
+    .metric-card {
+        border: none;
+        border-radius: 12px;
         color: white;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        height: 100%;
     }
-
-    .w3-container {
-        padding: 0px;
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    .metric-card .icon-bg {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.2;
+        transform: rotate(-15deg);
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0px;
+    }
+    .metric-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+        margin-bottom: 5px;
     }
 </style>
 
-<h4>Collection Report From {{start}} to {{end}}
-    <form action="{% url 'microfinance:pdf2'%}" method="POST" style="float: right;font-size:16px;width:65%">
-        {% csrf_token %}
-        <input type="text" name="from" value="{{start}}" style="display:none">
-        <input type="text" name="to" value={{end}} style="display:none">
-        <input type="submit" value="PDF" style="width: 25%;">
-    </form>
-</h4>
-
-
-<div class="loanees">
-    <h4>
-        <div class="w3-container" style="display: flex; justify-content:space-evenly">
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total amount Financed:</h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{totalloan}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total amount Collected:</h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{totalinst|floatformat:2}}</h4>
-                </div>
-            </div>
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total amount To be Collected:</h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{totalamnt|floatformat:2}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Intrest to be collected </h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{intrest|floatformat:2}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total File Charge collected </h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{totalfc|floatformat:2}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Penalty To be Collected </h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{totalpenalty}}</h4>
-                </div>
-            </div>
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Penalty Collected </h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{Total_pencol}}</h4>
-                </div>
-            </div>
-
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Intrest collected </h4>
-                </header>
-                <div class="w3-container">
-                    <h4>{{intrestrec|floatformat:2}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Penalty Waived </h4>
-                </header>
-                <div class="w3-container">
-                    <h4 style="color: #28a745;">{{total_penalty_waived|floatformat:2}}</h4>
-                </div>
-            </div>
-
-            <div class="w3-card-4" style="width:15%">
-                <header class="w3-container w3-light-grey">
-                    <h4>Total Interest Waived </h4>
-                </header>
-                <div class="w3-container">
-                    <h4 style="color: #28a745;">{{total_interest_waived|floatformat:2}}</h4>
-                </div>
-            </div>
-
+<div class="container-fluid py-4" style="background-color: #f8f9fa;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-4 rounded shadow-sm">
+        <div>
+            <h4 class="mb-1 fw-bold text-dark">Total Finance & Collection Report</h4>
+            <span class="text-muted"><i class="far fa-calendar-alt me-2"></i>{{start}} to {{end}}</span>
         </div>
+        <form action="{% url 'microfinance:pdf2' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="from" value="{{start}}">
+            <input type="hidden" name="to" value="{{end}}">
+            <button type="submit" class="btn btn-danger text-white px-4">
+                <i class="fas fa-file-pdf me-2"></i>Download PDF
+            </button>
+        </form>
+    </div>
 
+    <!-- Cards Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Financed -->
+        <div class="col-md-3">
+            <div class="card metric-card" style="background: var(--secondary-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Total Financed</div>
+                    <div class="metric-value">₹{{totalloan|floatformat:2}}</div>
+                    <i class="fas fa-coins icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Collected -->
+        <div class="col-md-3">
+            <div class="card metric-card" style="background: var(--primary-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Total Collected</div>
+                    <div class="metric-value">₹{{totalinst|floatformat:2}}</div>
+                    <i class="fas fa-wallet icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <!-- To Be Collected -->
+        <div class="col-md-3">
+            <div class="card metric-card" style="background: var(--success-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Amt To Be Collected</div>
+                    <div class="metric-value">₹{{totalamnt|floatformat:2}}</div>
+                    <i class="fas fa-hand-holding-usd icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <!-- File Charges -->
+        <div class="col-md-3">
+            <div class="card metric-card bg-white text-dark border">
+                <div class="card-body p-3">
+                    <div class="metric-label text-muted">File Charges</div>
+                    <div class="metric-value text-primary">₹{{totalfc|floatformat:2}}</div>
+                    <i class="fas fa-file-invoice-dollar icon-bg text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    </h4>
+    <div class="row g-4 mb-4">
+        <!-- Penalty Collected -->
+        <div class="col-md-3">
+            <div class="card metric-card" style="background: var(--info-gradient);">
+                <div class="card-body p-3">
+                    <div class="metric-label">Penalty Collected</div>
+                    <div class="metric-value">₹{{Total_pencol|floatformat:2}}</div>
+                    <i class="fas fa-exclamation-circle icon-bg"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Penalty Pending -->
+        <div class="col-md-3">
+            <div class="card metric-card bg-white text-dark border">
+                <div class="card-body p-3">
+                    <div class="metric-label text-muted">Penalty Pending</div>
+                    <div class="metric-value text-danger">₹{{totalpenalty|floatformat:2}}</div>
+                    <i class="fas fa-clock icon-bg text-danger"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Interest Collected -->
+        <div class="col-md-3">
+            <div class="card metric-card bg-white text-dark border">
+                <div class="card-body p-3">
+                    <div class="metric-label text-muted">Interest Collected</div>
+                    <div class="metric-value text-success">₹{{intrestrec|floatformat:2}}</div>
+                    <i class="fas fa-percentage icon-bg text-success"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Interest To Be Collected -->
+        <div class="col-md-3">
+            <div class="card metric-card bg-white text-dark border">
+                <div class="card-body p-3">
+                    <div class="metric-label text-muted">Interest To Be Collected</div>
+                    <div class="metric-value text-muted">₹{{intrest|floatformat:2}}</div>
+                    <i class="fas fa-chart-line icon-bg text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-
-
+    <!-- Waivers Section -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Penalty Waived</h6>
+                        <h4 class="mb-0 text-success fw-bold">₹{{total_penalty_waived|floatformat:2}}</h4>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x text-light"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Interest Waived</h6>
+                        <h4 class="mb-0 text-success fw-bold">₹{{total_interest_waived|floatformat:2}}</h4>
+                    </div>
+                    <i class="fas fa-handshake fa-2x text-light"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-{%endblock%}
+{% endblock %}

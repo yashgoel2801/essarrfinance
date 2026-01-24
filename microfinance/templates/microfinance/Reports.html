@@ -1,190 +1,269 @@
-{%extends 'base_layout.html'%}{% load static %} {% block content %}
-<div class="container py-4">
-  <div class="row g-4">
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">OfficerWise Report</h5>
-          <form action="{% url 'microfinance:report1'%}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">Officer</label>
-              <select name="name" class="form-select mb-2">
-                {% for user in users %}{% if user.pk != 0 %}
-                  <option value="{{user.pk}}">{{user}}</option>{% endif %}
-                {% endfor %}
-                <option value="0">All</option>
-              </select>
-              <label class="form-label">Frequency</label>
-              <select name="loan" class="form-select mb-2">
-                <option value="0">All</option>
-                <option value="1">Daily</option>
-                <option value="2">Weekly</option>
-                <option value="3">Monthly</option>
-              </select>
-              <label class="form-label">Status</label>
-              <select name="status" class="form-select mb-2">
-                <option value="False">Active Cases</option>
-                <option value="True">Closed Cases</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
-        </div>
-      </div>
+{% extends 'base_layout.html' %}
+{% load static %}
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --blue-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --teal-gradient: linear-gradient(135deg, #009879 0%, #007b63 100%);
+        --cyan-gradient: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+        --yellow-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        --dark-gradient: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+    }
+
+    .report-card {
+        border: none;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .report-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    }
+    .report-header {
+        padding: 1.5rem;
+        color: white;
+    }
+    .report-header i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.8;
+    }
+    .report-title {
+        font-weight: 700;
+        margin-bottom: 0;
+        font-size: 1.1rem;
+    }
+    .card-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .report-form {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex-grow: 1;
+    }
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #636e72;
+        margin-bottom: 0.4rem;
+        letter-spacing: 0.5px;
+    }
+    .form-select, .form-control {
+        border: 1px solid #e1e8ee;
+        border-radius: 10px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .btn-generate {
+        border: none;
+        border-radius: 10px;
+        padding: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+        margin-top: auto; /* Pushes button to bottom */
+    }
+</style>
+
+<div class="container py-5">
+    <div class="mb-5 text-center">
+        <h2 class="fw-bold mb-2">Financial Reports Center</h2>
+        <p class="text-muted">Select a report type and apply filters to analyze your data.</p>
     </div>
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Officerwise Collection Report</h5>
-          <form action="{% url 'microfinance:report' %}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">Officer</label>
-              <select name="name" class="form-select mb-2">
-                {% for user in users %}{% if user.pk != 0 %}
-                  <option value="{{user.pk}}">{{user}}</option>{% endif %}
-                {% endfor %}
-                <option value="0">All</option>
-              </select>
-              <label class="form-label">Frequency</label>
-              <select name="loan" class="form-select mb-2">
-                <option value="0">All</option>
-                <option value="1">Daily</option>
-                <option value="2">Weekly</option>
-                <option value="3">Monthly</option>
-              </select>
-              <label class="form-label">From</label>
-              <input type="date" name="from" class="form-control mb-2" placeholder="From:" />
-              <label class="form-label">To</label>
-              <input type="date" name="to" class="form-control mb-2" placeholder="To:" />
+
+    <div class="row g-4 d-flex align-items-stretch">
+        <!-- Officer & Frequency Report -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--purple-gradient);">
+                    <i class="fas fa-user-circle"></i>
+                    <h5 class="report-title">Officer & Frequency</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report1'%}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Officer</label>
+                        <select name="name" class="form-select">
+                            <option value="0">All Officers</option>
+                            {% for user in users %}{% if user.pk != 0 %}
+                            <option value="{{user.pk}}">{{user}}</option>{% endif %}
+                            {% endfor %}
+                        </select>
+                        <label class="form-label">Frequency</label>
+                        <select name="loan" class="form-select">
+                            <option value="0">All Frequencies</option>
+                            <option value="1">Daily</option>
+                            <option value="2">Weekly</option>
+                            <option value="3">Monthly</option>
+                        </select>
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="False">Active Cases</option>
+                            <option value="True">Closed Cases</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-generate w-100" style="background: var(--purple-gradient); color: white;">Generate Report</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Total Amount Collection Report</h5>
-          <form action="{% url 'microfinance:report5' %}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">On Date</label>
-              <input type="date" name="Date" class="form-control mb-2" placeholder="Date" />
+
+        <!-- Collection Analysis -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--blue-gradient);">
+                    <i class="fas fa-wallet"></i>
+                    <h5 class="report-title">Collection Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report' %}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Officer</label>
+                        <select name="name" class="form-select">
+                            <option value="0">All Officers</option>
+                            {% for user in users %}{% if user.pk != 0 %}
+                            <option value="{{user.pk}}">{{user}}</option>{% endif %}
+                            {% endfor %}
+                        </select>
+                        <label class="form-label">Frequency</label>
+                        <select name="loan" class="form-select">
+                            <option value="0">All Frequencies</option>
+                            <option value="1">Daily</option>
+                            <option value="2">Weekly</option>
+                            <option value="3">Monthly</option>
+                        </select>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">From</label>
+                                <input type="date" name="from" class="form-control" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">To</label>
+                                <input type="date" name="to" class="form-control" required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-generate w-100" style="background: var(--blue-gradient); color: white;">Generate Report</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Daily Clients Chart</h5>
-          <form action="{% url 'microfinance:report6' %}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">Officer</label>
-              <select name="name" class="form-select mb-2">
-                {% for user in users %}{% if user.pk != 0 %}
-                  <option value="{{user.pk}}">{{user}}</option>{% endif %}
-                {% endfor %}
-                <option value="0">All</option>
-              </select>
+
+        <!-- Consolidated Daily -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--teal-gradient);">
+                    <i class="fas fa-chart-pie"></i>
+                    <h5 class="report-title">Consolidated Daily</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report5' %}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Select Target Date</label>
+                        <input type="date" name="Date" class="form-control" required />
+                        <button type="submit" class="btn btn-success btn-generate w-100" style="background: var(--teal-gradient); color: white;">Generate Report</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Week Chart</h5>
-          <form action="{% url 'microfinance:report7' %}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">Weekday</label>
-              <select name="Weekday" class="form-select mb-2">
-                <option value="2">Mon</option>
-                <option value="3">Tue</option>
-                <option value="4">Wed</option>
-                <option value="5">Thu</option>
-                <option value="6">Fri</option>
-                <option value="7">Sat</option>
-                <option value="1">Sun</option>
-                <option value="0">All</option>
-              </select>
-              <label class="form-label">Officer</label>
-              <select name="name" class="form-select mb-2">
-                {% for user in users %}{% if user.pk != 0 %}
-                  <option value="{{user.pk}}">{{user}}</option>{% endif %}
-                {% endfor %}
-                <option value="0">All</option>
-              </select>
+
+        <!-- Daily Clients Master -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--cyan-gradient);">
+                    <i class="fas fa-users-cog"></i>
+                    <h5 class="report-title">Daily Clients Master</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report6' %}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Officer</label>
+                        <select name="name" class="form-select">
+                            <option value="0">All Officers</option>
+                            {% for user in users %}{% if user.pk != 0 %}
+                            <option value="{{user.pk}}">{{user}}</option>{% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-info btn-generate w-100" style="background: var(--cyan-gradient); color: white;">View List</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Month Chart</h5>
-          <form action="{% url 'microfinance:report8' %}" method="POST">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label">Day of Month</label>
-              <select name="DueDate" class="form-select mb-2">
-                <option value="1">1st</option>
-                <option value="2">2nd</option>
-                <option value="3">3rd</option>
-                <option value="4">4th</option>
-                <option value="5">5th</option>
-                <option value="6">6th</option>
-                <option value="7">7th</option>
-                <option value="8">8th</option>
-                <option value="9">9th</option>
-                <option value="10">10th</option>
-                <option value="11">11th</option>
-                <option value="12">12th</option>
-                <option value="13">13th</option>
-                <option value="14">14th</option>
-                <option value="15">15th</option>
-                <option value="16">16th</option>
-                <option value="17">17th</option>
-                <option value="18">18th</option>
-                <option value="19">19th</option>
-                <option value="20">20th</option>
-                <option value="21">21st</option>
-                <option value="22">22nd</option>
-                <option value="23">23rd</option>
-                <option value="24">24th</option>
-                <option value="25">25th</option>
-                <option value="26">26th</option>
-                <option value="27">27th</option>
-                <option value="28">28th</option>
-                <option value="29">29th</option>
-                <option value="30">30th</option>
-                <option value="31">31st</option>
-                <option value="0">All</option>
-              </select>
-              <label class="form-label">Officer</label>
-              <select name="name" class="form-select mb-2">
-                {% for user in users %}{% if user.pk != 0 %}
-                  <option value="{{user.pk}}">{{user}}</option>{% endif %}
-                {% endfor %}
-                <option value="0">All</option>
-              </select>
+
+        <!-- Weekly Schedule -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--yellow-gradient);">
+                    <i class="fas fa-calendar-week" style="color: rgba(0,0,0,0.5);"></i>
+                    <h5 class="report-title text-dark">Weekly Schedule</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report7' %}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Weekday</label>
+                        <select name="Weekday" class="form-select">
+                            <option value="2">Monday</option>
+                            <option value="3">Tuesday</option>
+                            <option value="4">Wednesday</option>
+                            <option value="5">Thursday</option>
+                            <option value="6">Friday</option>
+                            <option value="7">Saturday</option>
+                            <option value="1">Sunday</option>
+                            <option value="0">All Days</option>
+                        </select>
+                        <label class="form-label">Officer</label>
+                        <select name="name" class="form-select">
+                            <option value="0">All Officers</option>
+                            {% for user in users %}{% if user.pk != 0 %}
+                            <option value="{{user.pk}}">{{user}}</option>{% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-warning btn-generate w-100" style="background: var(--yellow-gradient);">View Chart</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-          </form>
         </div>
-      </div>
+
+        <!-- Monthly Schedule -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card report-card">
+                <div class="report-header" style="background: var(--dark-gradient);">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h5 class="report-title">Monthly Schedule</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'microfinance:report8' %}" method="POST" class="report-form">
+                        {% csrf_token %}
+                        <label class="form-label">Day of Month</label>
+                        <select name="DueDate" class="form-select">
+                            {% for i in "123456789"|make_list %}<option value="{{forloop.counter}}">{{forloop.counter}}st</option>{% endfor %}
+                            {% for i in "0123456789012345678901"|make_list %}<option value="{{forloop.counter|add:9}}">{{forloop.counter|add:9}}th</option>{% endfor %}
+                            <option value="0">All Days</option>
+                        </select>
+                        <label class="form-label">Officer</label>
+                        <select name="name" class="form-select">
+                            <option value="0">All Officers</option>
+                            {% for user in users %}{% if user.pk != 0 %}
+                            <option value="{{user.pk}}">{{user}}</option>{% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-dark btn-generate w-100" style="background: var(--dark-gradient); color: white;">View Chart</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
