@@ -521,8 +521,6 @@ def Client_Detail(request,pk):
 
 
 
-# def Recalculate_Penalty(Loan):
-#     calculate_penalties(Loan)
 
 def Recalculate_Penalty(Loan):
     # Convert QuerySets to the format expected by the function
@@ -1282,135 +1280,6 @@ def Reports(request):
     staff =Staff.objects.all().distinct()
     return render(request,'microfinance/Reports.html',{'users':staff})
 
-# @login_required(login_url="/accounts/login/")
-# def Officer_And_Frequency_Wise_Report(request):
-#     Staff_pk=int(request.POST.get('name'))
-#     status =(request.POST.get('status'))
-#     if status == 'False':
-#         Loanstat =Loans.objects.all().filter(Status=False)
-#     else:
-#         Loanstat =Loans.objects.all().filter(Status=True)
-#     Frequency=int(request.POST.get('loan'))
-#     if Staff_pk != 0 and Frequency != 0: 
-#         Loan =Loanstat.filter(Loan_Collector=Staff_pk,Frequency =Frequency)
-#     if Staff_pk == 0 and Frequency !=0:
-#         Loan =Loanstat.filter(Frequency =Frequency).exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10)
-#     if Staff_pk !=0 and Frequency ==0:
-#         Loan =Loanstat.filter(Loan_Collector=Staff_pk)
-#     if Staff_pk == 0 and Frequency == 0:
-#         Loan =Loanstat.exclude(Loan_Collector_id=9).exclude(Loan_Collector_id=10)
-#     Installment = Installments.objects.filter(Loan__in=Loan).order_by('Date_Due').filter(Date_Due__lte =datetime.now())
-#     Advance_Inst =Installments.objects.filter(Date_Due__gt=datetime.now()).filter(Date_Paid=datetime.now())
-#     Today = datetime.now()
-#     Total_Daily_inst = 0
-#     Total_Amnt_to_be_coll=0
-#     Total_amnt_col =0
-#     Total_bal = 0
-#     Dic1 ={}
-#     Dic2={}
-#     dic3={}
-#     dic4={}
-#     for l in Loan:
-#         Total_Daily_inst =Total_Daily_inst + l.installments_set.first().Installment_Due
-#         Total_Amnt_to_be_coll=0
-#         Total_amnt_col =0
-#         Total_bal = 0
-#         All1 =Installments.objects.all().filter(Loan =l).order_by('Date_Due').filter(Date_Due__lte = datetime.now())
-#         All = Installments.objects.all().filter(Loan =l).order_by('Date_Due').exclude(Date_Due__lte= datetime.now())
-#         All2 =  Installments.objects.all().filter(Loan =l).order_by('Date_Due').filter(Date_Paid__isnull = False)
-#         for a in All1:
-#             Total_Amnt_to_be_coll = Total_Amnt_to_be_coll + a.Installment_Due
-#         for a in All2:
-#             Total_amnt_col = Total_amnt_col + a.Installment_Paid
-#         Total_bal = Total_bal + Total_Amnt_to_be_coll - Total_amnt_col
-#         for a in All:
-#             Total_bal = Total_bal + a.Installment_Due
-#         Dic1[l.pk]=round(Total_Amnt_to_be_coll,1)
-#         Dic2[l.pk]=round(Total_amnt_col,1)
-#         dic3[l.pk] = round(abs(Dic1[l.pk]-Dic2[l.pk]),1)
-#         dic4[l.pk]=round(Total_bal,1)
-        
-#     Total_Amnt_Pending=0
-#     Dic ={}
-#     for l in Loan:
-#         Total_Amnt_Pending=0
-#         All =Installments.objects.all().filter(Loan =l).order_by('Date_Due')
-#         for a in All:
-#             Total_Amnt_Pending = Total_Amnt_Pending + a.Installment_Due - a.Installment_Paid
-#         Dic[l.pk]=Total_Amnt_Pending
-    
-#     Total_Amnt_Pending=0
-    
-#     for i,j in dic3.items():
-#         Total_Amnt_Pending+=j
-#     Total_Amnt_balance=0
-#     for i,j in Dic.items():
-#         Total_Amnt_balance+=j
-       
-#     if Advance_Inst is not None:
-#         return render(request,'microfinance/Officer_And_Frequency_Wise_Report.html',{'adv':Advance_Inst,'loans':Loan,'insts':Installment,'Today':Today,'Staff':Staff_pk,'Frequency':Frequency,'totalpendingdict':Dic,'TotalAmnt':Total_Amnt_Pending,'Total_bal_dic':dic4,'Total_amt_to_be_col_dic':Dic1,'Total_amt_col_dic':Dic2,'Total_Pen_dic':dic3,'Total_Daily_inst':Total_Daily_inst,'Total_Amnt_balance':Total_Amnt_balance})
-#     else:
-#         return render(request,'microfinance/Officer_And_Frequency_Wise_Report.html',{'loans':Loan,'insts':Installment,'Today':Today,'Staff':Staff_pk,'Frequency':Frequency,'totalpendingdict':Dic,'TotalAmnt':Total_Amnt_Pending,'Total_bal_dic':dic4,'Total_amt_to_be_col_dic':Dic1,'Total_amt_col_dic':Dic2,'Total_Pen_dic':dic3,'Total_Daily_inst':Total_Daily_inst,'Total_Amnt_balance':Total_Amnt_balance})
-
-# @login_required(login_url="/accounts/login/")
-# def Officer_And_Frequency_Wise_pdf(request):
-#     if request.method =="POST":
-#         List = request.POST.getlist('Check') 
-        
-#         status =(request.POST.get('status'))
-#         Loan = Loans.objects.none()
-#         for i in List:
-#             n = Loans.objects.filter(id=i)            
-#             Loan= Loan | n
-        
-#         Installment = Installments.objects.filter(Loan__in=Loan).order_by('Date_Due').filter(Date_Due__lte =datetime.now())
-#         Advance_Inst =Installments.objects.filter(Date_Due__gt=datetime.now()).filter(Date_Paid=datetime.now())
-#         Today = datetime.now()
-        
-#         Total_Amnt_to_be_coll=0
-#         Total_amnt_col =0
-#         Total_bal = 0
-#         Dic1 ={}
-#         Dic2={}
-#         dic3={}
-#         dic4={}
-#         for l in Loan:
-            
-#             Total_Amnt_to_be_coll=0
-#             Total_amnt_col =0
-#             Total_bal = 0
-#             All1 =Installments.objects.all().filter(Loan =l).order_by('Date_Due').filter(Date_Due__lte = datetime.now())
-#             All = Installments.objects.all().filter(Loan =l).order_by('Date_Due').exclude(Date_Due__lte= datetime.now())
-#             All2 =  Installments.objects.all().filter(Loan =l).order_by('Date_Due').filter(Date_Paid__isnull = False)
-#             for a in All1:
-#                 Total_Amnt_to_be_coll = Total_Amnt_to_be_coll + a.Installment_Due
-#             for a in All2:
-#                 Total_amnt_col = Total_amnt_col + a.Installment_Paid
-#             Total_bal = Total_bal + Total_Amnt_to_be_coll - Total_amnt_col
-#             for a in All:
-#                 Total_bal = Total_bal + a.Installment_Due
-#             Dic1[l.pk]=round(Total_Amnt_to_be_coll,1)
-#             Dic2[l.pk]=round(Total_amnt_col,1)
-#             dic3[l.pk] = round(abs(Dic1[l.pk]-Dic2[l.pk]),1)
-#             dic4[l.pk]=round(Total_bal,1)
-            
-#         Total_Amnt_Pending=0
-#         Dic ={}
-#         for l in Loan:
-#             Total_Amnt_Pending=0
-#             All =Installments.objects.all().filter(Loan =l).order_by('Date_Due')
-#             for a in All:
-#                 Total_Amnt_Pending = Total_Amnt_Pending + a.Installment_Due - a.Installment_Paid
-#             Dic[l.pk]=Total_Amnt_Pending
-        
-#         Total_Amnt_Pending=0
-#         for i,j in Dic.items():
-#             Total_Amnt_Pending+=j
-#         if Advance_Inst is not None:
-#             return render(request,'microfinance/pdfs/Officer_And_Frequency_Wise_pdf.html',{'adv':Advance_Inst,'loans':Loan,'insts':Installment,'Today':Today,'totalpendingdict':Dic,'TotalAmnt':Total_Amnt_Pending,'Total_bal_dic':dic4,'Total_amt_to_be_col_dic':Dic1,'Total_amt_col_dic':Dic2,'Total_Pen_dic':dic3})
-#         else:
-#             return render(request,'microfinance/pdfs/Officer_And_Frequency_Wise_pdf.html',{'loans':Loan,'insts':Installment,'Today':Today,'totalpendingdict':Dic,'TotalAmnt':Total_Amnt_Pending,'Total_bal_dic':dic4,'Total_amt_to_be_col_dic':Dic1,'Total_amt_col_dic':Dic2,'Total_Pen_dic':dic3})
-
 
 @login_required(login_url="/accounts/login/")
 def Total_Finance_And_Collection_Report(request):
@@ -1580,10 +1449,14 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     if Frequency != 0:
         base_loans = base_loans.filter(Frequency=Frequency)
 
-    # 1. Main collection data (Loans with activity or due dates in range)
+    # 1. Main collection data (Active loans OR Closed loans with collection payments in range)
+    # Refactor: Ensure Payment dates from Payment table only.
     Loan_QS = base_loans.filter(
-        Q(installments__Date_Paid__range=[start, end]) | 
-        Q(installments__Date_Due__range=[start, end])
+        Q(installments__Date_Due__range=[start, end]) |
+        Q(payments__Payment_Type=1, payments__Date_Paid__range=[start, end])
+    ).filter(
+        Q(Status=False) |
+        Q(payments__Payment_Type=1, payments__Date_Paid__range=[start, end])
     ).distinct().order_by("id")
     
     # 2. Loans with penalty payments in range (source of truth: Payments table)
@@ -1601,41 +1474,48 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
     
     # Build detailed data list for the main table to avoid template lookup issues
     Collection_Data = []
+    Closed_Collection_Data = []
+    
     for loan in Loan_QS:
-        # Amount paid in range
+        # Amount paid in range (Source: Payments)
         payments = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__range=[start, end])
         collected = payments.aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         AmntCollected += collected
         
-        # Last payment date (any type, overall up to end date)
+        # Last payment date (Source: Payments)
         last_pay = Payments.objects.filter(Loan=loan, Date_Paid__lte=end).aggregate(Max('Date_Paid'))['Date_Paid__max']
         
-        # Amount expected to be collected (Installments due in range)
+        # Amount expected to be collected (Source: Installments Due)
         to_be_collected = Installments.objects.filter(Loan=loan, Date_Due__range=[start, end]).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
         AmntToBeCollected += to_be_collected
         
-        # Total Pending Penalty (whole loan)
-        penalties = Penalty.objects.filter(Loan=loan, Status=False)
-        pending_penalty = sum((p.Penalty_Calc - p.Penalty_Paid - p.Waived_Amount) for p in penalties)
+        # Total Pending Penalty (Dynamic Calc: Total Calc - Total Paid - Total Waived)
+        total_p_calc = Penalty.objects.filter(Loan=loan).aggregate(Sum('Penalty_Calc'))['Penalty_Calc__sum'] or 0
+        total_p_paid = Payments.objects.filter(Loan=loan, Payment_Type=2).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        total_p_waived = Waiver.objects.filter(Loan=loan, Waiver_Type=1).aggregate(Sum('Amount'))['Amount__sum'] or 0
+        pending_penalty = max(0, total_p_calc - total_p_paid - total_p_waived)
         
-        # Calculate Overdue Amount as per USER request
-        # 1. Total due till end date
+        # Calculate Overdue Amount (Pending till date)
+        # 1. Total due till end date (Source: Installments)
         total_due_till_end = Installments.objects.filter(Loan=loan, Date_Due__lte=end).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
-        # 2. Total paid till end date
+        # 2. Total paid till end date (Source: Payments)
         total_paid_till_end = Payments.objects.filter(Loan=loan, Payment_Type=1, Date_Paid__lte=end).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
-        # 3. Cumulative overdue
-        cumulative_overdue = max(0, total_due_till_end - total_paid_till_end)
-        # 4. Final overdue capped at range to_be_collected
-        overdue_amount = min(cumulative_overdue, to_be_collected)
+        # 3. Amount Overdue
+        overdue_amount = max(0, total_due_till_end - total_paid_till_end)
 
-        Collection_Data.append({
+        data = {
             'loan': loan,
             'collected': collected,
             'to_be_collected': to_be_collected,
             'last_pay': last_pay,
             'pending_penalty': max(0, pending_penalty),
             'overdue_amount': overdue_amount
-        })
+        }
+        
+        if loan.Status == False:
+            Collection_Data.append(data)
+        else:
+            Closed_Collection_Data.append(data)
 
     # Sub-tables data
     Penalty_Data = []
@@ -1656,6 +1536,7 @@ def Officerwise_Total_Finance_And_Collection_Report(request):
         'Staff': Staff_pk,
         'Freq': Frequency,
         'Collection_Data': Collection_Data,
+        'Closed_Collection_Data': Closed_Collection_Data,
         'Penalty_Data': Penalty_Data,
         'File_Charge_Data': File_Charge_Data,
         'amntcollected': AmntCollected,
@@ -1694,12 +1575,11 @@ def Officerwise_Total_Finance_And_Collection_pdf(request):
     # Filter loans that have activity or due dates in range
     Loan = base_loans.filter(
         Q(installments__Date_Due__range=[start,end]) | 
-        Q(installments__Date_Paid__range=[start,end]) |
         Q(payments__Date_Paid__range=[start,end])
     ).distinct().order_by("id")
-    Installment =Installments.objects.filter(Q(Date_Due__range=[start,end])|Q(Date_Paid__range=[start,end])).filter(Loan__in=Loan).order_by("Loan")
+    Installment =Installments.objects.filter(Date_Due__range=[start,end]).filter(Loan__in=Loan).order_by("Loan")
     Installment2 = Installments.objects.filter(Date_Due__range=[start,end]).filter(Loan__in=Loan)
-    Installment5 = Installments.objects.filter(Date_Paid__range=[start,end]).filter(Loan__in=Loan)
+    
     Total_Amnt_Pending=0
     Amnt_Collected = 0
     Dic ={}
@@ -1767,11 +1647,13 @@ def SMSselect(request):
         Date =request.POST.get('DatePaid')
         if Date == '':
             Date=timezone.now().date()    
-        Loan = Loans.objects.filter(installments__Date_Paid=Date).distinct()
+        # Use Payments for date query
+        Loan = Loans.objects.filter(payments__Date_Paid=Date, payments__Payment_Type=1).distinct()
         dic ={}
         for l in Loan:
-            Installment = Installments.objects.filter(Date_Paid = Date).filter(Loan =l).order_by('Date_Due','-Installment_To_Be_Paid').first()
-            dic[l] = Installment.Installment_Paid
+            # Aggregate amount paid from Payments table
+            paid_amount = Payments.objects.filter(Loan=l, Date_Paid=Date, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+            dic[l] = paid_amount
         return render(request,'microfinance/SMSLIST.html',{'Date':Date,'loan':Loan,'dic':dic})
     elif request.method =='POST' and 'CustomSmsSendList' in request.POST:
         Loan = Loans.objects.filter(Status=False)
@@ -1790,26 +1672,25 @@ def SMS(request):
     if request.method=='POST' and 'Datewise' in request.POST:      
         for l in List:
             Loan = Loans.objects.get(pk=int(l))
-            Installment = Installments.objects.filter(Loan=Loan).filter(Date_Paid=Date).order_by('Date_Due','-Installment_To_Be_Paid').first()
+            # Get amount from Payments table
+            amount = Payments.objects.filter(Loan=Loan, Date_Paid=Date, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+            
             x=str(Loan.Account.Client.Phone_no1)
             name = str(Loan.Account.Client.Name)
-            Amount_Paid = str(Installment.Installment_Paid)    
+            Amount_Paid = str(amount)    
             cid = str(Loan.Account.Client.pk) 
                 
             from_num = 'whatsapp:+14155238886'
             to_num =  'whatsapp:+919810897802'
             TWILIO_ACCOUNT_SID='AC4d6c8a4366514eb2023d5bfec126db50'
             TWILIO_AUTH_TOKEN='cf743112770219fc1964b4b731beb6d5'
-            # client = twilioClient(TWILIO_ACCOUNT_SID,TWILIO_AUTH_TOKEN)  
             client.messages.create(body='Ess Arr Finance: Hi '+name+' this is to confirm that we have recieved a deposit of Rs.'+Amount_Paid+' in your account having client id: '+cid+' and loan id: '+l+' Thank you!',from_=from_num,to=to_num)
             return HttpResponse('done')
-            #response = sendPostRequest(URL, 'WTI5CKKSHCQX0R2DPS0NPCRELPIWAANG', '062SNUSN0LQX2ZMG', 'stage',x, 'essarr', 'ESSARR FINANCE : '+y+', Amount paid: '+ Amount_Paid + ' on Date:' + Date )
     elif request.method == 'POST' and 'CustomSms' in request.POST:
         message = request.POST.get('message')
         for i in List:
             Client = Clients.objects.get(pk =int(i))
             x=str(Client.Phone_no1)
-            #response = sendPostRequest(URL, 'WTI5CKKSHCQX0R2DPS0NPCRELPIWAANG', '062SNUSN0LQX2ZMG', 'stage',x, 'essarr', 'ESSARR FINANCE :'+message  )
 
     return redirect('microfinance:home')
 
