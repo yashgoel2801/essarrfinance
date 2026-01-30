@@ -664,7 +664,7 @@ def Loan_Detail(request,pk):
             Loan.Status =status
             Loan.save()
             messages.success(request, 'Loan status updated successfully!')
-            return redirect('microfinance:loandetail', pk=pk)
+            return redirect('microfinance:search')
         
         # Handle close loan request (admin only)
         if 'close_loan' in request.POST:
@@ -676,12 +676,12 @@ def Loan_Detail(request,pk):
             Loan.Status = True
             Loan.save()
             messages.success(request, f'Loan #{Loan.pk} has been successfully closed.')
-            return redirect('microfinance:loandetail', pk=pk)
+            return redirect('microfinance:search')
         
         if "pay" in request.POST:   #Code to add amount paid 
             pay_installment(request,Loan,Payment,DatePaid)
             messages.success(request, 'Installment payment recorded successfully!')
-            return redirect('microfinance:loandetail', pk=pk)
+            return redirect('microfinance:search')
 
         if "penalty" in request.POST:
             PenaltyObjects =Penalties.filter(Status = False).order_by("Date_Started")
@@ -711,7 +711,7 @@ def Loan_Detail(request,pk):
                 Amount_Paid-=PenaltyObjects[PenaltyIndx].Penalty_Calc
                 PenaltyIndx+=1
             messages.success(request, 'Penalty payment recorded successfully!')
-            return redirect('microfinance:loandetail', pk=pk)
+            return redirect('microfinance:search')
         
         if "record_waiver" in request.POST:
             Amount = float(request.POST.get('waived_amount', 0))
@@ -730,7 +730,7 @@ def Loan_Detail(request,pk):
                 waiver_rec.save()
                 print(f"Recorded waiver of {Amount} (Type {WType}) for loan {Loan.pk}")
                 messages.success(request, 'Waiver applied successfully!')
-                return redirect('microfinance:loandetail', pk=pk)
+                return redirect('microfinance:search')
 
         if "delete_waiver" in request.POST:
             waiver_id = request.POST.get('waiver_id')
@@ -911,7 +911,7 @@ def Loan_Detail(request,pk):
             except Penalty.DoesNotExist:
                 print(f"Penalty {penalty_id} not found")
         
-        return redirect("microfinance:home")
+        return redirect('microfinance:search')
 
     else: 
         paymentIndx =0

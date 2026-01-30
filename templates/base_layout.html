@@ -450,11 +450,31 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link {% if request.path == '/Home/' %}active{% endif %}" href="/Home/">
+            <a class="nav-link {% if request.path == '/Home/' %}active{% endif %}" href="{% url 'microfinance:home' %}">
               <i class="fas fa-home me-1"></i> Home
             </a>
           </li>
           {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a class="nav-link {% if '/Search/' in request.path %}active{% endif %}" href="{% url 'microfinance:search' %}">
+              <i class="fas fa-search me-1"></i> Search
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'add_client' in request.path %}active{% endif %}" href="{% url 'microfinance:addclient' %}">
+              <i class="fas fa-user-plus me-1"></i> Add Client
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'Reports' in request.path %}active{% endif %}" href="{% url 'microfinance:reports' %}">
+              <i class="fas fa-chart-line me-1"></i> Reports
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'dashboard' in request.path %}active{% endif %}" href="{% url 'microfinance:dashboard' %}">
+              <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+            </a>
+          </li>
           <li class="nav-item">
             <a class="nav-link {% if 'Expenditure' in request.path %}active{% endif %}" href="{% url 'microfinance:addexpense' %}">
               <i class="fas fa-wallet me-1"></i> Expenses
@@ -465,15 +485,10 @@
               <i class="fas fa-user-tie me-1"></i> Add Staff
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link {% if request.path == '/Reports/' %}active{% endif %}" href="/Reports/">
-              <i class="fas fa-chart-line me-1"></i> Reports
-            </a>
-          </li>
           {% endif %}
         </ul>
 
-        {% if user.is_authenticated %}
+        {% if request.user.is_authenticated %}
         <a href="/accounts/logout/" class="btn-logout">
           <i class="fas fa-sign-out-alt"></i>
           Logout
