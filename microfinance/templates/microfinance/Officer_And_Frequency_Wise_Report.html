@@ -122,17 +122,6 @@
         </div>
     </div>
 
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            .container-fluid { padding: 0 !important; }
-            .card { border: 1px solid #eee !important; box-shadow: none !important; margin-bottom: 20px !important; }
-            .metric-card { color: black !important; border: 1px solid #eee !important; background: white !important; }
-            .metric-value, .metric-label { color: black !important; }
-            .table-modern thead { background: #667eea !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body { background: white !important; }
-        }
-    </style>
 
     <!-- Summary Cards -->
     <div class="row g-4 mb-4">
@@ -172,12 +161,12 @@
                 <table class="table-modern" id="table_row_total">
                     <thead>
                         <tr>
-                            <th style="width: 50px;">
+                            <th style="width: 50px;" class="no-print">
                                 <input type="checkbox" id="select-all" class="form-check-input">
                             </th>
                             <th>S.No</th>
                             <th>Freq</th>
-                            <th>Image</th>
+                            <th class="no-print">Image</th>
                             <th>Name</th>
                             <th>Inst Amt</th>
                             <th>No. Inst</th>
@@ -192,14 +181,14 @@
                     <tbody>
                         {% for loanee in loans %}
                         <tr>
-                            <td><input type="checkbox" id="{{loanee.pk}}" name="Check" value="{{loanee.pk}}" class="form-check-input"></td>
+                            <td class="no-print"><input type="checkbox" id="{{loanee.pk}}" name="Check" value="{{loanee.pk}}" class="form-check-input"></td>
                             <td>{{forloop.counter}}</td>
                             <td>
-                                {% if loanee.Frequency == 1 %}<span class="badge bg-info text-dark">D</span>
-                                {% elif loanee.Frequency == 2 %}<span class="badge bg-warning text-dark">W</span>
-                                {% elif loanee.Frequency == 3 %}<span class="badge bg-primary">M</span>{% endif %}
+                                {% if loanee.Frequency == 1 %}D
+                                {% elif loanee.Frequency == 2 %}W
+                                {% elif loanee.Frequency == 3 %}M{% endif %}
                             </td>
-                            <td>
+                            <td class="no-print">
                                 {% if loanee.Account.Client.Image %}
                                 <img src="{{loanee.Account.Client.Image.url}}" style="width:40px;height:40px; border-radius:10px; object-fit: cover;">
                                 {% endif %}
