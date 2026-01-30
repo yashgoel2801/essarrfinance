@@ -1240,6 +1240,7 @@ def Loan_Detail(request,pk):
             'total_interest_waived': total_interest_waived,
             'all_waivers': all_waivers_for_totals,
             'is_client_view': not request.user.is_staff,
+            'Today': timezone.now(),
         }
         
         return render(request, 'microfinance/LoanDetail.html', context)

@@ -891,7 +891,7 @@
                 <td>{{ item.Payment_Date|default:'-' }}</td>
                 <td>
                   {% if request.user.is_staff and item.pk %}
-                  <button type="button" class="btn btn-sm btn-danger" onclick="deletePenalty({{ item.pk|default:0 }})">
+                  <button type="button" class="btn btn-sm btn-danger delete-penalty-btn" data-penalty-id="{{ item.pk|default:0 }}">
                     <i class="fas fa-trash"></i> Delete
                   </button>
                   {% endif %}
@@ -941,8 +941,7 @@
                                 data-payment-type="{{ payment.Payment_Type|default:1 }}">
                           <i class="fas fa-edit"></i> Edit
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger"
-                          onclick="deletePayment({{ payment.pk|default:0 }})">
+                        <button type="button" class="btn btn-sm btn-danger delete-payment-btn" data-payment-id="{{ payment.pk|default:0 }}">
                           <i class="fas fa-trash"></i> Delete
                         </button>
                         {% endif %}
@@ -991,8 +990,7 @@
                                 data-payment-type="{{ payment.Payment_Type|default:2 }}">
                           <i class="fas fa-edit"></i> Edit
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger"
-                          onclick="deletePayment({{ payment.pk|default:0 }})">
+                        <button type="button" class="btn btn-sm btn-danger delete-payment-btn" data-payment-id="{{ payment.pk|default:0 }}">
                           <i class="fas fa-trash"></i> Delete
                         </button>
                         {% endif %}
@@ -1410,6 +1408,30 @@
         }
       });
     }
+  });
+
+  // Handle delete penalty buttons
+  document.addEventListener('click', function(e) {
+    const penaltyBtn = e.target.closest('.delete-penalty-btn');
+    if (penaltyBtn) {
+      deletePenalty(penaltyBtn.dataset.penaltyId);
+    }
+    
+    const paymentBtn = e.target.closest('.delete-payment-btn');
+    if (paymentBtn) {
+      deletePayment(paymentBtn.dataset.paymentId);
+    }
+  });
+
+  // Force reset forms on page load (handles browser back/forward cache)
+  window.addEventListener('pageshow', function(event) {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        // Don't reset the edit forms if they are inside modals being prepared
+        if (!form.id || !form.id.includes('edit')) {
+            form.reset();
+        }
+    });
   });
 </script>
 
