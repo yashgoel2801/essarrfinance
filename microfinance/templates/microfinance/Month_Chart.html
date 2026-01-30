@@ -1,0 +1,102 @@
+{%extends 'base_layout.html'%} {%block content%} {% load keyvalue %}{% load payment_tags %}
+
+<div class="container-fluid py-4">
+    <!-- Header Summary Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark mb-0">
+            <span class="d-none d-print-inline">ESSARR FINANCE - </span>
+            {% if DueDate and DueDate != 0 %}Day {{ DueDate }} Schedule{% else %}Monthly Schedule: All Days{% endif %}
+            <small class="text-muted fs-6 ms-2">Officer: {%if Staff == 0 %}All{%else%}{{Loan.first.Loan_Collector.Officer_Name}}{%endif%}</small>
+        </h3>
+        <button onclick="window.print()" class="btn btn-primary shadow-sm no-print">
+            <i class="fas fa-print me-2"></i> Print Report
+        </button>
+    </div>
+
+    <div class="d-none d-print-block mb-3">
+        <p class="mb-0 text-muted small">Generated on: {% now "jS F Y H:i" %}</p>
+        <hr>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Target Card -->
+        <div class="col-md-4">
+            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid #4facfe !important;">
+                <div class="card-body py-3">
+                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">{% if DueDate and DueDate != 0 %}Day {{ DueDate }}{% else %}Monthly{% endif %} Target</h6>
+                    <h4 class="mb-0 fw-bold text-primary">₹{% if DayTarget %}{{DayTarget|floatformat:0}}{% else %}{{MonthlyTarget|floatformat:0}}{% endif %}</h4>
+                    <small class="text-muted">Amount to be collected</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Pending Card -->
+        <div class="col-md-4">
+            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid #667eea !important;">
+                <div class="card-body py-3">
+                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">Total Pending (This List)</h6>
+                    <h4 class="mb-0 fw-bold" style="color: #667eea;">₹{{TotalPendingSum|floatformat:0}}</h4>
+                    <small class="text-muted">Total balance of scheduled clients</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Defaulter Card -->
+        <div class="col-md-4">
+            <div class="card stat-card border-0 shadow-sm h-100 bg-danger text-white">
+                <div class="card-body py-3">
+                    <h6 class="text-white-50 text-uppercase mb-2 small fw-bold">Defaulters Pending</h6>
+                    <h4 class="mb-0 fw-bold">₹{{Def2|floatformat:0}}</h4>
+                    <small class="text-white-50">Balance of other clients</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Tables -->
+    <div class="row g-4">
+        <div class="col-12 mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-list-ul me-2 text-primary"></i>Collection List</h5>
+            {% include "microfinance/includes/schedule_table.html" with loans=Loan day_filter=DueDate %}
+        </div>
+
+        {% if lon %}
+        <div class="col-12 mb-4">
+            <h5 class="fw-bold text-danger mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Defaulters</h5>
+            {% include "microfinance/includes/schedule_table.html" with loans=lon is_defaulter=True %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .bg-purple {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .table-modern thead th {
+        background: linear-gradient(to right, #667eea, #764ba2);
+        color: white;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 12px 10px;
+        border: none;
+    }
+
+    .bg-danger-header th {
+        background: linear-gradient(to right, #f85032, #e73827) !important;
+        color: white !important;
+    }
+
+    .table-modern tbody tr { border-bottom: 1px solid #eee; }
+    .table-modern tbody tr:hover { background-color: rgba(102, 126, 234, 0.05); }
+    
+    .stat-card { transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-5px); }
+
+    .stat-card:hover { transform: translateY(-5px); }
+</style>
+
+{% endblock %}

@@ -103,19 +103,36 @@
                 <span><i class="far fa-calendar-alt me-2"></i>Date: {{Today}}</span>
             </div>
         </div>
-        <form action="{% url 'microfinance:pdf1' %}" method="POST">
-            {% csrf_token %}
-            {% if Staff == 0 %} <input type="hidden" name="name" value="0">{% else %}
-            <input type="hidden" name="name" value="{{loans.last.Loan_Collector.pk}}">{% endif %}
-            {% if Frequency == 0 %} <input type="hidden" name="loan" value="0">{% else %}
-            <input type="hidden" name="loan" value="{{loans.last.Frequency}}">{% endif %}
-            <input type="hidden" name="status" value="{{loans.last.Status}}">
-            
-            <button type="submit" class="btn btn-danger text-white px-4">
-                <i class="fas fa-file-pdf me-2"></i>Download PDF
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-primary px-4">
+                <i class="fas fa-print me-2"></i>Print
             </button>
-        </form>
+            <form action="{% url 'microfinance:pdf1' %}" method="POST">
+                {% csrf_token %}
+                {% if Staff == 0 %} <input type="hidden" name="name" value="0">{% else %}
+                <input type="hidden" name="name" value="{{loans.last.Loan_Collector.pk}}">{% endif %}
+                {% if Frequency == 0 %} <input type="hidden" name="loan" value="0">{% else %}
+                <input type="hidden" name="loan" value="{{loans.last.Frequency}}">{% endif %}
+                <input type="hidden" name="status" value="{{loans.last.Status}}">
+                
+                <button type="submit" class="btn btn-danger text-white px-4">
+                    <i class="fas fa-file-pdf me-2"></i>Download PDF
+                </button>
+            </form>
+        </div>
     </div>
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .container-fluid { padding: 0 !important; }
+            .card { border: 1px solid #eee !important; box-shadow: none !important; margin-bottom: 20px !important; }
+            .metric-card { color: black !important; border: 1px solid #eee !important; background: white !important; }
+            .metric-value, .metric-label { color: black !important; }
+            .table-modern thead { background: #667eea !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: white !important; }
+        }
+    </style>
 
     <!-- Summary Cards -->
     <div class="row g-4 mb-4">

@@ -1723,10 +1723,10 @@ def Total_Amount_Collected_Report(request):
     
     # Fetch Data
     # Fetch Data with select_related to avoid N+1 queries
-    payments_inst = Payments.objects.filter(Date_Paid=Date, Payment_Type=1, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector')
-    pen_payments = Payments.objects.filter(Date_Paid=Date, Payment_Type=2, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector')
-    new_loans = Loans.objects.filter(Loan_Date=Date).select_related('Loan_Collector')
-    waivers = Waiver.objects.filter(Date_Applied=Date).select_related('Loan', 'Loan__Loan_Collector')
+    payments_inst = Payments.objects.filter(Date_Paid=Date, Payment_Type=1, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector', 'Loan__Account__Client')
+    pen_payments = Payments.objects.filter(Date_Paid=Date, Payment_Type=2, Amount_Paid__gt=0).select_related('Loan', 'Loan__Loan_Collector', 'Loan__Account__Client')
+    new_loans = Loans.objects.filter(Loan_Date=Date).select_related('Loan_Collector', 'Account__Client')
+    waivers = Waiver.objects.filter(Date_Applied=Date).select_related('Loan', 'Loan__Loan_Collector', 'Loan__Account__Client')
     
     # Group Data
     grouped_data = {}
@@ -1737,6 +1737,7 @@ def Total_Amount_Collected_Report(request):
             grouped_data[officer.pk] = {
                 'officer': officer,
                 'installments': [],
+                'installments_loan_ids': [],
                 'penalties': [],
                 'new_loans': [],
                 'waivers': [],
@@ -1748,7 +1749,21 @@ def Total_Amount_Collected_Report(request):
     for payment in payments_inst:
         officer = payment.Loan.Loan_Collector
         entry = get_entry(officer)
+        
+        # Get last payment date before this report date
+        last_pay = Payments.objects.filter(
+            Loan=payment.Loan, 
+            Payment_Type=1, 
+            Date_Paid__lt=Date
+        ).order_by('-Date_Paid').first()
+        payment.last_payment_date = last_pay.Date_Paid if last_pay else "N/A"
+        
+        # Check if penalty was paid on the same day
+        penalty_today = pen_payments.filter(Loan=payment.Loan).first()
+        payment.penalty_today = penalty_today.Amount_Paid if penalty_today else 0
+        
         entry['installments'].append(payment)
+        entry['installments_loan_ids'].append(payment.Loan.pk)
         entry['totals']['inst'] += payment.Amount_Paid
         entry['totals']['total'] += payment.Amount_Paid
         grand_totals['inst'] += payment.Amount_Paid
@@ -2034,6 +2049,19 @@ def Week_Chart_List(request):
         dic[l.pk]=totalPending
         TotalPendingSum += totalPending
     
+    # Calculate target specifically for the single-day view if applicable
+    DayTarget = 0
+    if Weekday != 0:
+        # Weekday is 1-7 (Sun-Sat), but Dic1 uses 0-6 (Mon-Sun)
+        idx = (Weekday + 5) % 7
+        DayTarget = Dic1.get(idx, 0)
+    
+    # Calculate Total Weekly Target for All Days view
+    WeeklyTarget = sum(Dic1.values())
+    
+    # Calculate total pending for all days visible in the Weekly Chart
+    WeeklyPending = sum(Dic2.values())
+    
     day_mapping = {
         2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday', 1: 'Sunday'
     }
@@ -2047,11 +2075,23 @@ def Week_Chart_List(request):
 
     DayName = day_mapping.get(int(Weekday), 'Week Day')
     
-    if int(Weekday) == 0:               
-        return render(request,'microfinance/Week_Chart.html',{'Loan':Loan,'dic':dic,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2, 'TotalPendingSum': TotalPendingSum})
-    else:
-        return render(request,'microfinance/week_chart2.html',{'Loan':Loan,'dic':dic,'dic2':dic2,'Staff':Staff_pk,'Total':Dic1,'TotalPen':Dic2,'Def1':Def1,'Def2':Def2,'lon':x, 'TotalPendingSum': TotalPendingSum, 'DayName': DayName})
-   
+    return render(request, 'microfinance/Week_Chart.html', {
+        'Loan': Loan,
+        'dic': dic,
+        'dic2': dic2,
+        'Staff': Staff_pk,
+        'Total': Dic1,
+        'TotalPen': Dic2,
+        'Def1': Def1,
+        'Def2': Def2,
+        'lon': x,
+        'TotalPendingSum': TotalPendingSum,
+        'WeeklyTarget': WeeklyTarget,
+        'DayTarget': DayTarget,
+        'DayName': DayName,
+        'Weekday': Weekday,
+        'day_mapping': {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
+    })
 
 @login_required(login_url="/accounts/login/")
 def Month_Chart_List(request):
@@ -2164,32 +2204,28 @@ def Month_Chart_List(request):
         dic[l.pk] = totalPending
         TotalPendingSum += totalPending
     
+    # Calculate specific targets for Monthly Chart
+    DayTarget = Dic1.get(DueDate, 0)
+    MonthlyTarget = sum(Dic1.values())
+    
     DateName = f"Day {DueDate}" if DueDate != 0 else "All Monthly Loans"
     
-    if DueDate == 0:
-        return render(request, 'microfinance/Month_Chart.html', {
-            'Loan': Loan,
-            'dic': dic,
-            'Staff': Staff_pk,
-            'Total': Dic1,
-            'TotalPen': Dic2,
-            'TotalPendingSum': TotalPendingSum
-        })
-    else:
-        return render(request, 'microfinance/month_chart2.html', {
-            'Loan': Loan,
-            'dic': dic,
-            'dic2': dic2,
-            'Staff': Staff_pk,
-            'Total': Dic1,
-            'TotalPen': Dic2,
-            'Def1': Def1,
-            'Def2': Def2,
-            'lon': x,
-            'TotalPendingSum': TotalPendingSum,
-            'DateName': DateName,
-            'DueDate': DueDate
-        })
+    return render(request, 'microfinance/Month_Chart.html', {
+        'Loan': Loan,
+        'dic': dic,
+        'dic2': dic2,
+        'Staff': Staff_pk,
+        'Total': Dic1,
+        'TotalPen': Dic2,
+        'Def1': Def1,
+        'Def2': Def2,
+        'lon': x,
+        'TotalPendingSum': TotalPendingSum,
+        'MonthlyTarget': MonthlyTarget,
+        'DayTarget': DayTarget,
+        'DateName': DateName,
+        'DueDate': DueDate
+    })
 
 
 
@@ -2367,21 +2403,22 @@ def EditLoan(request,pk):
 
 @login_required(login_url="/accounts/login/")
 def optimizeimg(request):
-    Client =Clients.objects.all()
+    from PIL import ImageOps
+    Client = Clients.objects.all()
     for j in Client:
         try:
-           
-            # image = Image.open(i.Image.path)
-            # image.save(i.Image.path,quality=20,optimize=True)
             i = Image.open(j.Image)
+            # Fix orientation based on EXIF data
+            i = ImageOps.exif_transpose(i)
+            
             thumb_io = BytesIO()
             i.save(thumb_io, format='JPEG', quality=20)
             inmemory_uploaded_file = InMemoryUploadedFile(thumb_io, None, 'foo.jpeg', 
                                               'image/jpeg', thumb_io.tell(), None)
             j.Image = inmemory_uploaded_file
             j.save()
-        except:
-            print(j.pk)
+        except Exception as e:
+            print(f"Error optimizing image for client {j.pk}: {e}")
     return HttpResponse('Images OP')
 
 

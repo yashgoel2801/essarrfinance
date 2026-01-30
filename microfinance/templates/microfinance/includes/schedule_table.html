@@ -1,0 +1,41 @@
+{% load keyvalue %}{% load payment_tags %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-modern hover-shadow mb-0">
+                <thead>
+                    <tr class="{% if is_defaulter %}bg-danger-header{% endif %}">
+                        <th class="ps-3">A/c No</th>
+                        <th>Loan ID</th>
+                        <th class="no-print">Img</th>
+                        <th>Customer Name</th>
+                        <th>Phone</th>
+                        <th>Inst.</th>
+                        <th>Balance</th>
+                        <th class="pe-3">Last Payment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in loans %}
+                        {% if not day_filter or l.First_Due_Date.weekday == day_filter or l.First_Due_Date.day == day_filter %}
+                        <tr>
+                            <td class="ps-3">{{l.AccNo}}</td>
+                            <td><span class="badge bg-light text-dark border">#{{l.pk}}</span></td>
+                            <td class="no-print"><img src="{{l.Account.Client.Image.url}}" style="width:35px;height:35px; border-radius:50%; object-fit: cover;"></td>
+                            <td class="fw-bold">{{l.Account.Client.Name}}</td>
+                            <td>{{l.Account.Client.Phone_no1}}</td>
+                            <td>₹{{l.installments_set.first.Installment_Due|floatformat:0}}</td>
+                            <td class="fw-bold text-danger">₹{% if is_defaulter %}{{dic2|keyvalue:l.pk|floatformat:0}}{% else %}{{dic|keyvalue:l.pk|floatformat:0}}{% endif %}</td>
+                            <td class="pe-3">{% last_payment_info l %}</td>
+                        </tr>
+                        {% endif %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No records found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

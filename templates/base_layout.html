@@ -379,12 +379,64 @@
         font-size: 3rem;
       }
     }
+    
+    @media print {
+      .navbar, .no-print, .btn, .alert { display: none !important; }
+      body { 
+        background-color: white !important; 
+        height: auto !important;
+        min-height: auto !important;
+        display: block !important;
+        color: black !important;
+      }
+      main { 
+        padding: 0 !important; 
+        margin: 0 !important;
+        display: block !important;
+      }
+      .container, .container-fluid {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+        margin-bottom: 1.5rem !important;
+        break-inside: auto !important;
+      }
+      .table-responsive {
+        overflow: visible !important;
+        display: block !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+      }
+      th, td {
+        padding: 4pt !important;
+        border: 1px solid #dee2e6 !important;
+      }
+      .table-modern thead th {
+        background-color: #f8f9fa !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Prevent page breaks inside rows */
+      tr {
+        break-inside: avoid !important;
+        break-after: auto !important;
+      }
+    }
   </style>
 </head>
 
 <body>
   {% if request.path != '/accounts/login/' %}
-  <nav class="navbar navbar-expand-lg">
+  <nav class="navbar navbar-expand-lg no-print">
     <div class="container-fluid">
       <a class="navbar-brand" href="/Home/">
         <i class="fas fa-landmark"></i>

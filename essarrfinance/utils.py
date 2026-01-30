@@ -3,7 +3,7 @@ import random
 from io import BytesIO
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 
 from django.utils.text import slugify
@@ -42,6 +42,9 @@ def compress_image(image_field, quality=70, max_width=1200):
         return None
         
     img = Image.open(image_field)
+    
+    # Fix orientation based on EXIF data
+    img = ImageOps.exif_transpose(img)
     
     # Convert to RGB if necessary (e.g. for PNG with transparency saved as JPEG)
     if img.mode in ("RGBA", "P"):

@@ -64,16 +64,21 @@
                             <p class="text-muted small mb-0">Report Range</p>
                             <h6 class="mb-0 fw-bold">{{ start }} to {{ end }}</h6>
                         </div>
-                        <form action="{% url 'microfinance:pdf3'%}" method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="from" value="{{start}}">
-                            <input type="hidden" name="to" value="{{end}}">
-                            <input type="hidden" name="name" value="{{Staff}}">
-                            <input type="hidden" name="loan" value="{{Freq}}">
-                            <button type="submit" class="btn btn-danger btn-sm px-4 shadow-sm">
-                                <i class="fas fa-file-pdf me-2"></i>Download PDF
+                        <div class="d-flex gap-2 no-print">
+                            <button onclick="window.print()" class="btn btn-primary btn-sm px-4 shadow-sm">
+                                <i class="fas fa-print me-2"></i>Print
                             </button>
-                        </form>
+                            <form action="{% url 'microfinance:pdf3'%}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="from" value="{{start}}">
+                                <input type="hidden" name="to" value="{{end}}">
+                                <input type="hidden" name="name" value="{{Staff}}">
+                                <input type="hidden" name="loan" value="{{Freq}}">
+                                <button type="submit" class="btn btn-danger btn-sm px-4 shadow-sm">
+                                    <i class="fas fa-file-pdf me-2"></i>Download PDF
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -320,6 +325,10 @@
         font-size: 0.75rem;
         letter-spacing: 0.5px;
         padding: 12px 8px;
+    }
+
+    .table-modern tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
     }
 
     .table-modern tbody tr:hover {

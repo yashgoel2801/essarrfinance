@@ -54,15 +54,31 @@
             <h4 class="mb-1 fw-bold text-dark">Total Finance & Collection Report</h4>
             <span class="text-muted"><i class="far fa-calendar-alt me-2"></i>{{start}} to {{end}}</span>
         </div>
-        <form action="{% url 'microfinance:pdf2' %}" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="from" value="{{start}}">
-            <input type="hidden" name="to" value="{{end}}">
-            <button type="submit" class="btn btn-danger text-white px-4">
-                <i class="fas fa-file-pdf me-2"></i>Download PDF
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-primary px-4">
+                <i class="fas fa-print me-2"></i>Print
             </button>
-        </form>
+            <form action="{% url 'microfinance:pdf2' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="from" value="{{start}}">
+                <input type="hidden" name="to" value="{{end}}">
+                <button type="submit" class="btn btn-danger text-white px-4">
+                    <i class="fas fa-file-pdf me-2"></i>Download PDF
+                </button>
+            </form>
+        </div>
     </div>
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .container-fluid { padding: 0 !important; }
+            .card { border: 1px solid #eee !important; box-shadow: none !important; margin-bottom: 20px !important; }
+            .metric-card { color: black !important; border: 1px solid #eee !important; background: white !important; }
+            .metric-value, .metric-label { color: black !important; }
+            body { background: white !important; }
+        }
+    </style>
 
     <!-- Cards Grid -->
     <div class="row g-4 mb-4">
