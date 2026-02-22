@@ -238,8 +238,8 @@
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
 
                                 <td>{{object.Account.Client.Phone_no1}}</td>
-                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
-                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
+                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk|floatformat:1}}</td>
+                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due|floatformat:1}}</td>
                                 <td class="d-none d-lg-table-cell small text-muted">{{object.remark}}</td>
                                 <td><span class="badge bg-light text-dark border">{{object.reminder|date:"d M, Y"}}</span></td>
                             </tr>
@@ -265,8 +265,8 @@
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
 
                                 <td>{{object.Account.Client.Phone_no1}}</td>
-                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
-                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
+                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk|floatformat:1}}</td>
+                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due|floatformat:1}}</td>
                                 <td class="d-none d-lg-table-cell small text-muted">{{object.remark}}</td>
                                 <td><span class="badge bg-light text-dark border">{{object.reminder|date:"d M, Y"}}</span></td>
                             </tr>
@@ -292,8 +292,8 @@
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
 
                                 <td>{{object.Account.Client.Phone_no1}}</td>
-                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
-                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
+                                <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk|floatformat:1}}</td>
+                                <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due|floatformat:1}}</td>
                                 <td class="d-none d-lg-table-cell small text-muted">{{object.remark}}</td>
                                 <td><span class="badge bg-light text-dark border">{{object.reminder|date:"d M, Y"}}</span></td>
                             </tr>

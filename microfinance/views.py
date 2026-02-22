@@ -1201,8 +1201,8 @@ def Loan_Detail(request,pk):
                     potential_loyalty_bonus = total_interest * 0.10
                     loyalty_msg = "Good Client! 10% Interest Waiver suggested for 0-penalty completion."
 
-        # Calculate Amount Overdue (subtracting waivers)
-        amount_overdue = max(0, AmntBal)
+        # Calculate Amount Overdue (ensure it doesn't exceed total pending, nor go below zero)
+        amount_overdue = max(0, min(AmntBal, max(0, totalPending)))
         
         context = {
             'Loan': Loan,
@@ -1211,7 +1211,7 @@ def Loan_Detail(request,pk):
             'combinedInstallmentPaymentView': combinedInstallmentPaymentView,
             'combinedPenaltyPaymentView': combinedPenaltyPaymentView,
             'Total_Loan_Amount': Loan.Principle_Amount + Loan.Principle_Amount * Loan.Intrest_Rate / 100,
-            'Total_Pending': round(totalPending, 1),
+            'Total_Pending': round(max(0, totalPending), 1),
             'amnt_pen': round(AmntBal, 1),
             'lastinst': lastinst,
             'Penalties': Penalties,
@@ -1877,16 +1877,16 @@ def Home(request):
             i.Remark ='None'
             i.save()
     for l in loan:
-        i = Installments.objects.all().filter(Loan_id =l.pk).filter(Date_Due__lte=datetime.now()).filter(Installment_Due__gt=0).filter(Date_Paid__isnull=True).aggregate(Sum('Installment_Due')) 
+        # Calculate Amount Overdue precisely matching ClientLoanDetail logic
+        total_due = Installments.objects.filter(Loan=l, Date_Due__lte=timezone.now().date()).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        total_paid = Payments.objects.filter(Loan=l, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         
-        j= Installments.objects.all().filter(Loan_id =l.pk).filter(Date_Due__lte=datetime.now()).filter(Installment_Due=0).filter(Date_Paid__isnull=True).aggregate(Sum('Installment_To_Be_Paid'))
-        if j['Installment_To_Be_Paid__sum'] and i['Installment_Due__sum']:
-            i['Installment_Due__sum']+=j['Installment_To_Be_Paid__sum']
-        if j['Installment_To_Be_Paid__sum'] and not i['Installment_Due__sum']:
-            i['Installment_Due__sum']=j['Installment_To_Be_Paid__sum']
-        if not j['Installment_To_Be_Paid__sum'] and not i['Installment_Due__sum']:
-            i['Installment_Due__sum']=0
-        dic[l.pk]=i['Installment_Due__sum']
+        amount_overdue = total_due - total_paid
+        total_loan_amount = l.Principle_Amount + (l.Principle_Amount * l.Intrest_Rate / 100)
+        total_waivers = Waiver.objects.filter(Loan=l, Waiver_Type=2).aggregate(Sum('Amount'))['Amount__sum'] or 0
+        total_pending = total_loan_amount - total_paid - total_waivers
+        
+        dic[l.pk] = round(max(0, min(amount_overdue, max(0, total_pending))), 1)
     staff =Staff.objects.all().distinct()
     if request.method == 'POST':
         user_filter = LoanFilter(request.POST, queryset=loan)
