@@ -1864,21 +1864,45 @@ def Home(request):
         except Clients.DoesNotExist:
             return HttpResponse("Client profile not found. Please contact support.")
 
-    loan=Loans.objects.filter(reminder__lte=datetime.now()).filter(Status=False).distinct()    
-    dic={}
-    for i in Loans.objects.all().filter(reminder__lt=datetime.now()).filter(Status=False).distinct():
-        if i.reminder < datetime.now().date():
-            if i.installments_set.order_by('-Date_Due').first().Date_Due <datetime.now().date():
-                i.reminder=datetime.now().date()            
-            
+    today_date = timezone.now().date()
+    
+    # Check and update all applicable reminders BEFORE querying what to display
+    for i in Loans.objects.all().filter(reminder__lte=today_date, Status=False).distinct():
+        total_paid = Payments.objects.filter(Loan=i, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        next_reminder = None
+        
+        # Find the next installment that is not fully paid off
+        for inst in i.installments_set.order_by('Date_Due'):
+            if total_paid >= inst.Installment_Due:
+                total_paid -= inst.Installment_Due
             else:
-                if i.installments_set.filter(Date_Due__gt=datetime.now()).filter(Date_Paid__isnull=True).order_by('Date_Paid').first() is not None:
-                    i.Reminder= i.installments_set.filter(Date_Due__gt=datetime.now()).filter(Date_Paid__isnull=True).order_by('Date_Paid').first().Date_Due
-            i.Remark ='None'
-            i.save()
-    for l in loan:
+                next_reminder = inst.Date_Due
+                break
+                
+        if next_reminder:
+            # If they are short on payment, remind today, otherwise future due date
+            i.reminder = today_date if next_reminder <= today_date else next_reminder
+        else:
+            # They have paid ahead of the current generated installments
+            future_inst = i.installments_set.filter(Date_Due__gt=today_date).order_by('Date_Due').first()
+            if future_inst:
+                i.reminder = future_inst.Date_Due
+            else:
+                last_inst = i.installments_set.order_by('-Date_Due').first()
+                if last_inst and last_inst.Date_Due < today_date:
+                    i.reminder = today_date  # All scheduled installments ended but loan not marked closed
+                    
+        i.remark = 'None'
+        i.save()
+        
+    # Now query the updated reminders to display ONLY those due today or older
+    loan_queryset = Loans.objects.filter(reminder__lte=today_date, Status=False).distinct()
+    dic = {}
+    display_loans = []
+    
+    for l in loan_queryset:
         # Calculate Amount Overdue precisely matching ClientLoanDetail logic
-        total_due = Installments.objects.filter(Loan=l, Date_Due__lte=timezone.now().date()).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        total_due = Installments.objects.filter(Loan=l, Date_Due__lte=today_date).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
         total_paid = Payments.objects.filter(Loan=l, Payment_Type=1).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
         
         amount_overdue = total_due - total_paid
@@ -1886,14 +1910,21 @@ def Home(request):
         total_waivers = Waiver.objects.filter(Loan=l, Waiver_Type=2).aggregate(Sum('Amount'))['Amount__sum'] or 0
         total_pending = total_loan_amount - total_paid - total_waivers
         
-        dic[l.pk] = round(max(0, min(amount_overdue, max(0, total_pending))), 1)
-    staff =Staff.objects.all().distinct()
+        calculated_pending = round(max(0, min(amount_overdue, max(0, total_pending))), 1)
+        
+        if calculated_pending > 0:
+            dic[l.pk] = calculated_pending
+            display_loans.append(l.pk)
+            
+    # Re-query precisely the ones that have a pending balance so pagination/filter still works
+    loan = Loans.objects.filter(pk__in=display_loans).order_by('reminder')
+            
+    staff = Staff.objects.all().distinct()
     if request.method == 'POST':
         user_filter = LoanFilter(request.POST, queryset=loan)
-        return render(request,'microfinance/Homepage.html',{'month':timezone.now().date().month,'loan':loan,'filter': user_filter,'users':staff,'dic':dic})
+        return render(request, 'microfinance/Homepage.html', {'month': today_date.month, 'loan': loan, 'filter': user_filter, 'users': staff, 'dic': dic})
     else:
-        return render(request,'microfinance/Homepage.html',{'month':timezone.now().date().month,'users':staff})
-
+        return render(request, 'microfinance/Homepage.html', {'month': today_date.month, 'loan': loan, 'users': staff, 'dic': dic})
 
 @login_required(login_url="/accounts/login/")
 def DeleteIntsallment(request):
