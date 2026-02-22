@@ -154,6 +154,14 @@ class ClientSearchForm(forms.Form):
                     required=False,
                     label= 'Search by Phone no'
                   )
+    search_accno = forms.IntegerField(
+                    required=False,
+                    label='Search by Account No'
+                  )
+    search_loan_id = forms.IntegerField(
+                    required=False,
+                    label='Search by Loan ID'
+                  )
 
 
 class EditLoanDetail(forms.ModelForm):

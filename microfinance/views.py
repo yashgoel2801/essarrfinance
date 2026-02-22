@@ -1250,7 +1250,8 @@ class ClientFilter(BaseFilter):
     search_fields = {
         'search_name' : ['Name'],
         'search_id' : { 'operator' : '__exact', 'fields' : ['pk'] },
-        'search_phone' : ['Phone_no1','Phone_no2']
+        'search_phone' : ['Phone_no1','Phone_no2'],
+        'search_accno' : { 'operator' : '__exact', 'fields' : ['accounts__loans__AccNo'] }
     }
 
 class ClientSearchList(LoginRequiredMixin, UserPassesTestMixin, SearchListView):

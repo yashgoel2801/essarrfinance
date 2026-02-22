@@ -62,25 +62,32 @@
             <div class="search-card">
                 <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-users me-2"></i>Search Clients</h5>
                 <form method="GET" action="" class="row g-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Name</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="fas fa-user text-muted"></i></span>
                             <input type="text" name="search_name" class="form-control" placeholder="Search by Name" value="{{ form.search_name.value|default_if_none:'' }}">
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Client ID</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="fas fa-id-card text-muted"></i></span>
                             <input type="text" name="search_id" class="form-control" placeholder="Search by ID" value="{{ form.search_id.value|default_if_none:'' }}">
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Phone</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="fas fa-phone text-muted"></i></span>
                             <input type="number" name="search_phone" class="form-control" placeholder="Search by Phone" value="{{ form.search_phone.value|default_if_none:'' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Acc No</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-hashtag text-muted"></i></span>
+                            <input type="number" name="search_accno" class="form-control" placeholder="Account No" value="{{ form.search_accno.value|default_if_none:'' }}">
                         </div>
                     </div>
                     <div class="col-12 mt-4 text-end">
