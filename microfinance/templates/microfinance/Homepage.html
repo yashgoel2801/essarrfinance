@@ -105,10 +105,6 @@
         margin-bottom: 0;
     }
 
-    .hide {
-        display: none;
-    }
-
     [data-toggle="toggle"] {
         display: none;
     }
@@ -214,7 +210,7 @@
                                 <th>Loan ID</th>
                                 <th>A/c No.</th>
                                 <th>Name</th>
-                                <th class="d-none d-lg-table-cell">Father's Name</th>
+
                                 <th>Phone No</th>
                                 <th>Pending Amt</th>
                                 <th class="d-none d-md-table-cell">Inst Amt</th>
@@ -234,13 +230,13 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tbody class="hide border-top">
+                        <tbody class="hide-section d-none border-top">
                             {% for object in filter.qs %}{% if object.Frequency == 1 %}
                             <tr>
                                 <td class="fw-bold text-primary">#{{object.pk}}</td>
                                 <td>{{object.AccNo}}</td>
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
-                                <td class="d-none d-lg-table-cell text-muted">{{object.Account.Client.Father_Name}}</td>
+
                                 <td>{{object.Account.Client.Phone_no1}}</td>
                                 <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
                                 <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
@@ -261,13 +257,13 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tbody class="hide border-top">
+                        <tbody class="hide-section d-none border-top">
                             {% for object in filter.qs %}{% if object.Frequency == 2 %}
                             <tr>
                                 <td class="fw-bold text-primary">#{{object.pk}}</td>
                                 <td>{{object.AccNo}}</td>
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
-                                <td class="d-none d-lg-table-cell text-muted">{{object.Account.Client.Father_Name}}</td>
+
                                 <td>{{object.Account.Client.Phone_no1}}</td>
                                 <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
                                 <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
@@ -288,13 +284,13 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tbody class="hide border-top">
+                        <tbody class="hide-section d-none border-top">
                             {% for object in filter.qs %}{% if object.Frequency == 3 %}
                             <tr>
                                 <td class="fw-bold text-primary">#{{object.pk}}</td>
                                 <td>{{object.AccNo}}</td>
                                 <td><a href="{% url 'microfinance:clientdetail' pk=object.Account.Client.pk %}" class="fw-bold text-dark text-decoration-none">{{object.Account.Client.Name}}</a></td>
-                                <td class="d-none d-lg-table-cell text-muted">{{object.Account.Client.Father_Name}}</td>
+
                                 <td>{{object.Account.Client.Phone_no1}}</td>
                                 <td class="fw-bold text-danger">₹{{dic|keyvalue:object.pk}}</td>
                                 <td class="d-none d-md-table-cell">₹{{object.installments_set.first.Installment_Due}}</td>
@@ -316,15 +312,13 @@
     $(document).ready(function () {
         // Toggle table sections
         $('[data-toggle="toggle"]').parent('label').parent('td').parent('tr').parent('tbody').click(function() {
-            var $target = $(this).next('.hide');
-            $target.fadeToggle(200);
-            
-            // Toggle icon if we add one later
+            var $target = $(this).next('.hide-section');
+            $target.toggleClass('d-none');
         });
 
         // Keep original functionality for checkboxes if any exist
         $('[data-toggle="toggle"]').change(function () {
-            $(this).parents().next('.hide').toggle();
+            $(this).parents().next('.hide-section').toggleClass('d-none');
         });
     });
 </script>
