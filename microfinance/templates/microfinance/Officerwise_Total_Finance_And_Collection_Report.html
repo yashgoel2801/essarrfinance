@@ -99,7 +99,7 @@
                     <thead>
                         <tr>
                             <th class="ps-3">S.No</th>
-                            <th>Loan ID</th>
+                            <th>ID</th>
                             <th>Customer Name</th>
                             <th>Collection Detail</th>
                             <th>To Be Collected</th>
@@ -112,7 +112,10 @@
                         {% for item in Collection_Data %}
                         <tr>
                             <td class="ps-3">{{ forloop.counter }}</td>
-                            <td><span class="badge bg-light text-dark border">#{{ item.loan.pk }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">Acc: {{ item.loan.Account.pk }}</div>
+                                <div class="text-muted fw-bold" style="font-size: 0.85rem;">L: {{ item.loan.pk }}</div>
+                            </td>
                             <td>
                                 <a href="{% url 'microfinance:clientdetail' pk=item.loan.Account.Client.pk %}" class="fw-bold text-decoration-none text-dark">
                                     {{ item.loan.Account.Client.Name }}
@@ -180,7 +183,7 @@
                     <thead>
                         <tr>
                             <th class="ps-3">S.No</th>
-                            <th>Loan ID</th>
+                            <th>ID</th>
                             <th>Customer Name</th>
                             <th>Collection Detail</th>
                             <th>To Be Collected</th>
@@ -193,7 +196,10 @@
                         {% for item in Closed_Collection_Data %}
                         <tr>
                             <td class="ps-3">{{ forloop.counter }}</td>
-                            <td><span class="badge bg-light text-dark border">#{{ item.loan.pk }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
+                                <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                            </td>
                             <td>
                                 <a href="{% url 'microfinance:clientdetail' pk=item.loan.Account.Client.pk %}" class="fw-bold text-decoration-none text-dark">
                                     {{ item.loan.Account.Client.Name }}
@@ -257,7 +263,10 @@
                             <tbody>
                                 {% for item in Penalty_Data %}
                                 <tr>
-                                    <td class="ps-3">#{{ item.loan.pk }}</td>
+                                    <td class="ps-3">
+                                        <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
+                                        <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                                    </td>
                                     <td>{{ item.loan.Account.Client.Name }}</td>
                                     <td class="fw-bold text-danger">₹{{ item.paid|floatformat:2 }}</td>
                                     <td class="pe-3">{{ item.loan.Loan_Collector.Officer_Name }}</td>
@@ -291,7 +300,10 @@
                             <tbody>
                                 {% for item in File_Charge_Data %}
                                 <tr>
-                                    <td class="ps-3">#{{ item.loan.pk }}</td>
+                                    <td class="ps-3">
+                                        <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
+                                        <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                                    </td>
                                     <td>{{ item.loan.Account.Client.Name }}</td>
                                     <td class="fw-bold text-info">₹{{ item.charge|floatformat:2 }}</td>
                                     <td class="pe-3">{{ item.loan.Loan_Collector.Officer_Name }}</td>
