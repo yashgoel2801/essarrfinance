@@ -2956,14 +2956,15 @@ def dashboard(request):
     # Calculate filtered days
     filtered_days = (end_date - start_date).days + 1
     
-    # Get active loans only
+    # Active loans for portfolio/due metrics; all loans for collection metrics
     active_loans = Loans.objects.filter(Status=False)
+    all_loans = Loans.objects.all()  # Includes closed loans - used for collection figures
     
     # === PERIOD-BASED METRICS ===
     
-    # 1. Collections in the selected period
+    # 1. Collections in the selected period (all loans - matches Officerwise Report)
     period_payments = Payments.objects.filter(
-        Loan__in=active_loans,
+        Loan__in=all_loans,
         Date_Paid__range=[start_date, end_date],
         Payment_Type=1  # Installment payments
     )
@@ -2987,9 +2988,9 @@ def dashboard(request):
     ).distinct()
     clients_due_period_count = len(clients_due_period)
     
-    # 4. Penalty collections in the period
+    # 4. Penalty collections in the period (all loans - matches Officerwise Report)
     penalty_collected_period = Payments.objects.filter(
-        Loan__in=active_loans,
+        Loan__in=all_loans,
         Date_Paid__range=[start_date, end_date],
         Payment_Type=2  # Penalty payments
     ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
@@ -3150,7 +3151,7 @@ def dashboard(request):
             daily_collection = Payments.objects.filter(
                 Date_Paid=current_date,
                 Payment_Type=1,
-                Loan__in=active_loans
+                Loan__in=all_loans  # All loans for collection trend
             ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
             
             daily_due = Installments.objects.filter(
@@ -3177,7 +3178,7 @@ def dashboard(request):
     # === RECENT PAYMENTS IN PERIOD ===
     
     recent_payments_period = Payments.objects.filter(
-        Loan__in=active_loans,
+        Loan__in=all_loans,  # All loans for recent payments list
         Date_Paid__range=[start_date, end_date]
     ).select_related(
         'Loan__Account__Client'

@@ -164,10 +164,11 @@
                             <th style="width: 50px;" class="no-print">
                                 <input type="checkbox" id="select-all" class="form-check-input">
                             </th>
-                            <th>S.No</th>
+                            <th>Acc ID</th>
                             <th>Freq</th>
                             <th class="no-print">Image</th>
                             <th>Name</th>
+                            <th>Phone</th>
                             <th>Inst Amt</th>
                             <th>No. Inst</th>
                             <th>First Due</th>
@@ -182,7 +183,7 @@
                         {% for loanee in loans %}
                         <tr>
                             <td class="no-print"><input type="checkbox" id="{{loanee.pk}}" name="Check" value="{{loanee.pk}}" class="form-check-input"></td>
-                            <td>{{forloop.counter}}</td>
+                            <td class="fw-bold">{{loanee.Account.pk}}</td>
                             <td>
                                 {% if loanee.Frequency == 1 %}D
                                 {% elif loanee.Frequency == 2 %}W
@@ -196,6 +197,7 @@
                             <td class="fw-bold text-start">
                                 <a href="{% url 'microfinance:clientdetail' pk=loanee.Account.Client.pk %}" class="text-decoration-none text-dark">{{loanee.Account.Client.Name}}</a>
                             </td>
+                            <td>{{loanee.Account.Client.Phone_no1}}</td>
                             <td>₹{{loanee.installments_set.first.Installment_Due|floatformat:2}}</td>
                             <td id="noofinst">{{loanee.No_Of_Installments}}</td>
                             <td style="display:none;" id="freq">{{loanee.Frequency}}</td>
