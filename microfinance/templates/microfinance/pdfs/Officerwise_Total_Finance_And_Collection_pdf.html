@@ -53,7 +53,7 @@
         <table id="table_row_total">
             <thead>
                 <tr>
-                    <th>Acc/Loan - Name </th>
+                    <th>Acc No - Name </th>
                     <th>No Of Inst</th>
                     {%for date in dates%}
                     <th>{{date|date:"M d "}}</th>{%endfor%}
@@ -67,7 +67,7 @@
 
                 {%for loanee in loans%}
                 <tr>
-                    <td>Acc: {{loanee.Account.pk}}/L: {{loanee.pk}} - {{loanee.Account.Client.Name}} </td>
+                    <td>{{loanee.AccNo}} - {{loanee.Account.Client.Name}} </td>
                     <td style="display: none;" id="freq">{{loanee.Frequency}}</td>
                     <td id="noofinst">{{loanee.No_Of_Installments}}
                     </td>

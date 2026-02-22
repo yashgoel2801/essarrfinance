@@ -99,7 +99,7 @@
                     <thead>
                         <tr>
                             <th class="ps-3">S.No</th>
-                            <th>ID</th>
+                            <th>Acc No</th>
                             <th>Customer Name</th>
                             <th>Collection Detail</th>
                             <th>To Be Collected</th>
@@ -113,8 +113,7 @@
                         <tr>
                             <td class="ps-3">{{ forloop.counter }}</td>
                             <td>
-                                <div class="fw-bold text-dark">Acc: {{ item.loan.Account.pk }}</div>
-                                <div class="text-muted fw-bold" style="font-size: 0.85rem;">L: {{ item.loan.pk }}</div>
+                                <div class="fw-bold text-dark">{{ item.loan.AccNo }}</div>
                             </td>
                             <td>
                                 <a href="{% url 'microfinance:clientdetail' pk=item.loan.Account.Client.pk %}" class="fw-bold text-decoration-none text-dark">
@@ -183,7 +182,7 @@
                     <thead>
                         <tr>
                             <th class="ps-3">S.No</th>
-                            <th>ID</th>
+                            <th>Acc No</th>
                             <th>Customer Name</th>
                             <th>Collection Detail</th>
                             <th>To Be Collected</th>
@@ -197,8 +196,7 @@
                         <tr>
                             <td class="ps-3">{{ forloop.counter }}</td>
                             <td>
-                                <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
-                                <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                                <div class="fw-bold text-dark">{{ item.loan.AccNo }}</div>
                             </td>
                             <td>
                                 <a href="{% url 'microfinance:clientdetail' pk=item.loan.Account.Client.pk %}" class="fw-bold text-decoration-none text-dark">
@@ -254,7 +252,7 @@
                         <table class="table table-hover mb-0 small">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="ps-3">ID</th>
+                                    <th class="ps-3">Acc No</th>
                                     <th>Customer</th>
                                     <th>Penalty Paid</th>
                                     <th class="pe-3">Officer</th>
@@ -264,8 +262,7 @@
                                 {% for item in Penalty_Data %}
                                 <tr>
                                     <td class="ps-3">
-                                        <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
-                                        <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                                        <div class="fw-bold text-dark">{{ item.loan.AccNo }}</div>
                                     </td>
                                     <td>{{ item.loan.Account.Client.Name }}</td>
                                     <td class="fw-bold text-danger">₹{{ item.paid|floatformat:2 }}</td>
@@ -291,7 +288,7 @@
                         <table class="table table-hover mb-0 small">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="ps-3">ID</th>
+                                    <th class="ps-3">Acc No</th>
                                     <th>Customer</th>
                                     <th>Charge Paid</th>
                                     <th class="pe-3">Officer</th>
@@ -301,8 +298,7 @@
                                 {% for item in File_Charge_Data %}
                                 <tr>
                                     <td class="ps-3">
-                                        <div class="fw-bold text-dark">A{{ item.loan.Account.pk }}</div>
-                                        <div class="text-muted fw-bold" style="font-size: 0.85rem;">L{{ item.loan.pk }}</div>
+                                        <div class="fw-bold text-dark">{{ item.loan.AccNo }}</div>
                                     </td>
                                     <td>{{ item.loan.Account.Client.Name }}</td>
                                     <td class="fw-bold text-info">₹{{ item.charge|floatformat:2 }}</td>
