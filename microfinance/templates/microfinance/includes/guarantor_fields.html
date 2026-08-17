@@ -1,0 +1,17 @@
+{% comment %}
+Compact field grid for one guarantor. Used by both the preview and the
+"show all" list, which previously carried identical copies of this markup.
+
+  guarantor  the Guarantors instance
+{% endcomment %}<div class="profile-grid">
+  {% include "microfinance/includes/field.html" with label="Father's Name" value=guarantor.Guarantor_Father_Name %}
+  {% include "microfinance/includes/field.html" with label="Mother's Name" value=guarantor.Guarantor_Mother_Name %}
+  {% include "microfinance/includes/field.html" with label="Phone No" value=guarantor.Guarantor_Phone_no %}
+  {% include "microfinance/includes/field.html" with label="Phone No 2" value=guarantor.Guarantor_Phone_no2 %}
+  {% include "microfinance/includes/field.html" with label="Occupation" value=guarantor.Guarantor_Occupation %}
+  {% include "microfinance/includes/field.html" with label="Designation" value=guarantor.Guarantor_Designation %}
+  {% include "microfinance/includes/field.html" with label="Local Address" value=guarantor.Guarantor_Local_Address wide=True %}
+  {% include "microfinance/includes/field.html" with label="Permanent Address" value=guarantor.Guarantor_Permanent_Address wide=True %}
+  {% include "microfinance/includes/field.html" with label="Office Address" value=guarantor.Guarantor_Office_Address wide=True %}
+  {% include "microfinance/includes/field.html" with label="Security Documents" value=guarantor.Guarantor_Security_Docs wide=True %}
+</div>

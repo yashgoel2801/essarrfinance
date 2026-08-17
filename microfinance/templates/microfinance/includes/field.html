@@ -1,0 +1,14 @@
+{% load fieldutils %}{% comment %}
+One label/value cell in a compact profile grid.
+
+  label  the field name
+  value  the field value
+  wide   set True for long values (addresses) so the cell spans two columns
+
+Records commonly store a literal '.', '-' or 'not specified' rather than a
+blank, so is_blank treats those as empty. Empty cells are hidden until the
+"Show empty fields" switch is turned on.
+{% endcomment %}<div class="pf{% if wide %} pf-wide{% endif %}{% if value|is_blank %} pf-empty{% endif %}">
+  <div class="pf-k">{{ label }}</div>
+  <div class="pf-v">{% if value|is_blank %}<span class="text-muted">&mdash;</span>{% else %}{{ value }}{% endif %}</div>
+</div>

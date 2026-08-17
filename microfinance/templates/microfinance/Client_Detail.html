@@ -94,6 +94,61 @@
     border-left: 4px solid var(--gray-300) !important;
   }
 
+  /* Compact profile grid - replaces the long label/value tables so the whole
+     profile is visible without scrolling inside the card. */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .pf {
+    background: var(--gray-100);
+    border: 1px solid var(--rule, #e6e9ec);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.6rem;
+    min-width: 0;
+  }
+
+  .pf-wide {
+    grid-column: 1 / -1;
+  }
+
+  .pf-k {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-600);
+    line-height: 1.3;
+  }
+
+  .pf-v {
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-top: 0.1rem;
+    overflow-wrap: anywhere;
+  }
+
+  /* Records commonly store '.', '-' or 'not specified'; those cells stay hidden
+     until the switch is turned on, which halves the panel on most clients. */
+  .pf-empty {
+    display: none;
+  }
+
+  .show-empty .pf-empty {
+    display: block;
+  }
+
+  .profile-grid-body {
+    padding: 0.9rem 1rem 1rem;
+  }
+
+  /* The two panels sit side by side, so let the taller one govern and keep the
+     shorter one from stretching its cells. */
+  .profile-grid-body .profile-grid {
+    align-content: start;
+  }
+
   /* Independent scroll for details sections */
   .details-scroll-container {
     max-height: 600px;
@@ -527,84 +582,34 @@
       <div class="card-header bg-primary text-white">
         <h5 class="mb-0">Full Client Profile</h5>
       </div>
-      <div class="card-body details-scroll-container">
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered mb-0">
-            <tbody>
-              <tr>
-                <th width="40%">Father's Name:</th>
-                <td>{{ Client.Father_Name }}</td>
-              </tr>
-              <tr>
-                <th>Husband's Name:</th>
-                <td>{{ Client.Husband_Name }}</td>
-              </tr>
-              <tr>
-                <th>Mother's Name:</th>
-                <td>{{ Client.Mother_Name }}</td>
-              </tr>
-              <tr>
-                <th>Wife's Name:</th>
-                <td>{{ Client.Wife_Name }}</td>
-              </tr>
-              <tr>
-                <th>Local Address:</th>
-                <td>{{ Client.Local_Address }}</td>
-              </tr>
-              <tr>
-                <th>Permanent Address:</th>
-                <td>{{ Client.Permanent_Address }}</td>
-              </tr>
-              <tr>
-                <th>Occupation:</th>
-                <td>{{ Client.Occupation }}</td>
-              </tr>
-              <tr>
-                <th>Designation:</th>
-                <td>{{ Client.Designation }}</td>
-              </tr>
-              <tr>
-                <th>Office Address:</th>
-                <td>{{ Client.Office_Address }}</td>
-              </tr>
-              <tr>
-                <th>Phone No 1:</th>
-                <td>{{ Client.Phone_no1 }}</td>
-              </tr>
-              <tr>
-                <th>Phone No 2:</th>
-                <td>{{ Client.Phone_no2 }}</td>
-              </tr>
-              <tr>
-                <th>{{ Client.Photo_Id }}:</th>
-                <td>{{ Client.Photo_Id_No }}</td>
-              </tr>
-              <tr>
-                <th>Reference Name:</th>
-                <td>{{ Client.Reference_Name }}</td>
-              </tr>
-              <tr>
-                <th>Reference Phone No:</th>
-                <td>{{ Client.Reference_No }}</td>
-              </tr>
-              <tr>
-                <th>Verified By:</th>
-                <td>{{ Client.Verified_By }}</td>
-              </tr>
-              <tr>
-                <th>Date Added:</th>
-                <td>{{ Client.Date_Added }}</td>
-              </tr>
-              <tr>
-                <th>Entered By:</th>
-                <td>{{ Client.author }}</td>
-              </tr>
-              <tr>
-                <th>Medical Issues:</th>
-                <td>{{ Client.Major_Medical_Issues }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="card-body profile-grid-body" id="clientProfileBody">
+        <div class="d-flex justify-content-end align-items-center mb-2">
+          <div class="form-check form-switch small mb-0">
+            <input class="form-check-input" type="checkbox" id="showEmptyClient">
+            <label class="form-check-label text-muted" for="showEmptyClient">
+              Show empty fields <span id="emptyCount" class="text-muted"></span>
+            </label>
+          </div>
+        </div>
+        <div class="profile-grid" id="clientProfileGrid">
+          {% include "microfinance/includes/field.html" with label="Father's Name" value=Client.Father_Name %}
+          {% include "microfinance/includes/field.html" with label="Husband's Name" value=Client.Husband_Name %}
+          {% include "microfinance/includes/field.html" with label="Mother's Name" value=Client.Mother_Name %}
+          {% include "microfinance/includes/field.html" with label="Wife's Name" value=Client.Wife_Name %}
+          {% include "microfinance/includes/field.html" with label="Phone No 1" value=Client.Phone_no1 %}
+          {% include "microfinance/includes/field.html" with label="Phone No 2" value=Client.Phone_no2 %}
+          {% include "microfinance/includes/field.html" with label=Client.Photo_Id value=Client.Photo_Id_No %}
+          {% include "microfinance/includes/field.html" with label="Occupation" value=Client.Occupation %}
+          {% include "microfinance/includes/field.html" with label="Designation" value=Client.Designation %}
+          {% include "microfinance/includes/field.html" with label="Local Address" value=Client.Local_Address wide=True %}
+          {% include "microfinance/includes/field.html" with label="Permanent Address" value=Client.Permanent_Address wide=True %}
+          {% include "microfinance/includes/field.html" with label="Office Address" value=Client.Office_Address wide=True %}
+          {% include "microfinance/includes/field.html" with label="Reference Name" value=Client.Reference_Name %}
+          {% include "microfinance/includes/field.html" with label="Reference Phone" value=Client.Reference_No %}
+          {% include "microfinance/includes/field.html" with label="Verified By" value=Client.Verified_By %}
+          {% include "microfinance/includes/field.html" with label="Date Added" value=Client.Date_Added %}
+          {% include "microfinance/includes/field.html" with label="Entered By" value=Client.author %}
+          {% include "microfinance/includes/field.html" with label="Medical Issues" value=Client.Major_Medical_Issues wide=True %}
         </div>
       </div>
     </div>
@@ -643,52 +648,7 @@
                 Docs
               </button>
             </form>
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered mb-0">
-                <tbody>
-                  <tr>
-                    <th width="40%">Father's Name:</th>
-                    <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                  </tr>
-                  <tr>
-                    <th>Mother's Name:</th>
-                    <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                  </tr>
-                  <tr>
-                    <th>Local Address:</th>
-                    <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Permanent Address:</th>
-                    <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Occupation:</th>
-                    <td>{{ guarantor.Guarantor_Occupation }}</td>
-                  </tr>
-                  <tr>
-                    <th>Designation:</th>
-                    <td>{{ guarantor.Guarantor_Designation }}</td>
-                  </tr>
-                  <tr>
-                    <th>Office Address:</th>
-                    <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Phone No:</th>
-                    <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                  </tr>
-                  <tr>
-                    <th>Phone No 2:</th>
-                    <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                  </tr>
-                  <tr>
-                    <th>Security Documents:</th>
-                    <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          {% include "microfinance/includes/guarantor_fields.html" %}
             {% if not forloop.last %}
             <hr />
             {% endif %}
@@ -713,52 +673,7 @@
                 Docs
               </button>
             </form>
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered mb-0">
-                <tbody>
-                  <tr>
-                    <th width="40%">Father's Name:</th>
-                    <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                  </tr>
-                  <tr>
-                    <th>Mother's Name:</th>
-                    <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                  </tr>
-                  <tr>
-                    <th>Local Address:</th>
-                    <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Permanent Address:</th>
-                    <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Occupation:</th>
-                    <td>{{ guarantor.Guarantor_Occupation }}</td>
-                  </tr>
-                  <tr>
-                    <th>Designation:</th>
-                    <td>{{ guarantor.Guarantor_Designation }}</td>
-                  </tr>
-                  <tr>
-                    <th>Office Address:</th>
-                    <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                  </tr>
-                  <tr>
-                    <th>Phone No:</th>
-                    <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                  </tr>
-                  <tr>
-                    <th>Phone No 2:</th>
-                    <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                  </tr>
-                  <tr>
-                    <th>Security Documents:</th>
-                    <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          {% include "microfinance/includes/guarantor_fields.html" %}
             {% if not forloop.last %}
             <hr />
             {% endif %}
@@ -789,52 +704,7 @@
               Docs
             </button>
           </form>
-          <div class="table-responsive">
-            <table class="table table-sm table-bordered mb-0">
-              <tbody>
-                <tr>
-                  <th width="40%">Father's Name:</th>
-                  <td>{{ guarantor.Guarantor_Father_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Mother's Name:</th>
-                  <td>{{ guarantor.Guarantor_Mother_Name }}</td>
-                </tr>
-                <tr>
-                  <th>Local Address:</th>
-                  <td>{{ guarantor.Guarantor_Local_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Permanent Address:</th>
-                  <td>{{ guarantor.Guarantor_Permanent_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Occupation:</th>
-                  <td>{{ guarantor.Guarantor_Occupation }}</td>
-                </tr>
-                <tr>
-                  <th>Designation:</th>
-                  <td>{{ guarantor.Guarantor_Designation }}</td>
-                </tr>
-                <tr>
-                  <th>Office Address:</th>
-                  <td>{{ guarantor.Guarantor_Office_Address }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No:</th>
-                  <td>{{ guarantor.Guarantor_Phone_no }}</td>
-                </tr>
-                <tr>
-                  <th>Phone No 2:</th>
-                  <td>{{ guarantor.Guarantor_Phone_no2 }}</td>
-                </tr>
-                <tr>
-                  <th>Security Documents:</th>
-                  <td>{{ guarantor.Guarantor_Security_Docs }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {% include "microfinance/includes/guarantor_fields.html" %}
         </div>
         {% endfor %}
         {% endif %}
@@ -846,6 +716,29 @@
   </div>
 </div>
 </div>
+
+<script>
+  // "Show empty fields" reveals the cells whose value is a placeholder. The
+  // count tells the user how many are hidden so nothing looks missing.
+  (function () {
+    var toggle = document.getElementById('showEmptyClient');
+    var body = document.getElementById('clientProfileBody');
+    var label = document.getElementById('emptyCount');
+    if (!toggle || !body) return;
+
+    var hidden = body.querySelectorAll('.pf-empty').length;
+    if (label) {
+      label.textContent = hidden ? '(' + hidden + ')' : '';
+    }
+    if (!hidden) {
+      toggle.disabled = true;   // nothing to reveal on a fully-filled record
+    }
+
+    toggle.addEventListener('change', function () {
+      body.classList.toggle('show-empty', toggle.checked);
+    });
+  })();
+</script>
 
 <!-- Debug and functionality script -->
 <script>
