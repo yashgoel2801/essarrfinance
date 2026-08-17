@@ -43,6 +43,46 @@ def sendPostRequest(reqUrl, apiKey, secretKey, useType, phoneNo, senderId, textM
   return requests.post(reqUrl, req_params)
 
 
+def bulk_overdue_map(loan_pks, as_of=None):
+    """Overdue amount per loan for many loans, in a fixed number of queries.
+
+    Same definition as loan_repayment_status: everything due to date, less
+    everything paid, capped by what is still owed. Use this for list pages where
+    calling loan_repayment_status per row would mean hundreds of queries.
+    Returns {loan_pk: overdue_amount} containing only loans that are behind.
+    """
+    if not loan_pks:
+        return {}
+
+    today_date = as_of or timezone.now().date()
+
+    due = dict(Installments.objects.filter(
+        Loan_id__in=loan_pks, Date_Due__lte=today_date
+    ).values_list('Loan_id').annotate(t=Sum('Installment_Due')))
+
+    paid = dict(Payments.objects.filter(
+        Loan_id__in=loan_pks, Payment_Type=1
+    ).values_list('Loan_id').annotate(t=Sum('Amount_Paid')))
+
+    waived = dict(Waiver.objects.filter(
+        Loan_id__in=loan_pks, Waiver_Type=2
+    ).values_list('Loan_id').annotate(t=Sum('Amount')))
+
+    loan_terms = Loans.objects.filter(pk__in=loan_pks).values_list(
+        'pk', 'Principle_Amount', 'Intrest_Rate')
+
+    out = {}
+    for pk, principal, rate in loan_terms:
+        total_due = due.get(pk) or 0
+        total_paid = paid.get(pk) or 0
+        total_loan_amount = principal + (principal * rate / 100)
+        total_pending = total_loan_amount - total_paid - (waived.get(pk) or 0)
+        overdue = round(max(0, min(total_due - total_paid, max(0, total_pending))), 1)
+        if overdue > 0:
+            out[pk] = overdue
+    return out
+
+
 def loan_repayment_status(loan, cache=None, as_of=None):
     """Where a loan stands on repayment, as of today by default.
 
@@ -1731,7 +1771,25 @@ def All_Clients_List(request):
         )
     )
     Total_Amount_To_Be_Collected = Loan.aggregate(total=Sum('first_inst_due'))['total'] or 0
-    return render(request,'microfinance/All_Clients_List.html',{'loanee':Loan,'Staff':Staff_pk,'Total_Amount_To_Be_Collected':Total_Amount_To_Be_Collected})
+
+    # Flag loans behind on repayment. Computed in bulk: this list runs ~80 rows
+    # daily, so per-row status queries would mean hundreds of round trips.
+    Loan = list(Loan)
+    overdue_by_loan = bulk_overdue_map([l.pk for l in Loan], today_date)
+    behind_count = 0
+    for l in Loan:
+        l.overdue_amount = overdue_by_loan.get(l.pk, 0)
+        l.is_behind = l.overdue_amount > 0
+        if l.is_behind:
+            behind_count += 1
+
+    return render(request,'microfinance/All_Clients_List.html',{
+        'loanee':Loan,
+        'Staff':Staff_pk,
+        'Total_Amount_To_Be_Collected':Total_Amount_To_Be_Collected,
+        'behind_count': behind_count,
+        'total_count': len(Loan),
+    })
 
 
 @login_required(login_url="/accounts/login/")
