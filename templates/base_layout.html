@@ -198,6 +198,73 @@
     }
 
     /* ===========================
+       Bootstrap colour utilities, re-pointed at the design tokens.
+       Bootstrap ships its own palette for bg-primary/bg-info/etc, so without
+       this a `card-header bg-info` renders Bootstrap cyan and ignores the
+       theme entirely.
+       =========================== */
+
+    .bg-primary { background-color: var(--primary-color) !important; }
+    .bg-secondary { background-color: var(--primary-color) !important; }
+    .bg-info { background-color: var(--accent-color) !important; }
+    .bg-success { background-color: var(--success-color) !important; }
+    .bg-danger { background-color: var(--danger-color) !important; }
+    .bg-warning { background-color: var(--warning-color) !important; }
+
+    .text-primary { color: var(--primary-color) !important; }
+    .text-info { color: var(--accent-color) !important; }
+    .text-success { color: var(--success-color) !important; }
+    .text-danger { color: var(--danger-color) !important; }
+    .text-warning { color: #b8801f !important; }
+
+    .border-primary { border-color: var(--primary-color) !important; }
+    .border-info { border-color: var(--accent-color) !important; }
+    .border-success { border-color: var(--success-color) !important; }
+    .border-danger { border-color: var(--danger-color) !important; }
+
+    .btn-success {
+      background-color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    .btn-info {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background-color: var(--gray-600);
+      border-color: var(--gray-600);
+    }
+
+    .btn-outline-primary {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+
+    a {
+      color: var(--primary-color);
+    }
+
+    a:hover {
+      color: var(--accent-color);
+    }
+
+    .navbar a,
+    .btn a,
+    a.btn,
+    .table-modern thead a {
+      color: inherit;
+    }
+
+    /* ===========================
        Form Styles
        =========================== */
     
