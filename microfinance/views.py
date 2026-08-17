@@ -42,6 +42,81 @@ def sendPostRequest(reqUrl, apiKey, secretKey, useType, phoneNo, senderId, textM
   }
   return requests.post(reqUrl, req_params)
 
+
+def loan_repayment_status(loan, cache=None, as_of=None):
+    """Where a loan stands on repayment, as of today by default.
+
+    Shared by the reports, client detail and loan detail pages so "behind"
+    means the same thing everywhere. Mirrors the Home page calculation:
+    everything due to date, less everything paid, capped by what is still owed.
+
+    Returns a dict of state ('behind' | 'ontrack' | 'closed'), a human label,
+    the overdue amount, the count of installments not covered, and the pending
+    penalty. Pass a dict as `cache` to avoid recomputing across a list of rows.
+    """
+    if cache is not None and loan.pk in cache:
+        return cache[loan.pk]
+
+    today_date = as_of or timezone.now().date()
+
+    if loan.Status:
+        status = {'state': 'closed', 'label': 'Closed', 'overdue': 0, 'behind': 0,
+                  'pending_penalty': 0}
+    else:
+        total_due = Installments.objects.filter(
+            Loan=loan, Date_Due__lte=today_date
+        ).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
+        total_paid = Payments.objects.filter(
+            Loan=loan, Payment_Type=1
+        ).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        total_loan_amount = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
+        total_waivers = Waiver.objects.filter(
+            Loan=loan, Waiver_Type=2
+        ).aggregate(Sum('Amount'))['Amount__sum'] or 0
+        total_pending = total_loan_amount - total_paid - total_waivers
+
+        overdue = round(max(0, min(total_due - total_paid, max(0, total_pending))), 1)
+
+        # Count the installments the payments do not cover, walking them in due
+        # order. Installment amounts vary within a loan (many start with a small
+        # stub), so dividing the shortfall by any single amount would be wrong.
+        behind = 0
+        remaining = total_paid
+        for due_amount in Installments.objects.filter(
+            Loan=loan, Date_Due__lte=today_date
+        ).exclude(Installment_Due=0).order_by('Date_Due').values_list('Installment_Due', flat=True):
+            if remaining >= due_amount:
+                remaining -= due_amount
+            else:
+                behind += 1
+
+        # Pending penalty, mirroring ClientLoanDetail: charged less paid less waived.
+        penalty_rows = Penalty.objects.filter(Loan=loan).aggregate(
+            charged=Sum('Penalty_Calc'), paid=Sum('Penalty_Paid'), waived=Sum('Waived_Amount')
+        )
+        penalty_paid_direct = Payments.objects.filter(
+            Loan=loan, Payment_Type=2
+        ).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+        penalty_waived = Waiver.objects.filter(
+            Loan=loan, Waiver_Type=1
+        ).aggregate(Sum('Amount'))['Amount__sum'] or 0
+        pending_penalty = round(max(0, (penalty_rows['charged'] or 0)
+                                    - max(penalty_paid_direct, penalty_rows['paid'] or 0)
+                                    - max(penalty_waived, penalty_rows['waived'] or 0)), 1)
+
+        if overdue <= 0:
+            status = {'state': 'ontrack', 'label': 'On track', 'overdue': 0, 'behind': 0,
+                      'pending_penalty': pending_penalty}
+        else:
+            label = '%s installment%s behind' % (behind, '' if behind == 1 else 's') if behind else 'Behind schedule'
+            status = {'state': 'behind', 'label': label, 'overdue': overdue, 'behind': behind,
+                      'pending_penalty': pending_penalty}
+
+    if cache is not None:
+        cache[loan.pk] = status
+    return status
+
+
 # Create your views here.
 @login_required(login_url="/accounts/login/")
 def Add_Officer(request):
@@ -1736,73 +1811,10 @@ def Total_Amount_Collected_Report(request):
 
     # Repayment status is judged as of today, not the report date, so a historic
     # report still tells you where the loan stands now.
-    today_date = timezone.now().date()
     loan_status_cache = {}
 
     def get_loan_status(loan):
-        """Overdue position of a loan as of today.
-
-        Mirrors the Home page / ClientLoanDetail calculation: everything due to
-        date, less everything paid, capped by what is actually still owed.
-        """
-        if loan.pk in loan_status_cache:
-            return loan_status_cache[loan.pk]
-
-        if loan.Status:
-            status = {'state': 'closed', 'label': 'Closed', 'overdue': 0, 'behind': 0,
-                      'pending_penalty': 0}
-        else:
-            total_due = Installments.objects.filter(
-                Loan=loan, Date_Due__lte=today_date
-            ).aggregate(Sum('Installment_Due'))['Installment_Due__sum'] or 0
-            total_paid = Payments.objects.filter(
-                Loan=loan, Payment_Type=1
-            ).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
-            total_loan_amount = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
-            total_waivers = Waiver.objects.filter(
-                Loan=loan, Waiver_Type=2
-            ).aggregate(Sum('Amount'))['Amount__sum'] or 0
-            total_pending = total_loan_amount - total_paid - total_waivers
-
-            overdue = round(max(0, min(total_due - total_paid, max(0, total_pending))), 1)
-
-            # Count the installments the payments do not cover, walking them in due
-            # order. Installment amounts vary within a loan (many start with a small
-            # stub), so dividing the shortfall by any single amount would be wrong.
-            behind = 0
-            remaining = total_paid
-            for due_amount in Installments.objects.filter(
-                Loan=loan, Date_Due__lte=today_date
-            ).exclude(Installment_Due=0).order_by('Date_Due').values_list('Installment_Due', flat=True):
-                if remaining >= due_amount:
-                    remaining -= due_amount
-                else:
-                    behind += 1
-
-            # Pending penalty, mirroring ClientLoanDetail: charged less paid less waived.
-            penalty_rows = Penalty.objects.filter(Loan=loan).aggregate(
-                charged=Sum('Penalty_Calc'), paid=Sum('Penalty_Paid'), waived=Sum('Waived_Amount')
-            )
-            penalty_paid_direct = Payments.objects.filter(
-                Loan=loan, Payment_Type=2
-            ).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
-            penalty_waived = Waiver.objects.filter(
-                Loan=loan, Waiver_Type=1
-            ).aggregate(Sum('Amount'))['Amount__sum'] or 0
-            pending_penalty = round(max(0, (penalty_rows['charged'] or 0)
-                                        - max(penalty_paid_direct, penalty_rows['paid'] or 0)
-                                        - max(penalty_waived, penalty_rows['waived'] or 0)), 1)
-
-            if overdue <= 0:
-                status = {'state': 'ontrack', 'label': 'On track', 'overdue': 0, 'behind': 0,
-                          'pending_penalty': pending_penalty}
-            else:
-                label = '%s installment%s behind' % (behind, '' if behind == 1 else 's') if behind else 'Behind schedule'
-                status = {'state': 'behind', 'label': label, 'overdue': overdue, 'behind': behind,
-                          'pending_penalty': pending_penalty}
-
-        loan_status_cache[loan.pk] = status
-        return status
+        return loan_repayment_status(loan, cache=loan_status_cache)
 
     def get_entry(officer):
         if officer.pk not in grouped_data:
