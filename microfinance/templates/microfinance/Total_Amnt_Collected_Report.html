@@ -72,6 +72,42 @@
         font-size: 0.9rem;
     }
 
+    /* Repayment position as of today. A left border carries the signal so it
+       survives printing and does not rely on colour alone. */
+    .table-modern tr.loan-behind td {
+        background-color: #fdf3f4;
+    }
+
+    .table-modern tr.loan-behind td:first-child {
+        box-shadow: inset 3px 0 0 #dc3545;
+    }
+
+    .table-modern tr.loan-ontrack td:first-child {
+        box-shadow: inset 3px 0 0 #198754;
+    }
+
+    .table-modern tr.loan-closed td:first-child {
+        box-shadow: inset 3px 0 0 #adb5bd;
+    }
+
+    .status-key {
+        display: flex;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+    }
+
+    .status-key .swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 0.35rem;
+        vertical-align: baseline;
+    }
+
     .officer-section {
         background: white;
         border-radius: 16px;
@@ -198,6 +234,12 @@
                         <span class="bg-success rounded-circle me-2" style="width: 8px; height: 8px; display: inline-block;"></span> 
                         INSTALLMENT PAYMENTS
                     </h6>
+                    <div class="status-key">
+                        <span>Repayment position today:</span>
+                        <span><span class="swatch" style="background:#198754;"></span>On track</span>
+                        <span><span class="swatch" style="background:#dc3545;"></span>Behind schedule</span>
+                        <span><span class="swatch" style="background:#adb5bd;"></span>Closed</span>
+                    </div>
                     <div class="table-responsive">
                         <table class="table-modern table-hover mb-4">
                             <thead class="bg-light">
@@ -212,7 +254,7 @@
                             </thead>
                             <tbody>
                                 {% for payment in data.installments %}
-                                <tr>
+                                <tr class="loan-{{payment.loan_status.state}}" title="As of today: {{payment.loan_status.label}}{% if payment.loan_status.overdue %} (₹{{payment.loan_status.overdue}} overdue){% endif %}">
                                     <td><a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}" class="text-decoration-none fw-bold">#{{payment.Loan.pk}}</a></td>
                                     <td><span class="fw-semibold">{{payment.Loan.Account.Client.Name}}</span></td>
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
@@ -223,6 +265,9 @@
                                         <span class="text-muted small">₹{{payment.last_payment_amount}} on {{payment.last_payment_date|date:"M j, Y"}}</span>
                                         {% else %}
                                         <span class="text-muted small fst-italic">First payment</span>
+                                        {% endif %}
+                                        {% if payment.loan_status.state == 'behind' %}
+                                        <div class="small fw-semibold text-danger">{{payment.loan_status.label}}</div>
                                         {% endif %}
                                     </td>
                                 </tr>
