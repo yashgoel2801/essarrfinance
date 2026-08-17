@@ -3144,9 +3144,14 @@ def dashboard(request):
         total=Sum('Amount_Paid')
     )['total'] or 0
     
-    # 2. Amount due in the selected period
+    # 2. Amount due in the selected period.
+    #    all_loans for the same reason as file charges: an installment that fell due
+    #    in a past period was due regardless of whether the loan has since closed.
+    #    Using active_loans reported Rs 63,156 due against Rs 733,885 collected for
+    #    Jan 2026 - hence the nonsensical 1162% collection rate. True figure is
+    #    Rs 639,814.
     period_installments = Installments.objects.filter(
-        Loan__in=active_loans,
+        Loan__in=all_loans,
         Date_Due__range=[start_date, end_date],
         Installment_Due__gt=0
     )
@@ -3167,8 +3172,13 @@ def dashboard(request):
         Payment_Type=2  # Penalty payments
     ).aggregate(total=Sum('Amount_Paid'))['total'] or 0
     
-    # 5. File charges from new loans in the period
-    period_loans = active_loans.filter(
+    # 5. File charges from new loans in the period.
+    #    Uses all_loans, not active_loans: what was disbursed in a past period is
+    #    a historical fact and must not change when those loans later close.
+    #    Filtering Status=False dropped 13 of the 18 loans disbursed in Jan 2026
+    #    (Rs 387,800 of Rs 562,800 principal; Rs 12,500 of Rs 18,550 file charges),
+    #    which is why the dashboard disagreed with the Finance report.
+    period_loans = all_loans.filter(
         Loan_Date__range=[start_date, end_date]
     )
     loans_created_period = period_loans.count()
