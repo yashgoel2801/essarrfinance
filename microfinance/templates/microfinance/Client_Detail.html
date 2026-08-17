@@ -72,23 +72,26 @@
     border: 1px solid var(--tint-success);
   }
 
-  /* Active loan row highlighting */
+  /* Row tint carries repayment position, matching the reports: green edge for
+     on track, red for behind, grey for closed. */
   .loan-row-active {
-    background-color: var(--tint-accent) !important;
-    border-left: 4px solid var(--info-color) !important;
+    border-left: 4px solid var(--success-color) !important;
   }
 
   .loan-row-active td {
-    background-color: var(--tint-accent) !important;
-    border-color: var(--tint-accent) !important;
+    background-color: #fff !important;
   }
 
-  .loan-row-active:hover {
-    background-color: var(--tint-accent) !important;
+  .loan-row-behind {
+    border-left: 4px solid var(--danger-color) !important;
   }
 
-  .loan-row-active:hover td {
-    background-color: var(--tint-accent) !important;
+  .loan-row-behind td {
+    background-color: var(--tint-danger) !important;
+  }
+
+  .loan-row-closed {
+    border-left: 4px solid var(--gray-300) !important;
   }
 
   /* Independent scroll for details sections */
@@ -330,6 +333,12 @@
         </div>
       </div>
       <div class="card-body">
+        <div class="status-key">
+          <span>Repayment position today:</span>
+          <span><span class="swatch" style="background:var(--success-color);"></span>On track</span>
+          <span><span class="swatch" style="background:var(--danger-color);"></span>Behind schedule</span>
+          <span><span class="swatch" style="background:var(--gray-300);"></span>Closed</span>
+        </div>
         <div class="table-responsive">
           <table class="table table-bordered table-hover align-middle">
             <thead class="table-light">
@@ -346,7 +355,8 @@
             </thead>
             <tbody>
               {% for loan in Loan %}
-              <tr {% if loan.Status %}class="loan-row-closed" {% else %}class="loan-row-active" {% endif %}>
+              <tr class="{% if loan.Status %}loan-row-closed{% elif loan.repayment.state == 'behind' %}loan-row-behind{% else %}loan-row-active{% endif %}"
+                title="{% if not loan.Status %}As of today: {{ loan.repayment.label }}{% endif %}">
                 <td>
                   <a href="{% url 'microfinance:loandetail' pk=loan.pk %}">{{ loan.pk }}</a>
                 </td>
@@ -382,6 +392,13 @@
                   <span class="badge status-closed">Closed</span>
                   {% else %}
                   <span class="badge status-active">Active</span>
+                  {% if loan.repayment.state == 'behind' %}
+                  <div class="small fw-semibold text-danger mt-1">{{ loan.repayment.label }}</div>
+                  <div class="small text-muted">₹{{ loan.repayment.overdue|floatformat:0 }} overdue{% if loan.repayment.pending_penalty %}
+                    · ₹{{ loan.repayment.pending_penalty|floatformat:0 }} penalty{% endif %}</div>
+                  {% else %}
+                  <div class="small text-success mt-1">On track</div>
+                  {% endif %}
                   {% endif %}
                 </td>
                 <td>

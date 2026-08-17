@@ -562,6 +562,12 @@ def Client_Detail(request,pk):
     
     guarantors = Guarantors.objects.filter(loans__Account=Account).distinct()
 
+    # Repayment position per loan, so a client with several loans shows which one
+    # is behind. Same calculation as the reports and the Home page.
+    status_cache = {}
+    for l in Loan:
+        l.repayment = loan_repayment_status(l, cache=status_cache)
+
     if request.method == "POST" :
         if "save" in request.POST:
             pk=request.POST['pk']
