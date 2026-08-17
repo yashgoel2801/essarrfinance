@@ -72,6 +72,42 @@
         font-size: 0.9rem;
     }
 
+    /* Repayment position as of today. A left border carries the signal so it
+       survives printing and does not rely on colour alone. */
+    .table-modern tr.loan-behind td {
+        background-color: #fdf3f4;
+    }
+
+    .table-modern tr.loan-behind td:first-child {
+        box-shadow: inset 3px 0 0 #dc3545;
+    }
+
+    .table-modern tr.loan-ontrack td:first-child {
+        box-shadow: inset 3px 0 0 #198754;
+    }
+
+    .table-modern tr.loan-closed td:first-child {
+        box-shadow: inset 3px 0 0 #adb5bd;
+    }
+
+    .status-key {
+        display: flex;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+    }
+
+    .status-key .swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 0.35rem;
+        vertical-align: baseline;
+    }
+
     .officer-section {
         background: white;
         border-radius: 16px;
@@ -198,27 +234,55 @@
                         <span class="bg-success rounded-circle me-2" style="width: 8px; height: 8px; display: inline-block;"></span> 
                         INSTALLMENT PAYMENTS
                     </h6>
+                    <div class="status-key">
+                        <span>Repayment position today:</span>
+                        <span><span class="swatch" style="background:#198754;"></span>On track</span>
+                        <span><span class="swatch" style="background:#dc3545;"></span>Behind schedule</span>
+                        <span><span class="swatch" style="background:#adb5bd;"></span>Closed</span>
+                    </div>
                     <div class="table-responsive">
                         <table class="table-modern table-hover mb-4">
                             <thead class="bg-light">
                                 <tr>
-                                    <th width="8%">ID</th>
+                                    <th width="8%">Loan</th>
                                     <th>Client Name</th>
-                                    <th width="15%">Last Pay Date</th>
-                                    <th class="text-end" width="12%">Inst. Amt</th>
+                                    <th class="text-end" width="13%">Paid on {{Date}}</th>
                                     <th class="text-end" width="12%">Penalty Paid</th>
                                     <th class="text-end" width="12%">Row Total</th>
+                                    <th class="text-end" width="11%">Overdue</th>
+                                    <th class="text-end" width="11%">Penalty Pending</th>
+                                    <th width="14%">Status Today</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for payment in data.installments %}
-                                <tr>
+                                <tr class="loan-{{payment.loan_status.state}}" title="As of today: {{payment.loan_status.label}}{% if payment.loan_status.overdue %} (₹{{payment.loan_status.overdue}} overdue){% endif %}">
                                     <td><a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}" class="text-decoration-none fw-bold">#{{payment.Loan.pk}}</a></td>
                                     <td><span class="fw-semibold">{{payment.Loan.Account.Client.Name}}</span></td>
-                                    <td><span class="text-muted small">{{payment.last_payment_date}}</span></td>
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
                                     <td class="text-end text-warning fw-bold">₹{{payment.penalty_today}}</td>
                                     <td class="text-end fw-bolder" style="background: #fbfbfb;">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
+                                    <td class="text-end">
+                                        {% if payment.loan_status.overdue %}
+                                        <span class="fw-semibold text-danger">₹{{payment.loan_status.overdue|floatformat:0}}</span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if payment.loan_status.pending_penalty %}
+                                        <span class="fw-semibold text-warning">₹{{payment.loan_status.pending_penalty|floatformat:0}}</span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if payment.loan_status.state == 'behind' %}
+                                        <span class="small fw-semibold text-danger">{{payment.loan_status.label}}</span>
+                                        {% else %}
+                                        <span class="small text-success">{{payment.loan_status.label}}</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
