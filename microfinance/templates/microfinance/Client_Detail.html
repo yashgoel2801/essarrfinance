@@ -98,8 +98,14 @@
   .details-scroll-container {
     max-height: 600px;
     overflow-y: auto;
-    padding-right: 5px;
+    /* Keep a gutter on both sides so the table does not run flush to the card
+       edge; the extra right padding leaves room for the scrollbar. */
+    padding: 0.75rem 1rem 0.75rem 1rem;
     scrollbar-width: thin;
+  }
+
+  .details-scroll-container .table {
+    margin-bottom: 0;
   }
 
   /* Custom scrollbar for better aesthetics */

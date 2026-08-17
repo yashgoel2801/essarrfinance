@@ -493,6 +493,43 @@
       vertical-align: middle;
     }
 
+    /* Header labels that wrap to two lines were sitting on mismatched
+       baselines, and body cells bottom-aligned against them. Anchor both to a
+       consistent vertical alignment across every table in the app. */
+    .table thead th,
+    .table-modern thead th {
+      vertical-align: middle;
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle;
+    }
+
+    /* Wide tables: let the table exceed the viewport and scroll inside its
+       container rather than squeezing 10 columns into the width, which is what
+       forced header labels to wrap mid-phrase. */
+    .table-responsive > .table,
+    .table-responsive > .table-modern {
+      min-width: max-content;
+    }
+
+    .table-responsive > .table > thead > tr > th,
+    .table-responsive > .table-modern > thead > tr > th {
+      white-space: nowrap;
+    }
+
+    /* Action buttons inside a table cell need room to breathe */
+    .table td .btn-sm,
+    .table-modern td .btn-sm {
+      white-space: nowrap;
+    }
+
+    .table td .btn-group,
+    .table-modern td .btn-group {
+      flex-wrap: nowrap;
+    }
+
     .table-modern tbody tr {
       transition: var(--transition-fast);
     }
@@ -714,8 +751,31 @@
     /* Container padding */
     .container,
     .container-fluid {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    /* Tables that sit directly in a card with no body padding were running
+       flush to the card edge. Inset the first and last cells so the content
+       keeps a gutter without needing per-page overrides. */
+    .card > .table-responsive > .table > :is(thead, tbody) > tr > :first-child,
+    .card > .table > :is(thead, tbody) > tr > :first-child,
+    .card-body.p-0 > .table-responsive > .table > :is(thead, tbody) > tr > :first-child {
+      padding-left: 1.25rem;
+    }
+
+    .card > .table-responsive > .table > :is(thead, tbody) > tr > :last-child,
+    .card > .table > :is(thead, tbody) > tr > :last-child,
+    .card-body.p-0 > .table-responsive > .table > :is(thead, tbody) > tr > :last-child {
+      padding-right: 1.25rem;
+    }
+
+    @media (max-width: 576px) {
+      .container,
+      .container-fluid {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+      }
     }
 
     /* ===========================
