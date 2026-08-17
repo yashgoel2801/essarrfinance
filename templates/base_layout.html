@@ -506,9 +506,17 @@
       vertical-align: middle;
     }
 
-    /* Wide tables: let the table exceed the viewport and scroll inside its
-       container rather than squeezing 10 columns into the width, which is what
-       forced header labels to wrap mid-phrase. */
+    /* Wide tables: let the table exceed the container and scroll horizontally
+       rather than squeezing many columns into the width, which forced header
+       labels to wrap mid-phrase.
+
+       A vertically-scrolling wrapper must still scroll horizontally, otherwise
+       the overflowing columns are simply unreachable - several pages set
+       `overflow-y: auto` inline, which alone resets overflow-x to visible. */
+    .table-responsive {
+      overflow-x: auto !important;
+    }
+
     .table-responsive > .table,
     .table-responsive > .table-modern {
       min-width: max-content;
@@ -919,6 +927,28 @@
 
   <!-- Bootstrap 5 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Scrolling the page with the cursor over a focused number input makes the
+    // browser increment/decrement its value, which silently edits amounts on
+    // forms like Add Loan and Add Payment. Block the wheel from changing the
+    // value; the page still scrolls normally.
+    //
+    // Capture phase + non-passive so preventDefault is honoured, and delegated
+    // from the document so it also covers inputs Django renders and any markup
+    // added later.
+    document.addEventListener('wheel', function (event) {
+      var el = event.target;
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'number') return;
+      if (document.activeElement !== el) return;   // only when it would actually change
+      el.blur();                                   // drop focus so the wheel can't reach it
+      // Let the page keep scrolling - do not preventDefault on the scroll itself.
+    }, { capture: true, passive: true });
+
+    // Arrow keys inside a number input are legitimate, but Up/Down on a field
+    // the user is only tabbing through is a common source of accidental edits
+    // on numeric-heavy forms. Leave keyboard behaviour untouched.
+  </script>
 </body>
 
 </html>

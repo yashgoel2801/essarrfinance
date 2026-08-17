@@ -254,7 +254,6 @@
                     <i class="fas fa-file-alt me-1"></i>Docs
                   </button>
                 </form>
-                </form>
                 {% if request.user.is_staff %}
                 <form action="{% url 'microfinance:editclient' pk=Client.pk %}" method="GET">
                   {% csrf_token %}
@@ -519,7 +518,8 @@
     </div>
   </div>
 </div>
-</div>
+{# Profile + guarantor row: own container so it gets the same page gutter as the rest #}
+<div class="container-fluid pb-4">
 <div class="row mt-4 mb-5">
   <!-- Full Client Profile Column -->
   <div class="col-md-6">
@@ -844,6 +844,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <!-- Debug and functionality script -->
