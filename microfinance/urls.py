@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^Expenditure/AddCategory/$', views.Add_Expense_Category, name="addexpensecategory"),
     url(r'^All-Expenditure/$', views.AllExpense,name="allexpense"),
     url(r'^Reports/$', views.Reports,name="reports"),
+    url(r'^Overdue/$', views.Overdue_Loans,name="overdue"),
     # url(r'^Report-Officer&Freq/$', views.Officer_And_Frequency_Wise_Report,name="report1"),
     # url(r'^PDF-Officer&Freq/$', views.Officer_And_Frequency_Wise_pdf,name="pdf1"),
     url(r'^Report-TotalFinance&Collection/$', views.Total_Finance_And_Collection_Report,name="report2"), 

@@ -154,6 +154,22 @@
       background-color: var(--primary-color) !important;
     }
 
+    /* Group separator between nav sections. Hidden below lg, where the navbar
+       collapses to a vertical list and a divider would read as a stray line. */
+    .nav-sep {
+      display: none;
+    }
+
+    @media (min-width: 992px) {
+      .nav-sep {
+        display: block;
+        width: 1px;
+        height: 20px;
+        margin: 0 0.5rem;
+        background-color: rgba(255, 255, 255, 0.22);
+      }
+    }
+
     .btn-logout {
       background-color: transparent;
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -926,16 +942,25 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
+        {% comment %}Grouped as daily work / records / money / admin, so the links read as distinct jobs rather than one undifferentiated row.{% endcomment %}
+        <ul class="navbar-nav me-auto align-items-lg-center">
           <li class="nav-item">
             <a class="nav-link {% if request.path == '/Home/' %}active{% endif %}" href="{% url 'microfinance:home' %}">
-              <i class="fas fa-home me-1"></i> Home
+              <i class="fas fa-house me-1"></i> Today
             </a>
           </li>
           {% if request.user.is_staff %}
           <li class="nav-item">
+            <a class="nav-link {% if 'Overdue' in request.path %}active{% endif %}" href="{% url 'microfinance:overdue' %}">
+              <i class="fas fa-triangle-exclamation me-1"></i> Overdue
+            </a>
+          </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
+          <li class="nav-item">
             <a class="nav-link {% if '/Search/' in request.path %}active{% endif %}" href="{% url 'microfinance:search' %}">
-              <i class="fas fa-search me-1"></i> Search
+              <i class="fas fa-magnifying-glass me-1"></i> Clients
             </a>
           </li>
           <li class="nav-item">
@@ -943,6 +968,9 @@
               <i class="fas fa-user-plus me-1"></i> Add Client
             </a>
           </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
           <li class="nav-item">
             <a class="nav-link {% if 'Reports' in request.path %}active{% endif %}" href="{% url 'microfinance:reports' %}">
               <i class="fas fa-chart-line me-1"></i> Reports
@@ -950,7 +978,7 @@
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'dashboard' in request.path %}active{% endif %}" href="{% url 'microfinance:dashboard' %}">
-              <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+              <i class="fas fa-gauge-high me-1"></i> Dashboard
             </a>
           </li>
           <li class="nav-item">
@@ -958,9 +986,12 @@
               <i class="fas fa-wallet me-1"></i> Expenses
             </a>
           </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
           <li class="nav-item">
             <a class="nav-link {% if 'add_officer' in request.path %}active{% endif %}" href="{% url 'microfinance:addofficer' %}">
-              <i class="fas fa-user-tie me-1"></i> Add Staff
+              <i class="fas fa-user-tie me-1"></i> Staff
             </a>
           </li>
           {% endif %}

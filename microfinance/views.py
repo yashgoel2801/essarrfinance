@@ -1405,6 +1405,75 @@ def Reports(request):
 
 
 @login_required(login_url="/accounts/login/")
+def Overdue_Loans(request):
+    """Every open loan behind on repayment, worst exposure first.
+
+    Answers "who do I chase today" in one screen, which previously meant running
+    a report and reading it. Overdue comes from bulk_overdue_map so the whole
+    list costs a fixed handful of queries and agrees with the reports and the
+    client page to the rupee.
+    """
+    if not request.user.is_staff:
+        return HttpResponseForbidden("You do not have permission to view this page.")
+
+    today_date = timezone.now().date()
+    officer_pk = request.GET.get('officer') or ''
+
+    open_loans = Loans.objects.filter(Status=False).select_related(
+        'Account__Client', 'Loan_Collector')
+    if officer_pk:
+        open_loans = open_loans.filter(Loan_Collector_id=officer_pk)
+
+    open_loans = list(open_loans)
+    overdue_by_loan = bulk_overdue_map([l.pk for l in open_loans], today_date)
+
+    # Pending penalty in bulk, so the page does not fall back to per-row queries.
+    behind_pks = list(overdue_by_loan)
+    penalty_charged = dict(Penalty.objects.filter(Loan_id__in=behind_pks)
+                           .values_list('Loan_id').annotate(t=Sum('Penalty_Calc')))
+    penalty_paid = dict(Payments.objects.filter(Loan_id__in=behind_pks, Payment_Type=2)
+                        .values_list('Loan_id').annotate(t=Sum('Amount_Paid')))
+    penalty_waived = dict(Waiver.objects.filter(Loan_id__in=behind_pks, Waiver_Type=1)
+                          .values_list('Loan_id').annotate(t=Sum('Amount')))
+    last_paid = dict(Payments.objects.filter(Loan_id__in=behind_pks, Payment_Type=1)
+                     .values_list('Loan_id').annotate(d=Max('Date_Paid')))
+
+    rows = []
+    total_overdue = 0
+    total_penalty = 0
+    for loan in open_loans:
+        overdue = overdue_by_loan.get(loan.pk)
+        if not overdue:
+            continue
+        pending_penalty = round(max(0, (penalty_charged.get(loan.pk) or 0)
+                                    - (penalty_paid.get(loan.pk) or 0)
+                                    - (penalty_waived.get(loan.pk) or 0)), 1)
+        last = last_paid.get(loan.pk)
+        rows.append({
+            'loan': loan,
+            'overdue': overdue,
+            'pending_penalty': pending_penalty,
+            'last_paid': last,
+            'days_since': (today_date - last).days if last else None,
+        })
+        total_overdue += overdue
+        total_penalty += pending_penalty
+
+    rows.sort(key=lambda r: r['overdue'], reverse=True)
+
+    return render(request, 'microfinance/Overdue_Loans.html', {
+        'rows': rows,
+        'total_overdue': round(total_overdue, 1),
+        'total_penalty': round(total_penalty, 1),
+        'behind_count': len(rows),
+        'open_count': len(open_loans),
+        'officers': Staff.objects.all().order_by('Officer_Name'),
+        'selected_officer': officer_pk,
+        'today': today_date,
+    })
+
+
+@login_required(login_url="/accounts/login/")
 def Total_Finance_And_Collection_Report(request):
     start=request.POST.get('from')
     end=request.POST.get('to')
