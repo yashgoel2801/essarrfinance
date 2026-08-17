@@ -1,7 +1,7 @@
 {%extends 'base_layout.html'%} {% load noofinstallment %} {%block content%}
 <style>
   .borrower-card {
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--primary-color);
     max-height: calc(100vh - 120px);
     overflow-y: auto;
     overflow-x: hidden;
@@ -22,12 +22,12 @@
   }
 
   .borrower-avatar {
-    border: 3px solid #007bff;
+    border: 3px solid var(--primary-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .installment-table-section {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid var(--success-color);
   }
 
   .container-fluid {
@@ -99,7 +99,7 @@
 
   .last-payment-card {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--primary-color);
   }
 
   .last-payment-card .card-body {
@@ -488,13 +488,13 @@
             }
 
             #transactionTabs .nav-link:hover {
-              color: #198754 !important;
+              color: var(--success-color) !important;
               /* Green on hover */
               background-color: #f8f9fa !important;
             }
 
             #transactionTabs .nav-link.active {
-              color: #198754 !important;
+              color: var(--success-color) !important;
               /* Green for active */
               background-color: #fff !important;
             }

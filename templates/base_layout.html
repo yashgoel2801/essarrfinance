@@ -22,20 +22,39 @@
        =========================== */
     
     :root {
-      /* Primary Colors */
-      --primary-color: #4caf50;
-      --primary-hover: #45a049;
-      --primary-light: rgba(76, 175, 80, 0.1);
-      
-      /* Secondary Colors */
-      --secondary-color: #667eea;
-      --secondary-dark: #764ba2;
-      
+      /* Primary Colors — deep navy. Buttons, active nav, focus rings. */
+      --primary-color: #1e3a5f;
+      --primary-hover: #172e4c;
+      --primary-light: rgba(30, 58, 95, 0.1);
+
+      /* Accent — teal. Links, highlights, secondary emphasis. */
+      --accent-color: #14a098;
+      --accent-hover: #118c85;
+      --accent-light: rgba(20, 160, 152, 0.1);
+
+      /* Secondary Colors — navy/teal gradient pair, replaces the old purple */
+      --secondary-color: #1e3a5f;
+      --secondary-dark: #14a098;
+
       /* Status Colors */
-      --success-color: #28a745;
-      --danger-color: #dc3545;
-      --warning-color: #ffc107;
-      --info-color: #17a2b8;
+      --success-color: #2e9e5b;
+      --danger-color: #d64550;
+      --warning-color: #e8a33d;
+      --info-color: #14a098;
+
+      /* Gradients — single source of truth. Pages must not redefine these. */
+      --primary-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
+      --secondary-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
+      --success-gradient: linear-gradient(135deg, #2e9e5b 0%, #24804a 100%);
+      --info-gradient: linear-gradient(135deg, #14a098 0%, #118c85 100%);
+      --warning-gradient: linear-gradient(135deg, #e8a33d 0%, #cc8a26 100%);
+      --danger-gradient: linear-gradient(135deg, #d64550 0%, #b5333d 100%);
+      --dark-gradient: linear-gradient(135deg, #2b3138 0%, #16233a 100%);
+      --teal-gradient: linear-gradient(135deg, #14a098 0%, #0e7c7b 100%);
+      --purple-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
+      --blue-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
+      --cyan-gradient: linear-gradient(135deg, #14a098 0%, #118c85 100%);
+      --yellow-gradient: linear-gradient(135deg, #e8a33d 0%, #cc8a26 100%);
       
       /* Neutral Colors */
       --dark: #333;

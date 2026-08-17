@@ -14,7 +14,7 @@
     padding: 1.5rem;
     background: rgba(248, 249, 250, 0.5);
     border-radius: 15px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--secondary-color);
   }
 
   .section-title {
@@ -38,7 +38,7 @@
 
   .form-control:focus,
   .form-select:focus {
-    border-color: #667eea;
+    border-color: var(--secondary-color);
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
   }
 
@@ -56,7 +56,7 @@
   input[type="tel"]:focus,
   input[name*="Phone"]:focus,
   input[name*="phone"]:focus {
-    border-color: #667eea !important;
+    border-color: var(--secondary-color) !important;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
   }
 
@@ -70,12 +70,12 @@
   }
 
   select:focus {
-    border-color: #667eea !important;
+    border-color: var(--secondary-color) !important;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
   }
 
   .btn-primary {
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--secondary-color), var(--secondary-dark));
     border: none;
     border-radius: 10px;
     padding: 1rem 2rem;
@@ -172,7 +172,7 @@
     border-radius: 10px;
     margin-top: 10px;
     display: none;
-    border: 2px solid #667eea;
+    border: 2px solid var(--secondary-color);
   }
 
   .camera-btn {
@@ -185,7 +185,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #667eea;
+    color: var(--secondary-color);
     transition: all 0.3s ease;
   }
 
