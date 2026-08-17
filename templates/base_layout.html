@@ -42,6 +42,11 @@
       --warning-color: #e8a33d;
       --info-color: #14a098;
 
+      /* Darker variants for solid fills carrying white text (WCAG AA) */
+      --accent-strong: #0e7c7b;
+      --success-strong: #24804a;
+      --danger-strong: #c1323d;
+
       /* Gradients — single source of truth. Pages must not redefine these. */
       --primary-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
       --secondary-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
@@ -222,20 +227,43 @@
     .border-success { border-color: var(--success-color) !important; }
     .border-danger { border-color: var(--danger-color) !important; }
 
+    /* Button fills use the darker shade of each hue so white labels clear
+       WCAG AA (4.5:1). The lighter --success-color / --accent-color stay in use
+       for headings, badges and chart fills. */
     .btn-success {
-      background-color: var(--success-color);
-      border-color: var(--success-color);
+      background-color: var(--success-strong);
+      border-color: var(--success-strong);
     }
 
     .btn-info {
-      background-color: var(--accent-color);
-      border-color: var(--accent-color);
-      color: #fff;
+      background-color: var(--accent-strong);
+      border-color: var(--accent-strong);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-strong);
+      border-color: var(--danger-strong);
     }
 
     .btn-secondary {
       background-color: var(--gray-600);
       border-color: var(--gray-600);
+    }
+
+    /* Every solid button keeps a white label on its dark fill. Warning stays
+       dark-on-amber, which is the readable pairing there. */
+    .btn-success, .btn-success:hover, .btn-success:focus,
+    .btn-info, .btn-info:hover, .btn-info:focus,
+    .btn-secondary, .btn-secondary:hover, .btn-secondary:focus,
+    .btn-danger, .btn-danger:hover, .btn-danger:focus,
+    .btn-dark, .btn-dark:hover, .btn-dark:focus {
+      color: #fff !important;
+    }
+
+    .btn-warning,
+    .btn-warning:hover,
+    .btn-warning:focus {
+      color: #212529 !important;
     }
 
     .btn-outline-primary {
@@ -346,6 +374,15 @@
       padding: 0.75rem 1.5rem;
       font-weight: 500;
       transition: var(--transition-fast);
+    }
+
+    /* Solid buttons must declare their own text colour: without it the label
+       inherits the page's dark body text and goes unreadable on a dark fill. */
+    .btn-primary,
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary:active {
+      color: #fff !important;
     }
 
     .btn-primary {
