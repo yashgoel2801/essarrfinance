@@ -487,8 +487,7 @@
     <!-- Loan Details Table Section -->
     <div class="col-lg-9 col-md-8" id="rightContent">
 
-      {# Summary header: identity plus the four figures that decide what to do
-         about this loan, so they are not buried in the sidebar table. #}
+      {% comment %}Summary header: identity plus the four figures that decide what to do about this loan, so they are not buried in the sidebar table.{% endcomment %}
       <div class="card shadow-sm mb-4 loan-summary-header">
         <div class="loan-summary-id">
           <div>
@@ -965,9 +964,7 @@
             </span>
           </div>
         </div>
-        {# Five essential columns. Waived / Status / Payment Amount / Payment Date are
-           populated on under 5% of penalty rows, so they live in a detail row that
-           expands on click rather than taking permanent width. #}
+        {% comment %}Five essential columns. Waived / Status / Payment Amount / Payment Date are populated on under 5% of penalty rows, so they live in a detail row that expands on click rather than taking permanent width.{% endcomment %}
         <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
           <table class="table table-bordered table-striped align-middle penalty-table">
             <thead class="table-danger">

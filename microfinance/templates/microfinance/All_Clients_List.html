@@ -63,8 +63,7 @@
             {% if c.is_behind %}<span class="behind-tag">behind</span>{% endif %}
           </td>
           <td>{{c.Account.Client.Phone_no1}}</td>
-          {# first_inst_due is annotated in the view; installments_set.first would
-             fire a query per row #}
+          {% comment %}first_inst_due is annotated in the view; installments_set.first would fire a query per row{% endcomment %}
           <td>{{c.first_inst_due|default_if_none:"—"}}</td>
           <td>{% if c.overdue_amount %}<span class="text-danger fw-semibold">{{c.overdue_amount|floatformat:0}}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td colspan="2"></td>
