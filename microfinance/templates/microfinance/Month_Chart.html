@@ -22,7 +22,7 @@
     <div class="row g-3 mb-4">
         <!-- Target Card -->
         <div class="col-md-4">
-            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid #4facfe !important;">
+            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid var(--accent-color) !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted text-uppercase mb-2 small fw-bold">{% if DueDate and DueDate != 0 %}Day {{ DueDate }}{% else %}Monthly{% endif %} Target</h6>
                     <h4 class="mb-0 fw-bold text-primary">₹{% if DayTarget %}{{DayTarget|floatformat:0}}{% else %}{{MonthlyTarget|floatformat:0}}{% endif %}</h4>
@@ -76,7 +76,7 @@
     }
 
     .bg-danger-header th {
-        background: linear-gradient(to right, #f85032, #e73827) !important;
+        background: linear-gradient(to right, var(--danger-color), var(--danger-strong)) !important;
         color: white !important;
     }
     

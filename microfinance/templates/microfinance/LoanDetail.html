@@ -125,19 +125,19 @@
 
   .borrower-card::-webkit-scrollbar-track,
   #rightContent::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--gray-200);
     border-radius: 10px;
   }
 
   .borrower-card::-webkit-scrollbar-thumb,
   #rightContent::-webkit-scrollbar-thumb {
-    background: #888;
+    background: var(--gray-600);
     border-radius: 10px;
   }
 
   .borrower-card::-webkit-scrollbar-thumb:hover,
   #rightContent::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--dark);
   }
 </style>
 
@@ -509,18 +509,18 @@
 
             /* Explicit backgrounds to prevent transparency when scrolling */
             .table-success thead th {
-              background-color: #d1e7dd !important;
-              color: #0f5132 !important;
+              background-color: var(--tint-success) !important;
+              color: var(--tint-success-ink) !important;
             }
 
             .table-danger thead th {
-              background-color: #f8d7da !important;
-              color: #842029 !important;
+              background-color: var(--tint-danger) !important;
+              color: var(--tint-danger-ink) !important;
             }
 
             .table-warning thead th {
-              background-color: #fff3cd !important;
-              color: #664d03 !important;
+              background-color: var(--tint-warning) !important;
+              color: var(--tint-warning-ink) !important;
             }
 
             .table-light thead th,

@@ -14,14 +14,14 @@
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
-        color: #636e72;
+        color: var(--gray-600);
         letter-spacing: 0.5px;
         margin-bottom: 0.5rem;
     }
     .form-control {
         border-radius: 10px;
         padding: 0.75rem 1rem;
-        border: 1px solid #dfe6e9;
+        border: 1px solid var(--gray-300);
         font-size: 0.95rem;
     }
     .form-control:focus {
@@ -39,7 +39,7 @@
     }
     .input-group-text {
         border-radius: 10px 0 0 10px;
-        border: 1px solid #dfe6e9;
+        border: 1px solid var(--gray-300);
         border-right: none;
     }
     .input-group .form-control {
@@ -99,7 +99,7 @@
         <!-- Loan Search -->
         <div class="col-lg-4">
             <div class="search-card position-relative overflow-hidden" style="background: linear-gradient(145deg, #ffffff 0%, #f1f3f5 100%);">
-                <h5 class="fw-bold mb-4 text-success"><i class="fas fa-file-invoice-dollar me-2"></i>Quick Loan Lookup</h5>
+                <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-file-invoice-dollar me-2"></i>Quick Loan Lookup</h5>
                 <form method="POST" action="{% url 'microfinance:searchloan' %}">
                     {% csrf_token %}
                     <label class="form-label">Loan ID Reference</label>
@@ -107,7 +107,7 @@
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-hashtag text-muted"></i></span>
                         <input type="number" class="form-control border-start-0 ps-0" name="loan_id" placeholder="Enter Reference ID">
                     </div>
-                    <button type="submit" class="btn btn-success btn-search w-100"><i class="fas fa-arrow-right me-2"></i>Go to Loan</button>
+                    <button type="submit" class="btn btn-primary btn-search w-100"><i class="fas fa-arrow-right me-2"></i>Go to Loan</button>
                 </form>
             </div>
         </div>

@@ -47,6 +47,19 @@
       --success-strong: #24804a;
       --danger-strong: #c1323d;
 
+      /* Soft tints for section-coding tables and badges. Each pairs with the
+         matching -ink colour for readable text (all clear WCAG AA). */
+      --tint-success: #e4f3ea;
+      --tint-success-ink: #1b5e34;
+      --tint-danger: #fbe7e9;
+      --tint-danger-ink: #8f2730;
+      --tint-warning: #fdf2df;
+      --tint-warning-ink: #6b4a10;
+      --tint-accent: #e2f2f1;
+      --tint-accent-ink: #0a5b5a;
+      --tint-neutral: #eef1f4;
+      --tint-neutral-ink: #3c4652;
+
       /* Gradients — single source of truth. Pages must not redefine these. */
       --primary-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
       --secondary-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
@@ -266,6 +279,40 @@
       color: #212529 !important;
     }
 
+    /* Buttons sitting inside a dark card header: a solid btn-light reads as a
+       heavy white block and inflates the header. Render them as quiet outlines
+       so the header keeps a consistent height across cards. */
+    .card-header.bg-primary .btn-light,
+    .card-header.bg-primary .btn-light:focus {
+      background-color: rgba(255, 255, 255, 0.14) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #fff !important;
+      box-shadow: none;
+    }
+
+    .card-header.bg-primary .btn-light:hover {
+      background-color: rgba(255, 255, 255, 0.26) !important;
+      border-color: rgba(255, 255, 255, 0.7);
+      color: #fff !important;
+    }
+
+    .card-header .btn-sm {
+      padding: 0.3rem 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    /* Keep header rows a predictable height whether or not they hold a button */
+    .card-header {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-header > h5,
+    .card-header > h6 {
+      line-height: 1.3;
+    }
+
     .btn-outline-primary {
       color: var(--primary-color);
       border-color: var(--primary-color);
@@ -456,6 +503,33 @@
 
     .table-modern tbody tr:last-child td {
       border-bottom: none;
+    }
+
+    /* Section-coded tables keep a meaningful tint instead of the navy header:
+       success = schedule/paid, danger = penalties, warning = attention.
+       Each tint pairs with its own ink colour and clears WCAG AA. */
+    .table-success thead th,
+    .table-success.table-modern thead th {
+      background-color: var(--tint-success) !important;
+      color: var(--tint-success-ink) !important;
+    }
+
+    .table-danger thead th,
+    .table-danger.table-modern thead th {
+      background-color: var(--tint-danger) !important;
+      color: var(--tint-danger-ink) !important;
+    }
+
+    .table-warning thead th,
+    .table-warning.table-modern thead th {
+      background-color: var(--tint-warning) !important;
+      color: var(--tint-warning-ink) !important;
+    }
+
+    .table-info thead th,
+    .table-info.table-modern thead th {
+      background-color: var(--tint-accent) !important;
+      color: var(--tint-accent-ink) !important;
     }
 
     /* ===========================

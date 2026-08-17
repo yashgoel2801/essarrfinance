@@ -34,12 +34,12 @@
 
     .card-title {
         font-weight: 700;
-        color: #2d3436;
+        color: var(--dark);
         margin-bottom: 0.5rem;
     }
 
     .card-description {
-        color: #636e72;
+        color: var(--gray-600);
         font-size: 0.9rem;
         margin-bottom: 1.5rem;
     }
@@ -49,7 +49,7 @@
     .category-header {
         background-color: #f8f9fa !important;
         font-weight: 700;
-        color: #2d3436;
+        color: var(--dark);
         text-align: center;
         cursor: pointer;
         transition: background-color 0.2s;
@@ -145,7 +145,7 @@
         <div class="col-12">
             <div class="bg-white p-4 rounded-4 shadow-sm">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-                    <h2 class="fw-bold mb-0" style="color: #2d3436;">Reminder</h2>
+                    <h2 class="fw-bold mb-0" style="color: var(--dark);">Reminder</h2>
                     
                     <form method="POST" class="d-flex align-items-center gap-3 bg-light p-2 rounded-3">
                         {% csrf_token %}

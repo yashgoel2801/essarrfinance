@@ -11,7 +11,7 @@
     }
 
     .officer-header {
-        background: linear-gradient(135deg, #f1f2f6 0%, #dfe4ea 100%);
+        background: linear-gradient(135deg, var(--tint-neutral) 0%, var(--tint-neutral) 100%);
         padding: 1.25rem;
         border-radius: 16px 16px 0 0;
         display: flex;
@@ -155,7 +155,7 @@
                                     <td><span class="fw-semibold">{{payment.Loan.Account.Client.Name}}</span></td>
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
                                     <td class="text-end text-warning fw-bold">₹{{payment.penalty_today}}</td>
-                                    <td class="text-end fw-bolder" style="background: #fbfbfb;">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
+                                    <td class="text-end fw-bolder" style="background: var(--gray-100);">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
                                     <td class="text-end">
                                         {% if payment.loan_status.overdue %}
                                         <span class="fw-semibold text-danger">₹{{payment.loan_status.overdue|floatformat:0}}</span>
