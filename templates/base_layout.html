@@ -763,19 +763,50 @@
       padding-right: 1.5rem;
     }
 
-    /* Tables that sit directly in a card with no body padding were running
-       flush to the card edge. Inset the first and last cells so the content
-       keeps a gutter without needing per-page overrides. */
-    .card > .table-responsive > .table > :is(thead, tbody) > tr > :first-child,
-    .card > .table > :is(thead, tbody) > tr > :first-child,
-    .card-body.p-0 > .table-responsive > .table > :is(thead, tbody) > tr > :first-child {
-      padding-left: 1.25rem;
+    /* A .table-responsive placed straight inside a .card (no .card-body) gets
+       no padding from Bootstrap, so the table runs edge to edge. Give the
+       wrapper its own inset instead of trying to pad individual cells, which
+       breaks down as soon as the table scrolls horizontally. */
+    .card > .table-responsive,
+    .card-body.p-0 > .table-responsive {
+      padding: 0 1rem 0.25rem 1rem;
     }
 
-    .card > .table-responsive > .table > :is(thead, tbody) > tr > :last-child,
-    .card > .table > :is(thead, tbody) > tr > :last-child,
-    .card-body.p-0 > .table-responsive > .table > :is(thead, tbody) > tr > :last-child {
-      padding-right: 1.25rem;
+    /* A sticky header inside that wrapper must cover the new padding, or rows
+       show through beside it while scrolling. */
+    .card > .table-responsive > .table > thead,
+    .card-body.p-0 > .table-responsive > .table > thead {
+      background-clip: padding-box;
+    }
+
+    /* Scrolling a wide table sideways used to hide the leading column, leaving
+       action buttons with no row label. Rather than pin a column - which fights
+       every row tint and stripe for an opaque background - keep the columns
+       narrow enough that the table usually fits, and make the scroll obvious
+       when it does not. */
+    .table-responsive {
+      scrollbar-width: thin;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+      height: 9px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-600);
+    }
+
+    /* Dense tables (8+ columns) trim their padding and font a little so they
+       fit without horizontal scrolling on a normal screen. */
+    .table-responsive > .table > thead > tr > th,
+    .table-responsive > .table > tbody > tr > td {
+      padding-left: 0.6rem;
+      padding-right: 0.6rem;
     }
 
     @media (max-width: 576px) {
