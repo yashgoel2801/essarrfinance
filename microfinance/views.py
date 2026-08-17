@@ -1749,7 +1749,8 @@ def Total_Amount_Collected_Report(request):
             return loan_status_cache[loan.pk]
 
         if loan.Status:
-            status = {'state': 'closed', 'label': 'Closed', 'overdue': 0, 'behind': 0}
+            status = {'state': 'closed', 'label': 'Closed', 'overdue': 0, 'behind': 0,
+                      'pending_penalty': 0}
         else:
             total_due = Installments.objects.filter(
                 Loan=loan, Date_Due__lte=today_date
@@ -1778,11 +1779,27 @@ def Total_Amount_Collected_Report(request):
                 else:
                     behind += 1
 
+            # Pending penalty, mirroring ClientLoanDetail: charged less paid less waived.
+            penalty_rows = Penalty.objects.filter(Loan=loan).aggregate(
+                charged=Sum('Penalty_Calc'), paid=Sum('Penalty_Paid'), waived=Sum('Waived_Amount')
+            )
+            penalty_paid_direct = Payments.objects.filter(
+                Loan=loan, Payment_Type=2
+            ).aggregate(Sum('Amount_Paid'))['Amount_Paid__sum'] or 0
+            penalty_waived = Waiver.objects.filter(
+                Loan=loan, Waiver_Type=1
+            ).aggregate(Sum('Amount'))['Amount__sum'] or 0
+            pending_penalty = round(max(0, (penalty_rows['charged'] or 0)
+                                        - max(penalty_paid_direct, penalty_rows['paid'] or 0)
+                                        - max(penalty_waived, penalty_rows['waived'] or 0)), 1)
+
             if overdue <= 0:
-                status = {'state': 'ontrack', 'label': 'On track', 'overdue': 0, 'behind': 0}
+                status = {'state': 'ontrack', 'label': 'On track', 'overdue': 0, 'behind': 0,
+                          'pending_penalty': pending_penalty}
             else:
                 label = '%s installment%s behind' % (behind, '' if behind == 1 else 's') if behind else 'Behind schedule'
-                status = {'state': 'behind', 'label': label, 'overdue': overdue, 'behind': behind}
+                status = {'state': 'behind', 'label': label, 'overdue': overdue, 'behind': behind,
+                          'pending_penalty': pending_penalty}
 
         loan_status_cache[loan.pk] = status
         return status
@@ -1805,16 +1822,6 @@ def Total_Amount_Collected_Report(request):
         officer = payment.Loan.Loan_Collector
         entry = get_entry(officer)
         
-        # Previous installment payment, strictly before this report date.
-        # Deliberately excludes the report date so the column shows the gap since
-        # the client last paid, not a restatement of today's payment.
-        last_pay = Payments.objects.filter(
-            Loan=payment.Loan,
-            Payment_Type=1,
-            Date_Paid__lt=Date
-        ).order_by('-Date_Paid').first()
-        payment.last_payment_date = last_pay.Date_Paid if last_pay else None
-        payment.last_payment_amount = last_pay.Amount_Paid if last_pay else None
         payment.loan_status = get_loan_status(payment.Loan)
         
         # Check if penalty was paid on the same day

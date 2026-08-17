@@ -249,7 +249,9 @@
                                     <th class="text-end" width="13%">Paid on {{Date}}</th>
                                     <th class="text-end" width="12%">Penalty Paid</th>
                                     <th class="text-end" width="12%">Row Total</th>
-                                    <th width="17%">Previously Paid</th>
+                                    <th class="text-end" width="11%">Overdue</th>
+                                    <th class="text-end" width="11%">Penalty Pending</th>
+                                    <th width="14%">Status Today</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -260,14 +262,25 @@
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
                                     <td class="text-end text-warning fw-bold">₹{{payment.penalty_today}}</td>
                                     <td class="text-end fw-bolder" style="background: #fbfbfb;">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
-                                    <td>
-                                        {% if payment.last_payment_date %}
-                                        <span class="text-muted small">₹{{payment.last_payment_amount}} on {{payment.last_payment_date|date:"M j, Y"}}</span>
+                                    <td class="text-end">
+                                        {% if payment.loan_status.overdue %}
+                                        <span class="fw-semibold text-danger">₹{{payment.loan_status.overdue|floatformat:0}}</span>
                                         {% else %}
-                                        <span class="text-muted small fst-italic">First payment</span>
+                                        <span class="text-muted">—</span>
                                         {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if payment.loan_status.pending_penalty %}
+                                        <span class="fw-semibold text-warning">₹{{payment.loan_status.pending_penalty|floatformat:0}}</span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
                                         {% if payment.loan_status.state == 'behind' %}
-                                        <div class="small fw-semibold text-danger">{{payment.loan_status.label}}</div>
+                                        <span class="small fw-semibold text-danger">{{payment.loan_status.label}}</span>
+                                        {% else %}
+                                        <span class="small text-success">{{payment.loan_status.label}}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
