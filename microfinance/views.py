@@ -1769,7 +1769,7 @@ def All_Clients_List(request):
         first_inst_due=Subquery(
             Installments.objects.filter(Loan=OuterRef('pk')).order_by('Date_Due').values('Installment_Due')[:1]
         )
-    )
+    ).select_related('Account__Client', 'Loan_Collector')
     Total_Amount_To_Be_Collected = Loan.aggregate(total=Sum('first_inst_due'))['total'] or 0
 
     # Flag loans behind on repayment. Computed in bulk: this list runs ~80 rows
