@@ -1752,13 +1752,16 @@ def Total_Amount_Collected_Report(request):
         officer = payment.Loan.Loan_Collector
         entry = get_entry(officer)
         
-        # Get last payment date before this report date
+        # Previous installment payment, strictly before this report date.
+        # Deliberately excludes the report date so the column shows the gap since
+        # the client last paid, not a restatement of today's payment.
         last_pay = Payments.objects.filter(
-            Loan=payment.Loan, 
-            Payment_Type=1, 
+            Loan=payment.Loan,
+            Payment_Type=1,
             Date_Paid__lt=Date
         ).order_by('-Date_Paid').first()
-        payment.last_payment_date = last_pay.Date_Paid if last_pay else "N/A"
+        payment.last_payment_date = last_pay.Date_Paid if last_pay else None
+        payment.last_payment_amount = last_pay.Amount_Paid if last_pay else None
         
         # Check if penalty was paid on the same day
         penalty_today = pen_payments.filter(Loan=payment.Loan).first()

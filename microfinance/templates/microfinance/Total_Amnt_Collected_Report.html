@@ -202,12 +202,12 @@
                         <table class="table-modern table-hover mb-4">
                             <thead class="bg-light">
                                 <tr>
-                                    <th width="8%">ID</th>
+                                    <th width="8%">Loan</th>
                                     <th>Client Name</th>
-                                    <th width="15%">Last Pay Date</th>
-                                    <th class="text-end" width="12%">Inst. Amt</th>
+                                    <th class="text-end" width="13%">Paid on {{Date}}</th>
                                     <th class="text-end" width="12%">Penalty Paid</th>
                                     <th class="text-end" width="12%">Row Total</th>
+                                    <th width="17%">Previously Paid</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,10 +215,16 @@
                                 <tr>
                                     <td><a href="{% url 'microfinance:clientdetail' pk=payment.Loan.Account.Client.pk %}" class="text-decoration-none fw-bold">#{{payment.Loan.pk}}</a></td>
                                     <td><span class="fw-semibold">{{payment.Loan.Account.Client.Name}}</span></td>
-                                    <td><span class="text-muted small">{{payment.last_payment_date}}</span></td>
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
                                     <td class="text-end text-warning fw-bold">₹{{payment.penalty_today}}</td>
                                     <td class="text-end fw-bolder" style="background: #fbfbfb;">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
+                                    <td>
+                                        {% if payment.last_payment_date %}
+                                        <span class="text-muted small">₹{{payment.last_payment_amount}} on {{payment.last_payment_date|date:"M j, Y"}}</span>
+                                        {% else %}
+                                        <span class="text-muted small fst-italic">First payment</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
