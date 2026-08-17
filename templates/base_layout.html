@@ -430,15 +430,40 @@
       font-size: 1.1rem;
     }
 
+    /* Webcam capture UI, shared by Add Client and Add Guarantor.
+       Hidden until the camera starts - the JS flips display to block. Keeping
+       display:none here matters: an earlier version of this rule dropped it and
+       the empty black frame plus its controls rendered on page load. */
     .webcam-container {
       position: relative;
-      display: inline-block;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem auto;
+      background: #000;
+      border-radius: 15px;
+      overflow: hidden;
+      display: none;
     }
 
+    /* Round shutter button: the glyph is dark, so the button needs its own light
+       fill or the icon disappears against it. */
     .camera-btn {
-      border-radius: var(--radius-sm);
-      padding: 0.5rem 1rem;
-      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #212529;
+      transition: var(--transition-fast);
+    }
+
+    .camera-btn:hover {
+      background: #fff;
+      transform: scale(1.1);
     }
 
     @media (max-width: 768px) {
