@@ -1,5 +1,63 @@
 {%extends 'base_layout.html'%} {% load noofinstallment %} {%block content%}
 <style>
+  /* Summary header: identity band plus the four decision figures */
+  .loan-summary-header {
+    overflow: hidden;
+  }
+
+  .loan-summary-id {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 0.8rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .loan-summary-figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--gray-200);
+  }
+
+  .lsf {
+    background: #fff;
+    padding: 0.7rem 1.1rem;
+    min-width: 0;
+  }
+
+  .lsf-k {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-600);
+  }
+
+  .lsf-v {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+  }
+
+  .lsf-bad {
+    box-shadow: inset 3px 0 0 var(--danger-color);
+  }
+
+  .lsf-bad .lsf-v {
+    color: var(--tint-danger-ink);
+  }
+
+  .lsf-warn {
+    box-shadow: inset 3px 0 0 var(--warning-color);
+  }
+
+  .lsf-warn .lsf-v {
+    color: var(--tint-warning-ink);
+  }
+
   /* Penalty rows expand to reveal the rarely-populated fields and the Delete action */
   .penalty-row {
     cursor: pointer;
@@ -428,6 +486,42 @@
 
     <!-- Loan Details Table Section -->
     <div class="col-lg-9 col-md-8" id="rightContent">
+
+      {# Summary header: identity plus the four figures that decide what to do
+         about this loan, so they are not buried in the sidebar table. #}
+      <div class="card shadow-sm mb-4 loan-summary-header">
+        <div class="loan-summary-id">
+          <div>
+            <div class="fw-bold">{{ Client.Name }} <span class="opacity-75">· Loan #{{ Loan.pk }}</span></div>
+            <div class="small opacity-75">
+              Client #{{ Client.pk }} · opened {{ Loan.Loan_Date|date:"M d, Y" }}
+              {% if Loan.Loan_Collector %} · {{ Loan.Loan_Collector.Officer_Name }}{% endif %}
+            </div>
+          </div>
+          <span class="badge {% if Loan.Status %}bg-secondary{% else %}bg-success{% endif %}">
+            {% if Loan.Status %}Closed{% else %}Active{% endif %}
+          </span>
+        </div>
+        <div class="loan-summary-figures">
+          <div class="lsf">
+            <div class="lsf-k">Principal</div>
+            <div class="lsf-v">₹{{ Principal_Amount|floatformat:0 }}</div>
+          </div>
+          <div class="lsf">
+            <div class="lsf-k">Total pending</div>
+            <div class="lsf-v">₹{{ Total_Pending|floatformat:0 }}</div>
+          </div>
+          <div class="lsf {% if Amount_Overdue %}lsf-bad{% endif %}">
+            <div class="lsf-k">Overdue</div>
+            <div class="lsf-v">{% if Amount_Overdue %}₹{{ Amount_Overdue|floatformat:0 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="lsf {% if Pending_Penalty %}lsf-warn{% endif %}">
+            <div class="lsf-k">Penalty pending</div>
+            <div class="lsf-v">{% if Pending_Penalty %}₹{{ Pending_Penalty|floatformat:0 }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card shadow-sm mb-4 installment-table-section">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
