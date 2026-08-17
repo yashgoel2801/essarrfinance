@@ -222,12 +222,35 @@
        theme entirely.
        =========================== */
 
-    .bg-primary { background-color: var(--primary-color) !important; }
-    .bg-secondary { background-color: var(--primary-color) !important; }
-    .bg-info { background-color: var(--accent-color) !important; }
-    .bg-success { background-color: var(--success-color) !important; }
-    .bg-danger { background-color: var(--danger-color) !important; }
-    .bg-warning { background-color: var(--warning-color) !important; }
+    /* Retheme by overriding Bootstrap's *-rgb variables rather than the final
+       background-color. Setting background-color directly discards
+       --bs-bg-opacity, which is how bg-opacity-* works: a
+       `bg-success bg-opacity-10` icon tile then rendered as a solid block with
+       its glyph invisible against it. */
+    :root {
+      --bs-primary-rgb: 30, 58, 95;
+      --bs-secondary-rgb: 30, 58, 95;
+      --bs-info-rgb: 20, 160, 152;
+      --bs-success-rgb: 46, 158, 91;
+      --bs-danger-rgb: 214, 69, 80;
+      --bs-warning-rgb: 232, 163, 61;
+    }
+
+    .bg-primary,
+    .bg-secondary,
+    .bg-info,
+    .bg-success,
+    .bg-danger,
+    .bg-warning {
+      background-color: rgba(var(--bs-bg-rgb), var(--bs-bg-opacity, 1)) !important;
+    }
+
+    .bg-primary { --bs-bg-rgb: var(--bs-primary-rgb); }
+    .bg-secondary { --bs-bg-rgb: var(--bs-secondary-rgb); }
+    .bg-info { --bs-bg-rgb: var(--bs-info-rgb); }
+    .bg-success { --bs-bg-rgb: var(--bs-success-rgb); }
+    .bg-danger { --bs-bg-rgb: var(--bs-danger-rgb); }
+    .bg-warning { --bs-bg-rgb: var(--bs-warning-rgb); }
 
     .text-primary { color: var(--primary-color) !important; }
     .text-info { color: var(--accent-color) !important; }
