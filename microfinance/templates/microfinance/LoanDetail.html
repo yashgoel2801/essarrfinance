@@ -1,5 +1,23 @@
 {%extends 'base_layout.html'%} {% load noofinstallment %} {%block content%}
 <style>
+  /* Penalty rows expand to reveal the rarely-populated fields and the Delete action */
+  .penalty-row {
+    cursor: pointer;
+  }
+
+  .penalty-row:hover td {
+    background-color: var(--tint-danger) !important;
+  }
+
+  .penalty-row:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+  }
+
+  .penalty-detail td {
+    border-top: none;
+  }
+
   .borrower-card {
     border-left: 4px solid var(--primary-color);
     max-height: calc(100vh - 120px);
@@ -189,20 +207,14 @@
       display: none;
     }
 
-    /* Hide less important columns in penalty table */
-    .table-danger thead tr th:nth-child(2), /* Date Started */
-    .table-danger tbody tr td:nth-child(2),
-    .table-danger thead tr th:nth-child(3), /* Date Ended */
-    .table-danger tbody tr td:nth-child(3),
-    .table-danger thead tr th:nth-child(4), /* Amount */
-    .table-danger tbody tr td:nth-child(4),
-    .table-danger thead tr th:nth-child(6), /* Waived */
-    .table-danger tbody tr td:nth-child(6),
-    .table-danger thead tr th:nth-child(7), /* Status */
-    .table-danger tbody tr td:nth-child(7),
-    .table-danger thead tr th:nth-child(10), /* Actions */
-    .table-danger tbody tr td:nth-child(10) {
-      display: none;
+    /* The penalty table is down to five columns, all of which matter, so nothing
+       is hidden on mobile now. (This rule used to hide columns 2,3,4,6,7,10 by
+       index - against the new column set that would have hidden Amount, Penalty
+       and State and left an almost empty table.) Only trim the amounts a little. */
+    .penalty-table thead th,
+    .penalty-table tbody td {
+      font-size: 12px;
+      padding: 8px 6px;
     }
 
     /* Card spacing */
@@ -859,48 +871,96 @@
             </span>
           </div>
         </div>
+        {# Five essential columns. Waived / Status / Payment Amount / Payment Date are
+           populated on under 5% of penalty rows, so they live in a detail row that
+           expands on click rather than taking permanent width. #}
         <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
-          <table class="table table-bordered table-striped align-middle">
+          <table class="table table-bordered table-striped align-middle penalty-table">
             <thead class="table-danger">
               <tr>
-                <th>Installment Date</th>
-                <th>Date Started</th>
-                <th>Date Ended</th>
-                <th>Amount</th>
-                <th>Penalty Calc</th>
-                <th>Waived</th>
-                <th>Status</th>
-                <th>Payment Amount</th>
-                <th>Payment Date</th>
-                <th>Actions</th>
+                <th>Penalty Period</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">Penalty</th>
+                <th>State</th>
+                <th class="text-center" style="width:44px" aria-label="Expand"></th>
               </tr>
             </thead>
             <tbody>
               {% for item in combinedPenaltyPaymentView %}
-              <tr>
+              <tr class="penalty-row" data-target="pen-detail-{{ forloop.counter }}" tabindex="0"
+                role="button" aria-expanded="false" aria-controls="pen-detail-{{ forloop.counter }}">
                 <td>
-                  <span class="badge bg-primary">{{ item.Installment_Due_Date|date:"M d, Y"|default:'-' }}</span>
+                  {% if item.Installment_Due_Date %}
+                  <span class="badge bg-primary me-1">{{ item.Installment_Due_Date|date:"M d, Y" }}</span>
+                  {% endif %}
+                  <span class="text-nowrap">{{ item.Date_Started|default:'-' }}</span>
+                  <i class="fas fa-arrow-right mx-1 text-muted small"></i>
+                  <span class="text-nowrap">{{ item.Date_Ended|default:'-' }}</span>
                 </td>
-                <td>{{ item.Date_Started|default:'-' }}</td>
-                <td>{{ item.Date_Ended|default:'-' }}</td>
-                <td>{{ item.Amount|floatformat:1 }}</td>
-                <td>{{ item.Penalty_Calc|floatformat:1 }}</td>
-                <td>{{ item.Waived_Amount|floatformat:1 }}</td>
-                <td>{{ item.Status|default:'-' }}</td>
-                <td>{{ item.Payment_Amount|floatformat:1|default:'-' }}</td>
-                <td>{{ item.Payment_Date|default:'-' }}</td>
+                <td class="text-end">{{ item.Amount|floatformat:1 }}</td>
+                <td class="text-end fw-semibold">{{ item.Penalty_Calc|floatformat:1 }}</td>
                 <td>
-                  {% if request.user.is_staff and item.pk %}
-                  <button type="button" class="btn btn-sm btn-danger delete-penalty-btn" data-penalty-id="{{ item.pk|default:0 }}">
-                    <i class="fas fa-trash"></i> Delete
-                  </button>
+                  {% if item.Status %}
+                  <span class="badge bg-success">Paid</span>
+                  {% elif item.Waived_Amount %}
+                  <span class="badge bg-info">Waived</span>
+                  {% else %}
+                  <span class="badge bg-danger">Unpaid</span>
                   {% endif %}
                 </td>
+                <td class="text-center">
+                  <i class="fas fa-chevron-right text-muted penalty-caret"></i>
+                </td>
+              </tr>
+              <tr class="penalty-detail d-none" id="pen-detail-{{ forloop.counter }}">
+                <td colspan="5" class="bg-light">
+                  <div class="d-flex flex-wrap align-items-center gap-4 small">
+                    <span><span class="text-muted">Waived:</span>
+                      <strong>{{ item.Waived_Amount|floatformat:1|default:"0.0" }}</strong></span>
+                    <span><span class="text-muted">Payment amount:</span>
+                      <strong>{{ item.Payment_Amount|floatformat:1|default:"—" }}</strong></span>
+                    <span><span class="text-muted">Payment date:</span>
+                      <strong>{{ item.Payment_Date|default:"—" }}</strong></span>
+                    {% if request.user.is_staff and item.pk %}
+                    <button type="button" class="btn btn-sm btn-danger delete-penalty-btn ms-auto"
+                      data-penalty-id="{{ item.pk|default:0 }}">
+                      <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">No penalties recorded for this loan.</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
+
+        <script>
+          // Expand a penalty row to reveal the rarely-populated fields and Delete.
+          (function () {
+            document.querySelectorAll('.penalty-row').forEach(function (row) {
+              function toggle() {
+                var detail = document.getElementById(row.dataset.target);
+                if (!detail) return;
+                var open = !detail.classList.toggle('d-none');
+                row.setAttribute('aria-expanded', open ? 'true' : 'false');
+                var caret = row.querySelector('.penalty-caret');
+                if (caret) {
+                  caret.classList.toggle('fa-chevron-right', !open);
+                  caret.classList.toggle('fa-chevron-down', open);
+                }
+              }
+              row.addEventListener('click', toggle);
+              row.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+              });
+            });
+          })();
+        </script>
 
         <!-- Payment History Section - Collapsed by Default -->
         <div class="mb-4">
