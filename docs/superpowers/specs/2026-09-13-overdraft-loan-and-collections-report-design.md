@@ -37,15 +37,33 @@ overdue/behind-schedule classification.
   feature in use.
 - Regular loans use **flat interest**: `total_payable = principal +
   principal × rate/100`, fixed at creation, split evenly across
-  `No_Of_Installments` (`views.py:316-368`, duplicated at
-  `views.py:2531-2620` for the edit path).
+  `No_Of_Installments`. This generation logic is duplicated verbatim in
+  two places — `Add_Loan` (`views.py:315-368`) and the `EditLoan`
+  recreate-on-due-date-change path (`views.py:2483-2639`) — both already
+  diverging copies of the same Daily/Weekly/Monthly branching.
 - `Installments` rows are pre-generated in full at loan creation for
   regular loans.
-- `Penalty` (`models.py:226-242`) accrues on unpaid installment amounts at
-  a daily rate derived from `Percent` (default 2, `_get_penalty_rate`,
-  `views.py:3118-3121`), computed via
-  `_calculate_individual_installment_penalties` /
-  `_calculate_total_penalty` (`views.py:3102-3116`).
+- `Penalty` (`models.py:226-242`) accrues via the **live** call chain
+  `pay_installment` (`views.py:701-739`) / `Recalculate_Penalty`
+  (`views.py:646-667`) → `_calculate_individual_penalties`
+  (`views.py:2869-2870`, a thin wrapper) →
+  `_calculate_individual_installment_penalties` (`views.py:3789-4009`,
+  the function that actually walks unpaid installments and creates
+  `Penalty` rows). That function **hardcodes `penalty_rate =
+  Decimal('2')`** at its own line 3944 — it does not read
+  `Penalty.Percent` at all today, so regular loans' penalty rate is
+  effectively fixed at 2%/day regardless of what's stored on any
+  `Penalty` row.
+- There is a **second, entirely separate penalty engine** in the same
+  file (`calculate_penalties` → `_perform_calculation` →
+  `_calculate_with_running_balance` → `_process_date_sequence` →
+  `_calculate_total_penalty` / `_get_penalty_rate`, roughly
+  `views.py:2703-3150`) that *does* read `Penalty.Percent` via
+  `_get_penalty_rate`. Confirmed via grep of every call site: nothing in
+  the live request-handling path calls `calculate_penalties` or
+  `batch_calculate_penalties` — this entire cluster is **dead code**,
+  unreachable from any view. **This feature does not touch it** and it
+  is not the place to hook the configurable penalty rate.
 - `Staff` (`models.py:16-26`) is the officer/collector entity;
   `Loans.Loan_Collector` FKs to it.
 - `Overdue_Loans` (`views.py:1408-1473`) is the existing overdue report:
@@ -60,7 +78,10 @@ overdue/behind-schedule classification.
 1. Overdraft has a fixed monthly due date (like other loans), not a
    dateless running accrual.
 2. Late-payment penalty % is configurable per-loan at creation, for
-   **overdraft loans only**. Regular loans are untouched.
+   **all loan types** (Daily/Weekly/Monthly/OverDraft alike) — this
+   supersedes an earlier, narrower "overdraft only" scoping decided
+   mid-design. Loans created without a value keep the current hardcoded
+   2%/day default.
 3. Penalty base is that month's **unpaid interest**, not principal.
 4. Interest is a **simple monthly rate** applied to outstanding principal
    (not an annual rate prorated down).
@@ -122,16 +143,22 @@ Penalty_Rate = models.FloatField(null=True, blank=True)
 Principal_Threshold_Percent = models.FloatField(null=True, blank=True)
 ```
 
-- Both nullable; only meaningful/populated for `Frequency == 4`
-  (OverDraft).
-- `_get_penalty_rate` (`views.py:3118-3121`) will check
-  `loan.Penalty_Rate` first when `loan.Frequency == 4`, falling back to
-  existing `Penalty`-row/default-2 behavior otherwise (unchanged for
-  non-overdraft loans).
-- `Principal_Threshold_Percent` is the minimum leftover-as-%-of-outstanding
-  a payment must clear (after interest is fully paid) before that leftover
-  counts toward principal at all. Set at loan creation, alongside
-  `Intrest_Rate` and `Penalty_Rate`.
+- `Penalty_Rate` is nullable and available on **every** loan type —
+  added to the loan creation form (and edit form) regardless of
+  `Frequency`. It's read directly inside
+  `_calculate_individual_installment_penalties` (`views.py:3944`, the
+  live penalty engine — see Background), replacing that function's
+  hardcoded `Decimal('2')` with: `Decimal(str(loan.Penalty_Rate))` when
+  `loan.Penalty_Rate is not None`, else `Decimal('2')` (preserving
+  today's behavior for any loan created without a value, e.g. loans that
+  existed before this migration).
+- `Principal_Threshold_Percent` is nullable and only meaningful/populated
+  for `Frequency == 4` (OverDraft) — this field stays scoped to
+  overdraft loans; only the penalty rate was generalized to all types.
+  It's the minimum leftover-as-%-of-outstanding a payment must clear
+  (after interest is fully paid) before that leftover counts toward
+  principal at all. Set at loan creation, alongside `Intrest_Rate` and
+  `Penalty_Rate`.
 
 No `Outstanding_Principal` field is added — see below.
 
@@ -215,11 +242,17 @@ there's no circularity — nothing depends on guessing future behavior.
 
 ### Lazy invocation
 
-No scheduler exists in this app. `ensure_overdraft_installments(loan)`
-is called from every read/write path that touches an overdraft loan (loan
-detail view, payment recording, the collections report); it runs the
-replay and persists any newly-materialized `Installment` rows and updated
-unpaid-installment amounts.
+No scheduler exists in this app. `ensure_overdraft_installments(loan)` is
+a new, standalone function called from every read/write path that
+touches a loan (loan detail view, `pay_installment`, the collections
+report), guarded by `if loan.Frequency == 4:` at each call site — a thin
+early dispatch, not a modification to what those views currently do for
+other frequencies. It runs the replay and persists any
+newly-materialized `Installment` rows and updated unpaid-installment
+amounts. Similarly, `pay_installment`'s overdraft-specific allocation
+(interest-first, then threshold test, from the replay) lives in its own
+function, called only when `loan.Frequency == 4`; the existing payment
+logic for other frequencies in `pay_installment` is not altered.
 
 ### Piecewise proration within a cycle
 
@@ -258,7 +291,8 @@ is still computed purely on outstanding **principal** — unpaid interest
 is never added to principal and never itself accrues further interest.
 It remains a separate unpaid materialized `Installment` row and accrues
 **penalty** from its due date via the existing `Penalty` model (see
-"Penalty calculation for overdraft" below) for as long as it's unpaid.
+"Penalty calculation (configurable rate, all loan types)" below) for as
+long as it's unpaid.
 
 Oldest-first allocation (above) means a late payment clears month 1's
 unpaid interest before month 2's, and so on — and only a leftover *after
@@ -293,49 +327,90 @@ the ledger. Already-paid installments are left frozen as historical
 record — not retroactively corrected. This matches how the existing
 penalty system already treats settled history.
 
-## Places requiring an overdraft-aware branch
+## Design principle: new functions for overdraft, not branches in existing ones
 
-Flat-interest assumptions baked into existing code, each needing a
-`Frequency == 4` branch:
+To minimize risk to existing Daily/Weekly/Monthly behavior, overdraft
+logic is implemented as **new, separately-named functions** that regular
+loans never call, rather than threading `if Frequency == 4` branches
+into the existing (already duplicated) installment-generation code. Each
+place below either dispatches to a new function early (leaving the
+existing code path for other frequencies completely unmodified) or reads
+a value that's naturally correct for both cases without needing a
+frequency check at all:
 
-- **`Loans.Total` property** (models.py) — for overdraft, returns
-  `outstanding principal + unpaid interest + unpaid penalty − available
-  advance-interest credit` (all replay outputs) instead of the flat
-  `principal + principal×rate/100`.
-- **`bulk_overdue_map`** (`views.py:46-83`) — overdue cap uses the same
-  replay-derived figures instead of the flat total.
-- **`loan_repayment_status`** (`views.py:86-157`) — needs to understand
-  that overdraft loans have no fixed schedule to be "ahead" on; status is
-  based on whether the current materialized installment(s) are paid.
-- **Dashboard's reverse-derived interest/principal split**
-  (`views.py:3260-3266`) — for overdraft payments, read
-  `Payments.Principal_Portion` directly (already known) instead of
-  reverse-deriving from a flat-rate assumption.
-- **Both installment-generation code paths** (`views.py:316-368` and
-  `views.py:2531-2620`) — for overdraft loans, skip flat upfront
-  generation entirely; rely on lazy materialization instead.
+- **`Add_Loan`** (`views.py:315-368`) and the **`EditLoan` recreate path**
+  (`views.py:2483-2639`): add one `if instance.Frequency == 4: return
+  <call new function>; ...` (or equivalent early-dispatch) at the top of
+  the installment-generation block in each, calling a new
+  `create_overdraft_loan(...)` / `regenerate_overdraft_installments(...)`
+  helper that does nothing like the existing flat-schedule loop — it just
+  ensures the first cycle's row exists (or defers entirely to lazy
+  materialization). The existing Daily/Weekly/Monthly code below that
+  dispatch point is untouched, byte-for-byte, for every other frequency.
+  Any duplication between the new overdraft function and future cleanup
+  of the existing Daily/Weekly/Monthly duplication is left for a
+  separate, later refactor — not part of this feature.
+- **`Loans.Total` property** (models.py) — add a frequency check at the
+  top: `if self.Frequency == 4: return <overdraft total from the replay
+  helper>`, else fall through to the existing unmodified flat-rate
+  calculation.
+- **`bulk_overdue_map`** (`views.py:46-83`) and **`loan_repayment_status`**
+  (`views.py:86-157`) — both need an early per-loan dispatch: overdraft
+  loans route to new helper logic built on `replay_overdraft_loan`;
+  non-overdraft loans fall through to the existing query/calculation
+  code completely unchanged (the existing flat-total math is not
+  touched, only guarded behind a frequency check so it's simply never
+  reached for overdraft rows).
+- **Dashboard's interest/principal split** (`views.py:3260-3266`) — add a
+  branch: for `Payment.Loan.Frequency == 4`, read
+  `Payments.Principal_Portion`/`Interest_Portion` directly (already
+  known, no reverse-derivation needed); for every other frequency, keep
+  the existing reverse-split line exactly as it is today.
 - **Loan edit**: `Principle_Amount` is not directly editable on an
   overdraft loan after creation (the ledger-derived outstanding balance
-  is the source of truth) — edit form shows a clear message instead of
-  allowing the field to be changed.
+  is the source of truth) — the edit view adds an overdraft-specific
+  guard that shows a message and refuses the change; the existing edit
+  behavior for other frequencies is unaffected.
 
-## Penalty calculation for overdraft
+In every case above, the rule is: **check `Frequency == 4` first, dispatch
+to new overdraft-only code, and otherwise fall through to the existing
+code path unmodified.** No existing Daily/Weekly/Monthly branch, query,
+or formula is edited in place.
 
-- Base: that cycle's unpaid interest amount (the materialized
-  `Installment_Due`), not principal.
-- Rate: `Loans.Penalty_Rate` when `Frequency == 4`, read via the extended
-  `_get_penalty_rate`.
-- Mechanically reuses the existing `Penalty` model and existing daily
-  daily-accrual walk (`_calculate_individual_installment_penalties`) —
-  only the "amount penalty accrues on" and "rate source" branch by
-  frequency; the overdue-period detection and daily-rate penalty math are
-  unchanged.
+## Penalty calculation (configurable rate, all loan types)
+
+- Base: for regular loans, unchanged — the unpaid remainder of each
+  overdue `Installment` row, exactly as computed today. For overdraft,
+  this is naturally that cycle's unpaid **interest** amount, since
+  materialized overdraft installments are pure interest — no separate
+  "what amount does penalty accrue on" branch is needed; it falls out of
+  reusing the same `Installment` rows unchanged.
+- Rate: `_calculate_individual_installment_penalties`
+  (`views.py:3789-4009`) currently hardcodes `penalty_rate =
+  Decimal('2')` at line 3944. Change this single line to:
+  `Decimal(str(loan.Penalty_Rate)) if loan.Penalty_Rate is not None else
+  Decimal('2')`. This is the **only** code change this feature makes to
+  that function's penalty-rate handling — the rest of the function
+  (overdue-period detection, FIFO payment allocation, waiver/paid-pool
+  handling, daily-rate math) is untouched.
+- **Non-regression guarantee**: every loan in the database today has
+  `Penalty_Rate = NULL` after the migration (it's a new nullable field
+  with no default), so the `else Decimal('2')` branch fires for all of
+  them — penalty calculation for every existing loan is byte-for-byte
+  identical to current behavior. Only newly-created loans that
+  explicitly set a `Penalty_Rate` see different math.
+- The dead second penalty engine (`calculate_penalties` and friends,
+  `views.py:2703-3150`) is not modified, not called, and not relied upon
+  — confirmed unreachable from any view (see Background).
 
 ## Loan creation / edit form
 
 - "OverDraft" becomes a real, distinct, selectable `Frequency` option.
-- `Penalty_Rate` and `Principal_Threshold_Percent` inputs are shown only
-  when Frequency = OverDraft.
+- `Penalty_Rate` input is shown for **every** Frequency (Daily, Weekly,
+  Monthly, OverDraft) — optional; leaving it blank keeps the current
+  2%/day default for that loan.
+- `Principal_Threshold_Percent` input is shown only when Frequency =
+  OverDraft.
 - `No_Of_Installments` is hidden/disabled for OverDraft (open-ended, no
   fixed count).
 - Editing an existing OverDraft loan disallows changing `Principle_Amount`
@@ -416,18 +491,20 @@ out to conflict with something discovered in the existing code:
 
 - No changes to `FloatField` money fields to `DecimalField` — staying
   consistent with the existing codebase convention, not introducing a
-  mixed float/Decimal risk (note: `_get_penalty_rate` already returns
-  `Decimal` in some paths — the overdraft additions will match whichever
-  type that call site already expects, not introduce new mixing).
-  Consider a future numeric-precision cleanup as a fully separate,
-  unrelated task.
-  - **Nuance the implementer must handle:** the existing `Penalty` model
-    and `_get_penalty_rate` mix `Decimal` and `float` already in places;
-    the new `Penalty_Rate` field is a plain `FloatField` like other rate
-    fields on `Loans` (`Intrest_Rate`, `File_Charge_Percent`), so any
-    arithmetic combining it with a `Decimal`-typed value from existing
-    penalty code must explicitly convert one side to avoid a `TypeError`
-    at runtime.
+  mixed float/Decimal risk. Consider a future numeric-precision cleanup
+  as a fully separate, unrelated task.
+  - **Nuance the implementer must handle:** `_calculate_individual_installment_penalties`
+    (the live penalty engine) does all of its arithmetic in `Decimal`
+    (e.g. `period['amount'] * penalty_rate / Decimal('100') * period['days']`
+    at `views.py:3962`). `Penalty_Rate` is a plain `FloatField`, like
+    every other rate field on `Loans` (`Intrest_Rate`,
+    `File_Charge_Percent`), so it must be converted with
+    `Decimal(str(loan.Penalty_Rate))` — never used directly in that
+    Decimal expression — to avoid a `TypeError` at runtime. The
+    `Decimal(str(...))` conversion (not `Decimal(loan.Penalty_Rate)`
+    directly) avoids float binary-representation artifacts, matching how
+    the rest of the file already converts floats (e.g.
+    `Decimal(str(pay['Amount_Paid']))` at `views.py:3803`).
 - No cron/scheduler is introduced — materialization stays lazy/on-demand,
   matching the rest of the app's architecture.
 - No changes to Daily/Weekly/Monthly loan behavior, interest calculation,
