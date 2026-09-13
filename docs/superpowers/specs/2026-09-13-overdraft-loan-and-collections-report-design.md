@@ -8,12 +8,16 @@ Status: Approved for implementation planning
 
 Add a new "OverDraft" loan type alongside the existing Daily/Weekly/Monthly
 loans. Overdraft loans charge interest monthly on the *outstanding*
-principal rather than a flat amount fixed at creation; any payment beyond
-that month's interest reduces principal immediately (dated to the day it's
-paid), and future interest is prorated day-by-day across principal changes
-within a cycle. Overdraft loans also get a per-loan configurable
-late-payment penalty rate (existing loan types keep their current
-default-2%-via-`Penalty`-model behavior, unchanged).
+principal rather than a flat amount fixed at creation. After a payment
+clears all currently unpaid interest, the leftover only reduces principal
+if it meets a per-loan minimum threshold (a % of outstanding principal,
+set at loan creation) — a leftover below that threshold does not touch
+principal at all; instead it is banked as an advance-interest credit
+automatically applied against the next cycle's interest. Interest is
+prorated day-by-day across any principal reductions within a cycle.
+Overdraft loans also get a per-loan configurable late-payment penalty
+rate (existing loan types keep their current default-2%-via-`Penalty`-model
+behavior, unchanged).
 
 Separately, extend the existing Overdue Loans screen into a combined
 officer/collections view: loans grouped by collecting officer, with a
@@ -78,6 +82,17 @@ overdue/behind-schedule classification.
 10. A fully missed month's interest does **not** compound into
     principal — it stays a flat unpaid installment that only accrues
     penalty until paid; later payments clear unpaid interest oldest-first.
+11. After interest is fully cleared, a payment's leftover only reduces
+    principal if it is **≥ a per-loan threshold %** of outstanding
+    principal (set at creation, all-or-nothing — not just the amount
+    above the threshold). A leftover below the threshold is banked as an
+    **advance-interest credit** and auto-applied against the next cycle's
+    interest instead of touching principal — "paying in advance less
+    than the threshold isn't beneficial, it just prepays next month's
+    interest."
+12. At full payoff, unbilled interest for the partial period since the
+    last due date is charged as a final prorated stub before the loan
+    can close (not forgiven).
 
 ## Model changes
 
@@ -104,13 +119,19 @@ Add:
 
 ```python
 Penalty_Rate = models.FloatField(null=True, blank=True)
+Principal_Threshold_Percent = models.FloatField(null=True, blank=True)
 ```
 
-- Nullable; only meaningful/populated for `Frequency == 4` (OverDraft).
+- Both nullable; only meaningful/populated for `Frequency == 4`
+  (OverDraft).
 - `_get_penalty_rate` (`views.py:3118-3121`) will check
   `loan.Penalty_Rate` first when `loan.Frequency == 4`, falling back to
   existing `Penalty`-row/default-2 behavior otherwise (unchanged for
   non-overdraft loans).
+- `Principal_Threshold_Percent` is the minimum leftover-as-%-of-outstanding
+  a payment must clear (after interest is fully paid) before that leftover
+  counts toward principal at all. Set at loan creation, alongside
+  `Intrest_Rate` and `Penalty_Rate`.
 
 No `Outstanding_Principal` field is added — see below.
 
@@ -120,111 +141,157 @@ Add:
 
 ```python
 Principal_Portion = models.FloatField(default=0)
+Interest_Portion = models.FloatField(default=0)
 ```
 
-- For non-overdraft loans this stays `0` and is unused.
-- For overdraft loans, this is the amount of a given payment that went
-  toward reducing principal (i.e. the excess beyond that cycle's billed
-  interest), dated by the payment's existing `Date_Paid`.
+- For non-overdraft loans both stay `0` and are unused.
+- For overdraft loans: `Interest_Portion` is the amount of a given payment
+  applied to unpaid interest installments; `Principal_Portion` is the
+  amount that met the threshold test and reduced principal, dated by the
+  payment's existing `Date_Paid`. A payment's advance-interest-credit
+  contribution is implicit: `Amount_Paid − Interest_Portion −
+  Principal_Portion` (see credit balance below) — no separate stored
+  field for it.
 
-### Outstanding principal — derived, not stored
+### Outstanding principal and credit balance — derived, not stored
 
-Outstanding principal as of any date `D` for an overdraft loan is:
+Both are outputs of the same chronological replay (see "Interest engine"
+below), not independently stored fields:
 
 ```
-Principle_Amount − Σ(Principal_Portion of Payments for this loan with Date_Paid ≤ D)
+outstanding principal as of date D =
+    Principle_Amount − Σ(Principal_Portion of Payments with Date_Paid ≤ D)
+
+advance-interest credit as of date D =
+    Σ(Amount_Paid − Interest_Portion − Principal_Portion, for Payments
+      with Date_Paid ≤ D) − Σ(credit already consumed by materialized
+      installments due ≤ D)
 ```
 
-This is computed on demand (query volume here is small — per-loan
-payment counts are modest) rather than cached in a running field. A
-single writable source of truth (the payment ledger) avoids a cached
-`Outstanding_Principal` field silently drifting out of sync with reality,
-which would be the likely failure mode of maintaining both.
-
-A small helper, `overdraft_outstanding_principal(loan, as_of=None)`, wraps
-this query and is the only place this computation lives.
+Query volume here is small (per-loan payment counts are modest), so both
+are computed on demand rather than cached. A single writable source of
+truth (the payment ledger, `Interest_Portion` + `Principal_Portion` per
+payment) avoids two derived numbers drifting out of sync with each other
+or with reality — the likely failure mode of maintaining separate running
+fields. If replay performance ever becomes a concern, a cached balance on
+`Loans` is acceptable specifically *because* it stays recomputable from
+the ledger — not as a second independent source of truth.
 
 ## Interest engine
 
-### Lazy monthly materialization
+### Core mechanism: chronological replay
 
-No scheduler exists in this app, and each cycle's interest amount depends
-on payment timing within that cycle, so `Installments` rows for overdraft
-loans are **not** pre-generated at creation. Instead, a helper —
-`ensure_overdraft_installments(loan)` — is called from every read/write
-path that touches an overdraft loan (loan detail view, payment recording,
-the collections report) and materializes any `Installment` row whose due
-date has arrived but doesn't yet exist.
+The threshold rule means allocation decisions depend on state *at the
+moment of each payment* (outstanding principal then, what interest is
+billed-but-unpaid then, the accumulated credit then) — allocation is no
+longer a one-shot decision made independently at each payment's entry
+time. So the engine is a single pure function,
+`replay_overdraft_loan(loan)`, that walks a loan's due dates and payments
+in date order and derives everything else as its output:
 
-Because materialization only ever happens for cycles that are already
-fully in the past (today ≥ the cycle's due date), all payments within
-that cycle are already recorded — no circularity, no need to guess future
-payment behavior.
+- At each due date reached (≤ today): materialize the cycle's
+  `Installment_Due` from that cycle's segments (see proration below),
+  then immediately apply any available advance-interest credit against
+  it.
+- At each payment (in `Date_Paid` order): allocate interest-first against
+  oldest unpaid materialized installment(s) (`Interest_Portion`), then
+  threshold-test the leftover against outstanding principal *as of that
+  payment's date* — leftover ≥ threshold% → all of it becomes
+  `Principal_Portion`; leftover < threshold% → none of it becomes
+  `Principal_Portion`, and it is added to the running advance-interest
+  credit balance instead.
+
+Everything else — each payment's stored split, each installment's
+due/paid amounts, current outstanding principal, current credit balance —
+is read off this replay's output, not computed independently. This also
+subsumes backdated-payment recalculation (below): a backdated payment is
+handled by simply re-running the replay for that loan and re-deriving
+unpaid installment amounts; there is no separate bespoke recalc
+algorithm.
+
+Because replay only materializes cycles whose due date has already
+passed (today ≥ due date), and only replays payments that already exist,
+there's no circularity — nothing depends on guessing future behavior.
+
+### Lazy invocation
+
+No scheduler exists in this app. `ensure_overdraft_installments(loan)`
+is called from every read/write path that touches an overdraft loan (loan
+detail view, payment recording, the collections report); it runs the
+replay and persists any newly-materialized `Installment` rows and updated
+unpaid-installment amounts.
 
 ### Piecewise proration within a cycle
 
-For cycle `[previous_due_date, this_due_date)`, with `cycle_days = 
+For cycle `[previous_due_date, this_due_date)`, with `cycle_days =
 (this_due_date - previous_due_date).days`:
 
-1. Find every `Payment` in that window with `Principal_Portion > 0`,
-   ordered by `Date_Paid` — these are the segment boundaries.
+1. Within the replay, find every payment in that window whose allocation
+   produced `Principal_Portion > 0` — these are the segment boundaries.
+   (A leftover that was banked as credit, not applied to principal, does
+   **not** create a segment — the principal didn't change.)
 2. Walk the cycle as segments split at those dates. For each segment:
    `segment_days × outstanding_at_start_of_segment × (Intrest_Rate / 100 / cycle_days)`
-3. Sum the segments to get that cycle's `Installment_Due`.
+3. Sum the segments, **then subtract any advance-interest credit
+   available at this due date** (down to a floor of 0), to get that
+   cycle's `Installment_Due`.
 
-Worked example: due dates on the 10th, 30-day cycle, principal such that
-full-cycle interest = 5000. Borrower pays 5000 on the 10th (exactly
-covers that cycle's interest, `Principal_Portion=0` — no segment change).
-Borrower then pays another 5000 on the 20th (`Principal_Portion=5000`).
-The *next* cycle (10th → 10th) is split into: day 10–19 (10 days, full
-principal) + day 20–next due (20 days, principal − 5000).
+Worked example (threshold 20%, full-cycle interest 5000 on a 250,000
+principal): borrower pays 5000 on the 10th (clears interest exactly,
+leftover 0 — no segment, no credit). Borrower then pays 55,000 on the
+20th: 5000 already cleared this cycle's interest via the first payment,
+so the entire 55,000 is leftover — that's ≥ 20% of 250,000 (50,000), so
+the **full** 55,000 becomes `Principal_Portion`. Next cycle splits into
+day 10–19 (10 days, principal 250,000) + day 20–next due (20 days,
+principal 195,000).
+
+Contrast: borrower instead pays 30,000 on the 20th. Leftover 30,000 is
+below the 50,000 threshold, so none of it reduces principal — it's banked
+as credit and applied to reduce (or fully cover) next cycle's
+`Installment_Due` when that cycle materializes. Principal stays 250,000,
+so next cycle's proration has no segment split from this payment.
 
 ### Missed months — unpaid interest does not compound
 
-If a cycle's interest goes completely unpaid (borrower pays nothing on
-the 10th), the next cycle's interest is still computed purely on
-outstanding **principal** — the unpaid interest amount is never added to
-principal and never itself accrues further interest. It simply remains
-as a second unpaid materialized `Installment` row. It does, however,
-continue to accrue **penalty** from its due date via the existing
-`Penalty` model (section "Penalty calculation for overdraft" below) for
-as long as it stays unpaid.
+If a cycle's interest goes completely unpaid, the next cycle's interest
+is still computed purely on outstanding **principal** — unpaid interest
+is never added to principal and never itself accrues further interest.
+It remains a separate unpaid materialized `Installment` row and accrues
+**penalty** from its due date via the existing `Penalty` model (see
+"Penalty calculation for overdraft" below) for as long as it's unpaid.
 
-When the borrower later makes a payment, allocation (below) applies it
-against unpaid interest installments **oldest first**: a late payment
-first clears month 1's unpaid interest, then month 2's, and so on — only
-an amount left over after every currently-billed interest installment is
-satisfied counts as `Principal_Portion`. A borrower who skips a month and
-then pays exactly one cycle's worth of interest the following month
-clears the old debt, not the new one, and the newer cycle's interest
-remains outstanding (continuing to accrue penalty) until paid.
+Oldest-first allocation (above) means a late payment clears month 1's
+unpaid interest before month 2's, and so on — and only a leftover *after
+every currently-billed interest installment is satisfied* is subject to
+the threshold test at all. A borrower who skips a month and then pays
+exactly one cycle's worth of interest the next month clears the old
+debt, not the new one; the newer cycle's interest remains outstanding
+(continuing to accrue penalty) until paid.
 
-### Payment allocation (applied when a payment is recorded)
+### Payoff and closure
 
-Extending `pay_installment` (`views.py:701-739`) with an overdraft branch:
+An overdraft loan closes when outstanding principal reaches zero and all
+billed interest/penalty is settled. Since interest is only billed at due
+dates, a mid-cycle full payoff (e.g. paying off on the 25th, next due
+date the 10th) requires charging a final **prorated stub**: at payoff,
+compute interest for the partial period from the last due date to the
+payoff date using the same daily formula, and require it paid (net of
+any available advance-interest credit) before the loan can close. This is
+not forgiven.
 
-1. Apply the payment against the oldest unpaid materialized interest
-   installment(s) first, in order.
-2. Any amount remaining after all currently-billed interest is satisfied
-   becomes that payment's `Principal_Portion`, dated at the payment's
-   `Date_Paid`.
-3. This also correctly handles paying before a cycle's interest has even
-   been billed yet (e.g. paying on the 5th ahead of a 10th due date):
-   with no unpaid billed interest to apply against, the whole amount
-   becomes `Principal_Portion` immediately, effective that date, and
-   prorates the next materialization accordingly.
+Full payoff naturally passes the threshold test (the leftover equals
+100% of outstanding, which is ≥ any percentage threshold), so there's no
+conflict between the threshold rule and being able to close a loan.
 
 ### Backdated payments
 
-If a payment is recorded with a `Date_Paid` earlier than today, and it
-falls inside a cycle whose `Installment_Due` was already materialized,
-that installment's stored amount is now stale. Mirroring the existing
-`Recalculate_Penalty` pattern, a new `recalculate_overdraft_interest(loan)`
-re-derives amounts for **unpaid** materialized installments only, called
-after every overdraft payment. Already-paid installments are left frozen
-as historical record — not retroactively corrected. This is the simplest
-consistent behavior and matches how the existing penalty system already
-treats settled history.
+If a payment is recorded with a `Date_Paid` earlier than today, re-running
+`replay_overdraft_loan(loan)` naturally re-derives correct amounts for any
+**unpaid** materialized installments — this is not a separate algorithm,
+just the same replay re-executed after the new payment is inserted into
+the ledger. Already-paid installments are left frozen as historical
+record — not retroactively corrected. This matches how the existing
+penalty system already treats settled history.
 
 ## Places requiring an overdraft-aware branch
 
@@ -232,10 +299,11 @@ Flat-interest assumptions baked into existing code, each needing a
 `Frequency == 4` branch:
 
 - **`Loans.Total` property** (models.py) — for overdraft, returns
-  `overdraft_outstanding_principal(loan) + unpaid interest + unpaid
-  penalty` instead of the flat `principal + principal×rate/100`.
-- **`bulk_overdue_map`** (`views.py:46-83`) — overdue cap uses derived
-  outstanding + unpaid interest/penalty instead of the flat total.
+  `outstanding principal + unpaid interest + unpaid penalty − available
+  advance-interest credit` (all replay outputs) instead of the flat
+  `principal + principal×rate/100`.
+- **`bulk_overdue_map`** (`views.py:46-83`) — overdue cap uses the same
+  replay-derived figures instead of the flat total.
 - **`loan_repayment_status`** (`views.py:86-157`) — needs to understand
   that overdraft loans have no fixed schedule to be "ahead" on; status is
   based on whether the current materialized installment(s) are paid.
@@ -266,7 +334,8 @@ Flat-interest assumptions baked into existing code, each needing a
 ## Loan creation / edit form
 
 - "OverDraft" becomes a real, distinct, selectable `Frequency` option.
-- `Penalty_Rate` input is shown only when Frequency = OverDraft.
+- `Penalty_Rate` and `Principal_Threshold_Percent` inputs are shown only
+  when Frequency = OverDraft.
 - `No_Of_Installments` is hidden/disabled for OverDraft (open-ended, no
   fixed count).
 - Editing an existing OverDraft loan disallows changing `Principle_Amount`
@@ -290,6 +359,58 @@ rather than adding a new page:
   loans once `bulk_overdue_map` and `loan_repayment_status` are
   overdraft-aware (see branch inventory above) — the report itself needs
   no separate overdraft-specific logic.
+
+## Edge cases
+
+Stated as assumptions; the implementer should flag if any of these turn
+out to conflict with something discovered in the existing code:
+
+- **Waivers.** The existing `Waiver` model (Penalty=1 / Interest=2) is
+  netted throughout `bulk_overdue_map` and status calculations. For
+  overdraft: an interest waiver reduces the oldest unpaid interest
+  installment's outstanding amount — it never touches principal and never
+  contributes to the advance-interest credit balance.
+- **Overpayment beyond everything owed.** If a payment's leftover, after
+  clearing all unpaid interest, exceeds the full outstanding principal
+  (e.g. an intentional payoff-plus-extra), `Principal_Portion` is capped
+  at the remaining outstanding principal; any true residual beyond that
+  is rejected at entry (the form should not accept a payment larger than
+  total owed) rather than silently producing a negative outstanding
+  balance.
+- **Payment edit/delete.** If the existing UI allows editing or deleting
+  a `Payments` row, that must trigger the same replay used for backdated
+  payments (a stale `Interest_Portion`/`Principal_Portion` otherwise
+  corrupts every downstream figure) — or overdraft payments disallow
+  edit/delete entirely if that's simpler given how the existing payment
+  edit flow works.
+- **Penalty payments excluded from allocation.** `Payments.Payment_Type`
+  already distinguishes installment payments (1) from penalty payments
+  (2) in the same table; the replay's interest/principal allocation only
+  ever considers `Payment_Type=1` rows.
+- **First cycle.** `[Loan_Date, First_Due_Date)` can be any length —
+  proration-by-actual-days handles it without special-casing, but the
+  loan creation form should validate `First_Due_Date > Loan_Date`.
+- **Cycle boundary convention.** A cycle is `[previous_due_date,
+  this_due_date)` (inclusive start, exclusive end); a payment dated
+  exactly on a due date belongs to the *new* cycle as day 0. This applies
+  consistently to both proration segments and replay ordering.
+- **Month-end drift.** Due dates computed via repeated
+  `relativedelta(months=1)` (same mechanism regular Monthly loans already
+  use, `views.py:355-361`) can drift for a loan whose first due date is
+  the 29th–31st, landing on shorter months. Overdraft uses the same
+  drift behavior as existing Monthly loans for consistency — not a new
+  problem introduced by this feature.
+- **Materialization idempotency.** Because `ensure_overdraft_installments`
+  runs on every relevant request, two concurrent requests must not double-
+  create the same cycle's `Installment` row — implement via `get_or_create`
+  keyed on `(Loan, Date_Due)` inside a transaction.
+- **Stop materializing after closure**, and don't create a zero-amount
+  installment once principal is fully paid off but an older unpaid
+  interest installment still exists (interest on zero principal is zero).
+- **Future-dated payments.** A `Date_Paid` in the future is rejected at
+  entry — allowing it would let a payment affect proration of a cycle
+  that hasn't been materialized yet while today's derived "outstanding as
+  of now" figure confusingly wouldn't reflect it yet.
 
 ## Out of scope
 
