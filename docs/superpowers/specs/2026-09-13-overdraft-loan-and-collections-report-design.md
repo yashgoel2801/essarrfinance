@@ -15,9 +15,9 @@ set at loan creation) — a leftover below that threshold does not touch
 principal at all; instead it is banked as an advance-interest credit
 automatically applied against the next cycle's interest. Interest is
 prorated day-by-day across any principal reductions within a cycle.
-Overdraft loans also get a per-loan configurable late-payment penalty
-rate (existing loan types keep their current default-2%-via-`Penalty`-model
-behavior, unchanged).
+All loan types — not just overdraft — get a per-loan configurable
+late-payment penalty rate, replacing a currently hardcoded 2%/day
+constant; loans that don't set one keep exactly today's 2%/day behavior.
 
 Separately, extend the existing Overdue Loans screen into a combined
 officer/collections view: loans grouped by collecting officer, with a
@@ -507,8 +507,11 @@ out to conflict with something discovered in the existing code:
     `Decimal(str(pay['Amount_Paid']))` at `views.py:3803`).
 - No cron/scheduler is introduced — materialization stays lazy/on-demand,
   matching the rest of the app's architecture.
-- No changes to Daily/Weekly/Monthly loan behavior, interest calculation,
-  or penalty defaults.
+- No changes to Daily/Weekly/Monthly interest calculation or to the
+  behavior of any existing loan (one that already has
+  `Penalty_Rate = NULL` keeps computing penalty exactly as it does
+  today). The only change available to non-overdraft loans is the new
+  optional `Penalty_Rate` field itself.
 - No new "Officer" model — continues using `Staff` as-is.
 - No PDF variant of the enhanced Overdue Loans report in this pass (the
   codebase has a separate `report_pdf_views` pattern for PDFs elsewhere,
