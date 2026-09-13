@@ -75,6 +75,9 @@ overdue/behind-schedule classification.
    threshold.
 9. The report is an **enhancement of the existing Overdue Loans screen**,
    not a new page.
+10. A fully missed month's interest does **not** compound into
+    principal — it stays a flat unpaid installment that only accrues
+    penalty until paid; later payments clear unpaid interest oldest-first.
 
 ## Model changes
 
@@ -175,6 +178,26 @@ covers that cycle's interest, `Principal_Portion=0` — no segment change).
 Borrower then pays another 5000 on the 20th (`Principal_Portion=5000`).
 The *next* cycle (10th → 10th) is split into: day 10–19 (10 days, full
 principal) + day 20–next due (20 days, principal − 5000).
+
+### Missed months — unpaid interest does not compound
+
+If a cycle's interest goes completely unpaid (borrower pays nothing on
+the 10th), the next cycle's interest is still computed purely on
+outstanding **principal** — the unpaid interest amount is never added to
+principal and never itself accrues further interest. It simply remains
+as a second unpaid materialized `Installment` row. It does, however,
+continue to accrue **penalty** from its due date via the existing
+`Penalty` model (section "Penalty calculation for overdraft" below) for
+as long as it stays unpaid.
+
+When the borrower later makes a payment, allocation (below) applies it
+against unpaid interest installments **oldest first**: a late payment
+first clears month 1's unpaid interest, then month 2's, and so on — only
+an amount left over after every currently-billed interest installment is
+satisfied counts as `Principal_Portion`. A borrower who skips a month and
+then pays exactly one cycle's worth of interest the following month
+clears the old debt, not the new one, and the newer cycle's interest
+remains outstanding (continuing to accrue penalty) until paid.
 
 ### Payment allocation (applied when a payment is recorded)
 
