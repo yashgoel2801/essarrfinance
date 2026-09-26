@@ -1,0 +1,72 @@
+{% comment %}
+Shared OverDraft section for the finance/collection reports. Kept as a
+separate section from each report's flat-loan totals rather than merged
+into them, so the numbers are easy to verify side by side: an overdraft
+loan's interest is daily-prorated and split into interest/principal/credit,
+not a single flat Amount_Paid figure, so folding it into the flat totals
+would silently misstate both. Every row and the section subtotal satisfy
+interest + principal + credit == amount collected by construction.
+
+Expects in context: overdraft_rows (list of dicts from
+overdraft_report_rows) and overdraft_totals (dict with interest_billed,
+interest_collected, principal_collected, credit_banked, amount_collected,
+penalty_collected).
+{% endcomment %}
+<div class="card mb-4 border-info">
+  <div class="card-header bg-info bg-opacity-10">
+    <h5 class="mb-0"><i class="fas fa-university me-2"></i>OverDraft Loans (separate section)</h5>
+    <small class="text-muted">Interest is daily-prorated per loan; shown split, not aggregated into the totals above.</small>
+  </div>
+  <div class="card-body p-0">
+    {% if overdraft_rows %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Loan</th>
+            <th>Client</th>
+            <th>Officer</th>
+            <th>Interest Billed</th>
+            <th>Interest Collected</th>
+            <th>Principal Collected</th>
+            <th>Credit Banked</th>
+            <th>Amount Collected</th>
+            <th>Penalty Collected</th>
+            <th>Owed as of period end</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in overdraft_rows %}
+          <tr>
+            <td>#{{ row.loan.pk }}</td>
+            <td>{{ row.loan.Account.Client.Name }}</td>
+            <td>{{ row.loan.Loan_Collector }}</td>
+            <td>₹{{ row.interest_billed_in_range|floatformat:2 }}</td>
+            <td>₹{{ row.interest_collected_in_range|floatformat:2 }}</td>
+            <td>₹{{ row.principal_collected_in_range|floatformat:2 }}</td>
+            <td>₹{{ row.credit_banked_in_range|floatformat:2 }}</td>
+            <td><strong>₹{{ row.amount_collected_in_range|floatformat:2 }}</strong></td>
+            <td>₹{{ row.penalty_collected_in_range|floatformat:2 }}</td>
+            <td>₹{{ row.total_owed_as_of_end|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th colspan="3">Total</th>
+            <th>₹{{ overdraft_totals.interest_billed|floatformat:2 }}</th>
+            <th>₹{{ overdraft_totals.interest_collected|floatformat:2 }}</th>
+            <th>₹{{ overdraft_totals.principal_collected|floatformat:2 }}</th>
+            <th>₹{{ overdraft_totals.credit_banked|floatformat:2 }}</th>
+            <th>₹{{ overdraft_totals.amount_collected|floatformat:2 }}</th>
+            <th>₹{{ overdraft_totals.penalty_collected|floatformat:2 }}</th>
+            <th>&mdash;</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted p-3 mb-0">No OverDraft loan activity in this period.</p>
+    {% endif %}
+  </div>
+</div>

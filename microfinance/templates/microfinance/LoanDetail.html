@@ -1,7 +1,65 @@
 {%extends 'base_layout.html'%} {% load noofinstallment %} {%block content%}
 <style>
+  /* Summary header: identity band plus the four decision figures */
+  .loan-summary-header {
+    overflow: hidden;
+  }
+
+  .loan-summary-id {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 0.8rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .loan-summary-figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--gray-200);
+  }
+
+  .lsf {
+    background: #fff;
+    padding: 0.7rem 1.1rem;
+    min-width: 0;
+  }
+
+  .lsf-k {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-600);
+  }
+
+  .lsf-v {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+  }
+
+  .lsf-bad {
+    box-shadow: inset 3px 0 0 var(--danger-color);
+  }
+
+  .lsf-bad .lsf-v {
+    color: var(--tint-danger-ink);
+  }
+
+  .lsf-warn {
+    box-shadow: inset 3px 0 0 var(--warning-color);
+  }
+
+  .lsf-warn .lsf-v {
+    color: var(--tint-warning-ink);
+  }
+
   .borrower-card {
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--primary-color);
     max-height: calc(100vh - 120px);
     overflow-y: auto;
     overflow-x: hidden;
@@ -22,12 +80,12 @@
   }
 
   .borrower-avatar {
-    border: 3px solid #007bff;
+    border: 3px solid var(--primary-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .installment-table-section {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid var(--success-color);
   }
 
   .container-fluid {
@@ -99,7 +157,7 @@
 
   .last-payment-card {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--primary-color);
   }
 
   .last-payment-card .card-body {
@@ -125,19 +183,19 @@
 
   .borrower-card::-webkit-scrollbar-track,
   #rightContent::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--gray-200);
     border-radius: 10px;
   }
 
   .borrower-card::-webkit-scrollbar-thumb,
   #rightContent::-webkit-scrollbar-thumb {
-    background: #888;
+    background: var(--gray-600);
     border-radius: 10px;
   }
 
   .borrower-card::-webkit-scrollbar-thumb:hover,
   #rightContent::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--dark);
   }
 </style>
 
@@ -189,20 +247,14 @@
       display: none;
     }
 
-    /* Hide less important columns in penalty table */
-    .table-danger thead tr th:nth-child(2), /* Date Started */
-    .table-danger tbody tr td:nth-child(2),
-    .table-danger thead tr th:nth-child(3), /* Date Ended */
-    .table-danger tbody tr td:nth-child(3),
-    .table-danger thead tr th:nth-child(4), /* Amount */
-    .table-danger tbody tr td:nth-child(4),
-    .table-danger thead tr th:nth-child(6), /* Waived */
-    .table-danger tbody tr td:nth-child(6),
-    .table-danger thead tr th:nth-child(7), /* Status */
-    .table-danger tbody tr td:nth-child(7),
-    .table-danger thead tr th:nth-child(10), /* Actions */
-    .table-danger tbody tr td:nth-child(10) {
-      display: none;
+    /* The penalty table is down to five columns, all of which matter, so nothing
+       is hidden on mobile now. (This rule used to hide columns 2,3,4,6,7,10 by
+       index - against the new column set that would have hidden Amount, Penalty
+       and State and left an almost empty table.) Only trim the amounts a little. */
+    .penalty-table thead th,
+    .penalty-table tbody td {
+      font-size: 12px;
+      padding: 8px 6px;
     }
 
     /* Card spacing */
@@ -366,13 +418,15 @@
                     <th class="bg-light">Interest Rate:</th>
                     <td>{{ Loan.Intrest_Rate }}%</td>
                   </tr>
+                  {% if Loan.Frequency != 4 %}
                   <tr>
                     <th class="bg-light">No of Installments:</th>
                     <td><strong>{{ Loan|noofinstallment }}</strong></td>
                   </tr>
+                  {% endif %}
                   <tr>
                     <th class="bg-light">Total Amount:</th>
-                    <td><strong class="text-success">₹{{ Total_Loan_Amount|floatformat:2 }}</strong></td>
+                    <td><strong class="text-success">₹{{ Total_Loan_Amount|floatformat:2 }}</strong>{% if Loan.Frequency == 4 %} <span class="text-muted small">(outstanding)</span>{% endif %}</td>
                   </tr>
                   <tr>
                     <th class="bg-light">Total Balance:</th>
@@ -416,6 +470,41 @@
 
     <!-- Loan Details Table Section -->
     <div class="col-lg-9 col-md-8" id="rightContent">
+
+      {% comment %}Summary header: identity plus the four figures that decide what to do about this loan, so they are not buried in the sidebar table.{% endcomment %}
+      <div class="card shadow-sm mb-4 loan-summary-header">
+        <div class="loan-summary-id">
+          <div>
+            <div class="fw-bold">{{ Client.Name }} <span class="opacity-75">· Loan #{{ Loan.pk }}</span></div>
+            <div class="small opacity-75">
+              Client #{{ Client.pk }} · opened {{ Loan.Loan_Date|date:"M d, Y" }}
+              {% if Loan.Loan_Collector %} · {{ Loan.Loan_Collector.Officer_Name }}{% endif %}
+            </div>
+          </div>
+          <span class="badge {% if Loan.Status %}bg-secondary{% else %}bg-success{% endif %}">
+            {% if Loan.Status %}Closed{% else %}Active{% endif %}
+          </span>
+        </div>
+        <div class="loan-summary-figures">
+          <div class="lsf">
+            <div class="lsf-k">Principal</div>
+            <div class="lsf-v">₹{{ Principal_Amount|floatformat:0 }}</div>
+          </div>
+          <div class="lsf">
+            <div class="lsf-k">Total pending</div>
+            <div class="lsf-v">₹{{ Total_Pending|floatformat:0 }}</div>
+          </div>
+          <div class="lsf {% if Amount_Overdue %}lsf-bad{% endif %}">
+            <div class="lsf-k">Overdue</div>
+            <div class="lsf-v">{% if Amount_Overdue %}₹{{ Amount_Overdue|floatformat:0 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="lsf {% if Pending_Penalty %}lsf-warn{% endif %}">
+            <div class="lsf-k">Penalty pending</div>
+            <div class="lsf-v">{% if Pending_Penalty %}₹{{ Pending_Penalty|floatformat:0 }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card shadow-sm mb-4 installment-table-section">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
@@ -488,13 +577,13 @@
             }
 
             #transactionTabs .nav-link:hover {
-              color: #198754 !important;
+              color: var(--success-color) !important;
               /* Green on hover */
               background-color: #f8f9fa !important;
             }
 
             #transactionTabs .nav-link.active {
-              color: #198754 !important;
+              color: var(--success-color) !important;
               /* Green for active */
               background-color: #fff !important;
             }
@@ -509,18 +598,18 @@
 
             /* Explicit backgrounds to prevent transparency when scrolling */
             .table-success thead th {
-              background-color: #d1e7dd !important;
-              color: #0f5132 !important;
+              background-color: var(--tint-success) !important;
+              color: var(--tint-success-ink) !important;
             }
 
             .table-danger thead th {
-              background-color: #f8d7da !important;
-              color: #842029 !important;
+              background-color: var(--tint-danger) !important;
+              color: var(--tint-danger-ink) !important;
             }
 
             .table-warning thead th {
-              background-color: #fff3cd !important;
-              color: #664d03 !important;
+              background-color: var(--tint-warning) !important;
+              color: var(--tint-warning-ink) !important;
             }
 
             .table-light thead th,
@@ -593,6 +682,21 @@
                                 </div>
                               </div>
                             </div>
+
+                            {% if Loan.Frequency == 4 %}
+                            <div class="form-check mb-3">
+                              <input type="checkbox" class="form-check-input" id="apply_to_principal" name="apply_to_principal">
+                              <label class="form-check-label small" for="apply_to_principal">
+                                Apply any amount beyond interest to principal
+                              </label>
+                              <div class="form-text">
+                                Unchecked (default): anything you pay beyond the interest due
+                                is banked as credit toward next month's interest. Checked:
+                                the excess reduces the outstanding principal instead &mdash;
+                                required even to pay the loan off in full.
+                              </div>
+                            </div>
+                            {% endif %}
 
                             <button type="submit" name="pay" class="btn btn-success w-100 shadow-sm submit-btn">
                               <i class="fas fa-check-circle me-2"></i>Record Payment
@@ -724,7 +828,7 @@
                           </div>
                           <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
                             <table class="table table-hover align-middle mb-0">
-                              <thead class="bg-light sticky-top">
+                              <thead class="sticky-top">
                                 <tr class="small text-muted text-uppercase">
                                   <th class="ps-4">Date</th>
                                   <th>Type</th>
@@ -838,6 +942,15 @@
               </tr>
               {% endif %}
               {% endfor %}
+              {% if overdraft_upcoming %}
+              <tr class="table-light">
+                <td>{{ overdraft_upcoming.Date_Due }}</td>
+                <td colspan="4" class="text-center text-muted">
+                  <i class="fas fa-hourglass-half me-1"></i>Upcoming (estimate) &mdash; not yet billed
+                </td>
+                <td class="text-muted">~₹{{ overdraft_upcoming.Estimated_Interest|floatformat:2 }}</td>
+              </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>
@@ -859,43 +972,47 @@
             </span>
           </div>
         </div>
+        {% comment %}Flat table, matching the installment schedule above. Waived and
+        the payment columns only carry a value on a small share of rows, so they show
+        a dash rather than being hidden behind an expander.{% endcomment %}
         <div class="table-responsive mb-4" style="max-height: 500px; overflow-y: auto">
-          <table class="table table-bordered table-striped align-middle">
+          <table class="table table-bordered table-striped align-middle penalty-table">
             <thead class="table-danger">
               <tr>
-                <th>Installment Date</th>
-                <th>Date Started</th>
-                <th>Date Ended</th>
-                <th>Amount</th>
-                <th>Penalty Calc</th>
-                <th>Waived</th>
-                <th>Status</th>
-                <th>Payment Amount</th>
-                <th>Payment Date</th>
-                <th>Actions</th>
+                <th>Date From</th>
+                <th>Date To</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">Penalty</th>
+                <th class="text-end">Waived</th>
+                <th class="text-end">Paid</th>
+                <th>Paid On</th>
+                {% if request.user.is_staff %}<th class="text-center">Action</th>{% endif %}
               </tr>
             </thead>
             <tbody>
               {% for item in combinedPenaltyPaymentView %}
               <tr>
-                <td>
-                  <span class="badge bg-primary">{{ item.Installment_Due_Date|date:"M d, Y"|default:'-' }}</span>
-                </td>
-                <td>{{ item.Date_Started|default:'-' }}</td>
-                <td>{{ item.Date_Ended|default:'-' }}</td>
-                <td>{{ item.Amount|floatformat:1 }}</td>
-                <td>{{ item.Penalty_Calc|floatformat:1 }}</td>
-                <td>{{ item.Waived_Amount|floatformat:1 }}</td>
-                <td>{{ item.Status|default:'-' }}</td>
-                <td>{{ item.Payment_Amount|floatformat:1|default:'-' }}</td>
-                <td>{{ item.Payment_Date|default:'-' }}</td>
-                <td>
-                  {% if request.user.is_staff and item.pk %}
-                  <button type="button" class="btn btn-sm btn-danger delete-penalty-btn" data-penalty-id="{{ item.pk|default:0 }}">
-                    <i class="fas fa-trash"></i> Delete
+                <td class="text-nowrap">{{ item.Date_Started|default:'-' }}</td>
+                <td class="text-nowrap">{{ item.Date_Ended|default:'-' }}</td>
+                <td class="text-end">{{ item.Amount|floatformat:1 }}</td>
+                <td class="text-end fw-semibold">{{ item.Penalty_Calc|floatformat:1 }}</td>
+                <td class="text-end">{% if item.Waived_Amount %}{{ item.Waived_Amount|floatformat:1 }}{% else %}-{% endif %}</td>
+                <td class="text-end">{% if item.Payment_Amount %}{{ item.Payment_Amount|floatformat:1 }}{% else %}-{% endif %}</td>
+                <td class="text-nowrap">{{ item.Payment_Date|default:'-' }}</td>
+                {% if request.user.is_staff %}
+                <td class="text-center">
+                  {% if item.pk %}
+                  <button type="button" class="btn btn-sm btn-outline-danger delete-penalty-btn"
+                    data-penalty-id="{{ item.pk }}" title="Delete this penalty">
+                    <i class="fas fa-trash"></i>
                   </button>
                   {% endif %}
                 </td>
+                {% endif %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-3">No penalties recorded for this loan.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -923,6 +1040,7 @@
                     <tr>
                       <th>Date Paid</th>
                       <th>Amount Paid</th>
+                      {% if Loan.Frequency == 4 %}<th>Applied</th>{% endif %}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -932,13 +1050,24 @@
                     <tr>
                       <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
                       <td><strong class="text-success">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                      {% if Loan.Frequency == 4 %}
+                      <td class="small">
+                        {% if payment.Interest_Portion %}Interest: ₹{{ payment.Interest_Portion|floatformat:2 }}<br>{% endif %}
+                        {% if payment.Principal_Portion %}Principal: ₹{{ payment.Principal_Portion|floatformat:2 }}<br>{% endif %}
+                        {% if payment.Banked_As_Credit %}
+                        <span class="text-muted">&rarr; credit: ₹{{ payment.Banked_As_Credit|floatformat:2 }}</span>
+                        {% endif %}
+                      </td>
+                      {% endif %}
                       <td>
                         {% if request.user.is_staff %}
                         <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
-                                data-payment-id="{{ payment.pk|default:0 }}" 
-                                data-date-paid="{{ payment.Date_Paid|date:'Y-m-d'|default:'' }}" 
+                                data-payment-id="{{ payment.pk|default:0 }}"
+                                data-date-paid="{{ payment.Date_Paid|date:'Y-m-d'|default:'' }}"
                                 data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
-                                data-payment-type="{{ payment.Payment_Type|default:1 }}">
+                                data-payment-type="{{ payment.Payment_Type|default:1 }}"
+                                data-apply-to-principal="{{ payment.Apply_To_Principal|yesno:'1,0' }}"
+                                data-loan-frequency="{{ Loan.Frequency }}">
                           <i class="fas fa-edit"></i> Edit
                         </button>
                         <button type="button" class="btn btn-sm btn-danger delete-payment-btn" data-payment-id="{{ payment.pk|default:0 }}">
@@ -1014,7 +1143,6 @@
     </div>
   </div>
 </div>
-</div>
 
 <!-- Edit Payment Modal -->
 <div class="modal fade" id="editPaymentModal" tabindex="-1" aria-labelledby="editPaymentModalLabel" aria-hidden="true">
@@ -1044,6 +1172,14 @@
               <option value="2">Penalty Payment</option>
             </select>
           </div>
+          {% if Loan.Frequency == 4 %}
+          <div class="mb-3 form-check" id="editApplyToPrincipalWrapper">
+            <input type="checkbox" class="form-check-input" id="editApplyToPrincipal" name="apply_to_principal">
+            <label class="form-check-label small" for="editApplyToPrincipal">
+              Apply any amount beyond interest to principal
+            </label>
+          </div>
+          {% endif %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1102,8 +1238,8 @@
 
 <script>
   // Edit Payment Functions
-  function editPayment(paymentId, datePaid, amountPaid, paymentType) {
-    console.log('Editing payment:', {paymentId, datePaid, amountPaid, paymentType});
+  function editPayment(paymentId, datePaid, amountPaid, paymentType, applyToPrincipal) {
+    console.log('Editing payment:', {paymentId, datePaid, amountPaid, paymentType, applyToPrincipal});
 
     // Safely handle the values
     const safePaymentId = paymentId || 0;
@@ -1111,25 +1247,21 @@
     const safeAmountPaid = amountPaid || 0;
     const safePaymentType = paymentType || 1;
 
-    console.log('Setting form values:', {
-      id: safePaymentId,
-      date: safeDatePaid,
-      amount: safeAmountPaid,
-      type: safePaymentType
-    });
-
     document.getElementById('editPaymentId').value = safePaymentId;
     document.getElementById('editPaymentDate').value = safeDatePaid;
     document.getElementById('editPaymentAmount').value = safeAmountPaid;
     document.getElementById('editPaymentType').value = safePaymentType;
 
-    // Debug: Check if values are set correctly
-    console.log('Form values after setting:', {
-      id: document.getElementById('editPaymentId').value,
-      date: document.getElementById('editPaymentDate').value,
-      amount: document.getElementById('editPaymentAmount').value,
-      type: document.getElementById('editPaymentType').value
-    });
+    var principalCheckbox = document.getElementById('editApplyToPrincipal');
+    var principalWrapper = document.getElementById('editApplyToPrincipalWrapper');
+    if (principalCheckbox) {
+      principalCheckbox.checked = (applyToPrincipal === '1');
+      // The checkbox only makes sense for installment payments (type 1),
+      // not penalty payments (type 2) -- hide it for the latter.
+      if (principalWrapper) {
+        principalWrapper.style.display = (String(safePaymentType) === '2') ? 'none' : '';
+      }
+    }
 
     var modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
     modal.show();
@@ -1181,8 +1313,9 @@
         const datePaid = this.getAttribute('data-date-paid');
         const amountPaid = this.getAttribute('data-amount-paid');
         const paymentType = this.getAttribute('data-payment-type');
+        const applyToPrincipal = this.getAttribute('data-apply-to-principal');
 
-        editPayment(paymentId, datePaid, amountPaid, paymentType);
+        editPayment(paymentId, datePaid, amountPaid, paymentType, applyToPrincipal);
       });
     });
 

@@ -85,12 +85,13 @@
         </div>
     </div>
 
+    {% if not overdraft_only %}
     <!-- Main Collections Table -->
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0 fw-bold text-dark">
                 <i class="fas fa-clipboard-list me-2 text-primary"></i>Finance and Collection Report
-                <small class="text-muted fs-6 ms-2">(Active Loans Only)</small>
+                <small class="text-muted fs-6 ms-2">(Active Loans Only &mdash; excludes OverDraft, see section below)</small>
             </h5>
         </div>
         <div class="card-body p-0">
@@ -250,7 +251,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 small">
-                            <thead class="bg-light">
+                            <thead>
                                 <tr>
                                     <th class="ps-3">Acc No</th>
                                     <th>Customer</th>
@@ -286,7 +287,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 small">
-                            <thead class="bg-light">
+                            <thead>
                                 <tr>
                                     <th class="ps-3">Acc No</th>
                                     <th>Customer</th>
@@ -314,6 +315,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
+    {% include 'microfinance/includes/overdraft_report_section.html' %}
 </div>
 
 <style>
@@ -323,24 +327,7 @@
     .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
     
     .bg-purple {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    
-    .table-modern thead th {
-        background: linear-gradient(to right, #667eea, #764ba2);
-        color: white;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        padding: 12px 8px;
-    }
-
-    .table-modern tbody tr:hover {
-        background-color: rgba(102, 126, 234, 0.05);
-    }
-
-    .table-modern tbody tr:hover {
-        background-color: rgba(102, 126, 234, 0.05);
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%) !important;
     }
 </style>
 

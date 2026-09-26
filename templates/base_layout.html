@@ -14,7 +14,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
     /* ===========================
@@ -22,20 +22,57 @@
        =========================== */
     
     :root {
-      /* Primary Colors */
-      --primary-color: #4caf50;
-      --primary-hover: #45a049;
-      --primary-light: rgba(76, 175, 80, 0.1);
-      
-      /* Secondary Colors */
-      --secondary-color: #667eea;
-      --secondary-dark: #764ba2;
-      
+      /* Primary Colors — deep navy. Buttons, active nav, focus rings. */
+      --primary-color: #1e3a5f;
+      --primary-hover: #172e4c;
+      --primary-light: rgba(30, 58, 95, 0.1);
+
+      /* Accent — teal. Links, highlights, secondary emphasis. */
+      --accent-color: #14a098;
+      --accent-hover: #118c85;
+      --accent-light: rgba(20, 160, 152, 0.1);
+
+      /* Secondary Colors — navy/teal gradient pair, replaces the old purple */
+      --secondary-color: #1e3a5f;
+      --secondary-dark: #14a098;
+
       /* Status Colors */
-      --success-color: #28a745;
-      --danger-color: #dc3545;
-      --warning-color: #ffc107;
-      --info-color: #17a2b8;
+      --success-color: #2e9e5b;
+      --danger-color: #d64550;
+      --warning-color: #e8a33d;
+      --info-color: #14a098;
+
+      /* Darker variants for solid fills carrying white text (WCAG AA) */
+      --accent-strong: #0e7c7b;
+      --success-strong: #24804a;
+      --danger-strong: #c1323d;
+
+      /* Soft tints for section-coding tables and badges. Each pairs with the
+         matching -ink colour for readable text (all clear WCAG AA). */
+      --tint-success: #e4f3ea;
+      --tint-success-ink: #1b5e34;
+      --tint-danger: #fbe7e9;
+      --tint-danger-ink: #8f2730;
+      --tint-warning: #fdf2df;
+      --tint-warning-ink: #6b4a10;
+      --tint-accent: #e2f2f1;
+      --tint-accent-ink: #0a5b5a;
+      --tint-neutral: #eef1f4;
+      --tint-neutral-ink: #3c4652;
+
+      /* Gradients — single source of truth. Pages must not redefine these. */
+      --primary-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
+      --secondary-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
+      --success-gradient: linear-gradient(135deg, #2e9e5b 0%, #24804a 100%);
+      --info-gradient: linear-gradient(135deg, #14a098 0%, #118c85 100%);
+      --warning-gradient: linear-gradient(135deg, #e8a33d 0%, #cc8a26 100%);
+      --danger-gradient: linear-gradient(135deg, #d64550 0%, #b5333d 100%);
+      --dark-gradient: linear-gradient(135deg, #2b3138 0%, #16233a 100%);
+      --teal-gradient: linear-gradient(135deg, #14a098 0%, #0e7c7b 100%);
+      --purple-gradient: linear-gradient(135deg, #1e3a5f 0%, #14a098 100%);
+      --blue-gradient: linear-gradient(135deg, #1e3a5f 0%, #172e4c 100%);
+      --cyan-gradient: linear-gradient(135deg, #14a098 0%, #118c85 100%);
+      --yellow-gradient: linear-gradient(135deg, #e8a33d 0%, #cc8a26 100%);
       
       /* Neutral Colors */
       --dark: #333;
@@ -117,6 +154,22 @@
       background-color: var(--primary-color) !important;
     }
 
+    /* Group separator between nav sections. Hidden below lg, where the navbar
+       collapses to a vertical list and a divider would read as a stray line. */
+    .nav-sep {
+      display: none;
+    }
+
+    @media (min-width: 992px) {
+      .nav-sep {
+        display: block;
+        width: 1px;
+        height: 20px;
+        margin: 0 0.5rem;
+        background-color: rgba(255, 255, 255, 0.22);
+      }
+    }
+
     .btn-logout {
       background-color: transparent;
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -179,6 +232,153 @@
     }
 
     /* ===========================
+       Bootstrap colour utilities, re-pointed at the design tokens.
+       Bootstrap ships its own palette for bg-primary/bg-info/etc, so without
+       this a `card-header bg-info` renders Bootstrap cyan and ignores the
+       theme entirely.
+       =========================== */
+
+    /* Retheme by overriding Bootstrap's *-rgb variables rather than the final
+       background-color. Setting background-color directly discards
+       --bs-bg-opacity, which is how bg-opacity-* works: a
+       `bg-success bg-opacity-10` icon tile then rendered as a solid block with
+       its glyph invisible against it. */
+    :root {
+      --bs-primary-rgb: 30, 58, 95;
+      --bs-secondary-rgb: 30, 58, 95;
+      --bs-info-rgb: 20, 160, 152;
+      --bs-success-rgb: 46, 158, 91;
+      --bs-danger-rgb: 214, 69, 80;
+      --bs-warning-rgb: 232, 163, 61;
+    }
+
+    .bg-primary,
+    .bg-secondary,
+    .bg-info,
+    .bg-success,
+    .bg-danger,
+    .bg-warning {
+      background-color: rgba(var(--bs-bg-rgb), var(--bs-bg-opacity, 1)) !important;
+    }
+
+    .bg-primary { --bs-bg-rgb: var(--bs-primary-rgb); }
+    .bg-secondary { --bs-bg-rgb: var(--bs-secondary-rgb); }
+    .bg-info { --bs-bg-rgb: var(--bs-info-rgb); }
+    .bg-success { --bs-bg-rgb: var(--bs-success-rgb); }
+    .bg-danger { --bs-bg-rgb: var(--bs-danger-rgb); }
+    .bg-warning { --bs-bg-rgb: var(--bs-warning-rgb); }
+
+    .text-primary { color: var(--primary-color) !important; }
+    .text-info { color: var(--accent-color) !important; }
+    .text-success { color: var(--success-color) !important; }
+    .text-danger { color: var(--danger-color) !important; }
+    .text-warning { color: #b8801f !important; }
+
+    .border-primary { border-color: var(--primary-color) !important; }
+    .border-info { border-color: var(--accent-color) !important; }
+    .border-success { border-color: var(--success-color) !important; }
+    .border-danger { border-color: var(--danger-color) !important; }
+
+    /* Button fills use the darker shade of each hue so white labels clear
+       WCAG AA (4.5:1). The lighter --success-color / --accent-color stay in use
+       for headings, badges and chart fills. */
+    .btn-success {
+      background-color: var(--success-strong);
+      border-color: var(--success-strong);
+    }
+
+    .btn-info {
+      background-color: var(--accent-strong);
+      border-color: var(--accent-strong);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-strong);
+      border-color: var(--danger-strong);
+    }
+
+    .btn-secondary {
+      background-color: var(--gray-600);
+      border-color: var(--gray-600);
+    }
+
+    /* Every solid button keeps a white label on its dark fill. Warning stays
+       dark-on-amber, which is the readable pairing there. */
+    .btn-success, .btn-success:hover, .btn-success:focus,
+    .btn-info, .btn-info:hover, .btn-info:focus,
+    .btn-secondary, .btn-secondary:hover, .btn-secondary:focus,
+    .btn-danger, .btn-danger:hover, .btn-danger:focus,
+    .btn-dark, .btn-dark:hover, .btn-dark:focus {
+      color: #fff !important;
+    }
+
+    .btn-warning,
+    .btn-warning:hover,
+    .btn-warning:focus {
+      color: #212529 !important;
+    }
+
+    /* Buttons sitting inside a dark card header: a solid btn-light reads as a
+       heavy white block and inflates the header. Render them as quiet outlines
+       so the header keeps a consistent height across cards. */
+    .card-header.bg-primary .btn-light,
+    .card-header.bg-primary .btn-light:focus {
+      background-color: rgba(255, 255, 255, 0.14) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #fff !important;
+      box-shadow: none;
+    }
+
+    .card-header.bg-primary .btn-light:hover {
+      background-color: rgba(255, 255, 255, 0.26) !important;
+      border-color: rgba(255, 255, 255, 0.7);
+      color: #fff !important;
+    }
+
+    .card-header .btn-sm {
+      padding: 0.3rem 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    /* Keep header rows a predictable height whether or not they hold a button */
+    .card-header {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-header > h5,
+    .card-header > h6 {
+      line-height: 1.3;
+    }
+
+    .btn-outline-primary {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+
+    a {
+      color: var(--primary-color);
+    }
+
+    a:hover {
+      color: var(--accent-color);
+    }
+
+    .navbar a,
+    .btn a,
+    a.btn,
+    .table-modern thead a {
+      color: inherit;
+    }
+
+    /* ===========================
        Form Styles
        =========================== */
     
@@ -202,6 +402,80 @@
       color: var(--dark);
     }
 
+    /* Shared long-form data-entry layout (Add Client, Add Guarantor, ...) */
+
+    .form-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: rgba(248, 249, 250, 0.5);
+      border-radius: var(--radius-lg);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .section-title {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    /* Webcam capture UI, shared by Add Client and Add Guarantor.
+       Hidden until the camera starts - the JS flips display to block. Keeping
+       display:none here matters: an earlier version of this rule dropped it and
+       the empty black frame plus its controls rendered on page load. */
+    .webcam-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem auto;
+      background: #000;
+      border-radius: 15px;
+      overflow: hidden;
+      display: none;
+    }
+
+    /* Round shutter button: the glyph is dark, so the button needs its own light
+       fill or the icon disappears against it. */
+    .camera-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #212529;
+      transition: var(--transition-fast);
+    }
+
+    .camera-btn:hover {
+      background: #fff;
+      transform: scale(1.1);
+    }
+
+    @media (max-width: 768px) {
+      .form-section {
+        padding: 1rem;
+      }
+
+      .section-title {
+        font-size: 1rem;
+      }
+    }
+
     /* ===========================
        Button Styles
        =========================== */
@@ -211,6 +485,15 @@
       padding: 0.75rem 1.5rem;
       font-weight: 500;
       transition: var(--transition-fast);
+    }
+
+    /* Solid buttons must declare their own text colour: without it the label
+       inherits the page's dark body text and goes unreadable on a dark fill. */
+    .btn-primary,
+    .btn-primary:hover,
+    .btn-primary:focus,
+    .btn-primary:active {
+      color: #fff !important;
     }
 
     .btn-primary {
@@ -240,17 +523,83 @@
     }
 
     /* ===========================
-       Table Styles
+       Table Styles — the single definition for the whole app.
+       Pages had drifted into 21 variants of this; do not redefine locally.
        =========================== */
-    
+
     .table-modern {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
       border-radius: var(--radius-md);
       overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
+    .table-modern thead th,
     .table-modern thead {
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+      background: var(--primary-color);
       color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      padding: 12px;
+      border: none;
+      vertical-align: middle;
+    }
+
+    .table-modern td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    /* Header labels that wrap to two lines were sitting on mismatched
+       baselines, and body cells bottom-aligned against them. Anchor both to a
+       consistent vertical alignment across every table in the app. */
+    .table thead th,
+    .table-modern thead th {
+      vertical-align: middle;
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle;
+    }
+
+    /* Wide tables: let the table exceed the container and scroll horizontally
+       rather than squeezing many columns into the width, which forced header
+       labels to wrap mid-phrase.
+
+       A vertically-scrolling wrapper must still scroll horizontally, otherwise
+       the overflowing columns are simply unreachable - several pages set
+       `overflow-y: auto` inline, which alone resets overflow-x to visible. */
+    .table-responsive {
+      overflow-x: auto !important;
+    }
+
+    .table-responsive > .table,
+    .table-responsive > .table-modern {
+      min-width: max-content;
+    }
+
+    .table-responsive > .table > thead > tr > th,
+    .table-responsive > .table-modern > thead > tr > th {
+      white-space: nowrap;
+    }
+
+    /* Action buttons inside a table cell need room to breathe */
+    .table td .btn-sm,
+    .table-modern td .btn-sm {
+      white-space: nowrap;
+    }
+
+    .table td .btn-group,
+    .table-modern td .btn-group {
+      flex-wrap: nowrap;
     }
 
     .table-modern tbody tr {
@@ -259,6 +608,122 @@
 
     .table-modern tbody tr:hover {
       background: var(--gray-100);
+    }
+
+    .table-modern tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Section-coded tables keep a meaningful tint instead of the navy header:
+       success = schedule/paid, danger = penalties, warning = attention.
+       Each tint pairs with its own ink colour and clears WCAG AA. */
+    .table-success thead th,
+    .table-success.table-modern thead th {
+      background-color: var(--tint-success) !important;
+      color: var(--tint-success-ink) !important;
+    }
+
+    .table-danger thead th,
+    .table-danger.table-modern thead th {
+      background-color: var(--tint-danger) !important;
+      color: var(--tint-danger-ink) !important;
+    }
+
+    .table-warning thead th,
+    .table-warning.table-modern thead th {
+      background-color: var(--tint-warning) !important;
+      color: var(--tint-warning-ink) !important;
+    }
+
+    .table-info thead th,
+    .table-info.table-modern thead th {
+      background-color: var(--tint-accent) !important;
+      color: var(--tint-accent-ink) !important;
+    }
+
+    /* ===========================
+       Metric / stat cards — shared by every report page.
+       =========================== */
+
+    .metric-card {
+      border: none;
+      border-radius: var(--radius-lg);
+      color: white;
+      overflow: hidden;
+      position: relative;
+      transition: var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+      height: 100%;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .metric-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0;
+      line-height: 1.15;
+    }
+
+    .metric-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    .metric-card .icon-bg,
+    .stat-card .icon-bg {
+      position: absolute;
+      right: -10px;
+      bottom: -10px;
+      font-size: 4.5rem;
+      opacity: 0.15;
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+
+    /* ===========================
+       Repayment status — row-level risk signalling. Border carries the
+       signal alongside colour so it survives printing.
+       =========================== */
+
+    .loan-behind td {
+      background-color: rgba(214, 69, 80, 0.05);
+    }
+
+    .loan-behind td:first-child {
+      box-shadow: inset 3px 0 0 var(--danger-color);
+    }
+
+    .loan-ontrack td:first-child {
+      box-shadow: inset 3px 0 0 var(--success-color);
+    }
+
+    .loan-closed td:first-child {
+      box-shadow: inset 3px 0 0 var(--gray-300);
+    }
+
+    .status-key {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      margin-bottom: 0.75rem;
+    }
+
+    .status-key .swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 0.35rem;
+      vertical-align: baseline;
     }
 
     /* ===========================
@@ -358,8 +823,62 @@
     /* Container padding */
     .container,
     .container-fluid {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    /* A .table-responsive placed straight inside a .card (no .card-body) gets
+       no padding from Bootstrap, so the table runs edge to edge. Give the
+       wrapper its own inset instead of trying to pad individual cells, which
+       breaks down as soon as the table scrolls horizontally. */
+    .card > .table-responsive,
+    .card-body.p-0 > .table-responsive {
+      padding: 0 1rem 0.25rem 1rem;
+    }
+
+    /* A sticky header inside that wrapper must cover the new padding, or rows
+       show through beside it while scrolling. */
+    .card > .table-responsive > .table > thead,
+    .card-body.p-0 > .table-responsive > .table > thead {
+      background-clip: padding-box;
+    }
+
+    /* Scrolling a wide table sideways used to hide the leading column, leaving
+       action buttons with no row label. Rather than pin a column - which fights
+       every row tint and stripe for an opaque background - keep the columns
+       narrow enough that the table usually fits, and make the scroll obvious
+       when it does not. */
+    .table-responsive {
+      scrollbar-width: thin;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+      height: 9px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-600);
+    }
+
+    /* Dense tables (8+ columns) trim their padding and font a little so they
+       fit without horizontal scrolling on a normal screen. */
+    .table-responsive > .table > thead > tr > th,
+    .table-responsive > .table > tbody > tr > td {
+      padding-left: 0.6rem;
+      padding-right: 0.6rem;
+    }
+
+    @media (max-width: 576px) {
+      .container,
+      .container-fluid {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+      }
     }
 
     /* ===========================
@@ -448,16 +967,25 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
+        {% comment %}Grouped as daily work / records / money / admin, so the links read as distinct jobs rather than one undifferentiated row.{% endcomment %}
+        <ul class="navbar-nav me-auto align-items-lg-center">
           <li class="nav-item">
             <a class="nav-link {% if request.path == '/Home/' %}active{% endif %}" href="{% url 'microfinance:home' %}">
-              <i class="fas fa-home me-1"></i> Home
+              <i class="fas fa-house me-1"></i> Today
             </a>
           </li>
           {% if request.user.is_staff %}
           <li class="nav-item">
+            <a class="nav-link {% if 'Overdue' in request.path %}active{% endif %}" href="{% url 'microfinance:overdue' %}">
+              <i class="fas fa-triangle-exclamation me-1"></i> Overdue
+            </a>
+          </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
+          <li class="nav-item">
             <a class="nav-link {% if '/Search/' in request.path %}active{% endif %}" href="{% url 'microfinance:search' %}">
-              <i class="fas fa-search me-1"></i> Search
+              <i class="fas fa-magnifying-glass me-1"></i> Clients
             </a>
           </li>
           <li class="nav-item">
@@ -465,6 +993,9 @@
               <i class="fas fa-user-plus me-1"></i> Add Client
             </a>
           </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
           <li class="nav-item">
             <a class="nav-link {% if 'Reports' in request.path %}active{% endif %}" href="{% url 'microfinance:reports' %}">
               <i class="fas fa-chart-line me-1"></i> Reports
@@ -472,7 +1003,7 @@
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'dashboard' in request.path %}active{% endif %}" href="{% url 'microfinance:dashboard' %}">
-              <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+              <i class="fas fa-gauge-high me-1"></i> Dashboard
             </a>
           </li>
           <li class="nav-item">
@@ -480,9 +1011,12 @@
               <i class="fas fa-wallet me-1"></i> Expenses
             </a>
           </li>
+
+          <li class="nav-sep" aria-hidden="true"></li>
+
           <li class="nav-item">
             <a class="nav-link {% if 'add_officer' in request.path %}active{% endif %}" href="{% url 'microfinance:addofficer' %}">
-              <i class="fas fa-user-tie me-1"></i> Add Staff
+              <i class="fas fa-user-tie me-1"></i> Staff
             </a>
           </li>
           {% endif %}
@@ -503,6 +1037,28 @@
 
   <!-- Bootstrap 5 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Scrolling the page with the cursor over a focused number input makes the
+    // browser increment/decrement its value, which silently edits amounts on
+    // forms like Add Loan and Add Payment. Block the wheel from changing the
+    // value; the page still scrolls normally.
+    //
+    // Capture phase + non-passive so preventDefault is honoured, and delegated
+    // from the document so it also covers inputs Django renders and any markup
+    // added later.
+    document.addEventListener('wheel', function (event) {
+      var el = event.target;
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'number') return;
+      if (document.activeElement !== el) return;   // only when it would actually change
+      el.blur();                                   // drop focus so the wheel can't reach it
+      // Let the page keep scrolling - do not preventDefault on the scroll itself.
+    }, { capture: true, passive: true });
+
+    // Arrow keys inside a number input are legitimate, but Up/Down on a field
+    // the user is only tabbing through is a common source of accidental edits
+    // on numeric-heavy forms. Leave keyboard behaviour untouched.
+  </script>
 </body>
 
 </html>

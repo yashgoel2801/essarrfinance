@@ -22,7 +22,7 @@
     <div class="row g-3 mb-4">
         <!-- Target Card -->
         <div class="col-md-4">
-            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid #4facfe !important;">
+            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid var(--accent-color) !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted text-uppercase mb-2 small fw-bold">{% if DueDate and DueDate != 0 %}Day {{ DueDate }}{% else %}Monthly{% endif %} Target</h6>
                     <h4 class="mb-0 fw-bold text-primary">₹{% if DayTarget %}{{DayTarget|floatformat:0}}{% else %}{{MonthlyTarget|floatformat:0}}{% endif %}</h4>
@@ -33,10 +33,10 @@
         
         <!-- Total Pending Card -->
         <div class="col-md-4">
-            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid #667eea !important;">
+            <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid var(--secondary-color) !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted text-uppercase mb-2 small fw-bold">Total Pending (This List)</h6>
-                    <h4 class="mb-0 fw-bold" style="color: #667eea;">₹{{TotalPendingSum|floatformat:0}}</h4>
+                    <h4 class="mb-0 fw-bold" style="color: var(--secondary-color);">₹{{TotalPendingSum|floatformat:0}}</h4>
                     <small class="text-muted">Total balance of scheduled clients</small>
                 </div>
             </div>
@@ -72,26 +72,13 @@
 
 <style>
     .bg-purple {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    
-    .table-modern thead th {
-        background: linear-gradient(to right, #667eea, #764ba2);
-        color: white;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        padding: 12px 10px;
-        border: none;
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%) !important;
     }
 
     .bg-danger-header th {
-        background: linear-gradient(to right, #f85032, #e73827) !important;
+        background: linear-gradient(to right, var(--danger-color), var(--danger-strong)) !important;
         color: white !important;
     }
-
-    .table-modern tbody tr { border-bottom: 1px solid #eee; }
-    .table-modern tbody tr:hover { background-color: rgba(102, 126, 234, 0.05); }
     
     .stat-card { transition: transform 0.2s; }
     .stat-card:hover { transform: translateY(-5px); }

@@ -6,3 +6,4 @@ CLAUDE.local.md
 *.log
 .pyc
 __pycache__/
+.lavish/

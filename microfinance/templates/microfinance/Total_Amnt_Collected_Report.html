@@ -1,113 +1,7 @@
 {% extends 'base_layout.html' %}
 {% load keyvalue %}
 {% block content %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-        --success-gradient: linear-gradient(135deg, #198754 0%, #146c43 100%);
-        --info-gradient: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
-        --dark-gradient: linear-gradient(135deg, #2d3436 0%, #000000 100%);
-    }
-
-    .metric-card {
-        border: none;
-        border-radius: 12px;
-        color: white;
-        overflow: hidden;
-        position: relative;
-        transition: transform 0.2s;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        height: 100%;
-    }
-
-    .metric-card .icon-bg {
-        position: absolute;
-        right: -10px;
-        bottom: -10px;
-        font-size: 4rem;
-        opacity: 0.15;
-        transform: rotate(-15deg);
-    }
-
-    .metric-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0px;
-    }
-
-    .metric-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.9;
-        margin-bottom: 5px;
-    }
-
-    .table-modern {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-
-    .table-modern thead th {
-        background: #f8f9fa;
-        color: #2d3436;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        padding: 12px;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    .table-modern td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #eee;
-        font-size: 0.9rem;
-    }
-
-    /* Repayment position as of today. A left border carries the signal so it
-       survives printing and does not rely on colour alone. */
-    .table-modern tr.loan-behind td {
-        background-color: #fdf3f4;
-    }
-
-    .table-modern tr.loan-behind td:first-child {
-        box-shadow: inset 3px 0 0 #dc3545;
-    }
-
-    .table-modern tr.loan-ontrack td:first-child {
-        box-shadow: inset 3px 0 0 #198754;
-    }
-
-    .table-modern tr.loan-closed td:first-child {
-        box-shadow: inset 3px 0 0 #adb5bd;
-    }
-
-    .status-key {
-        display: flex;
-        gap: 1.25rem;
-        flex-wrap: wrap;
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin-bottom: 0.75rem;
-    }
-
-    .status-key .swatch {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 2px;
-        margin-right: 0.35rem;
-        vertical-align: baseline;
-    }
-
     .officer-section {
         background: white;
         border-radius: 16px;
@@ -117,7 +11,7 @@
     }
 
     .officer-header {
-        background: linear-gradient(135deg, #f1f2f6 0%, #dfe4ea 100%);
+        background: linear-gradient(135deg, var(--tint-neutral) 0%, var(--tint-neutral) 100%);
         padding: 1.25rem;
         border-radius: 16px 16px 0 0;
         display: flex;
@@ -236,13 +130,13 @@
                     </h6>
                     <div class="status-key">
                         <span>Repayment position today:</span>
-                        <span><span class="swatch" style="background:#198754;"></span>On track</span>
-                        <span><span class="swatch" style="background:#dc3545;"></span>Behind schedule</span>
-                        <span><span class="swatch" style="background:#adb5bd;"></span>Closed</span>
+                        <span><span class="swatch" style="background:var(--success-color);"></span>On track</span>
+                        <span><span class="swatch" style="background:var(--danger-color);"></span>Behind schedule</span>
+                        <span><span class="swatch" style="background:var(--gray-300);"></span>Closed</span>
                     </div>
                     <div class="table-responsive">
                         <table class="table-modern table-hover mb-4">
-                            <thead class="bg-light">
+                            <thead>
                                 <tr>
                                     <th width="8%">Loan</th>
                                     <th>Client Name</th>
@@ -261,7 +155,7 @@
                                     <td><span class="fw-semibold">{{payment.Loan.Account.Client.Name}}</span></td>
                                     <td class="text-end fw-bold text-success">₹{{payment.Amount_Paid}}</td>
                                     <td class="text-end text-warning fw-bold">₹{{payment.penalty_today}}</td>
-                                    <td class="text-end fw-bolder" style="background: #fbfbfb;">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
+                                    <td class="text-end fw-bolder" style="background: var(--gray-100);">₹{{ payment.Amount_Paid|add:payment.penalty_today }}</td>
                                     <td class="text-end">
                                         {% if payment.loan_status.overdue %}
                                         <span class="fw-semibold text-danger">₹{{payment.loan_status.overdue|floatformat:0}}</span>
@@ -405,7 +299,7 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead class="bg-light">
+                    <thead>
                         <tr>
                             <th class="border-0">Category</th>
                             <th class="border-0">Paid To</th>
@@ -430,5 +324,68 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- OverDraft Loans -- kept separate from the officer collection
+         totals above: interest is daily-prorated and split into
+         interest/principal/credit, not a single Amount_Paid figure. -->
+    <div class="card mb-4 border-info">
+        <div class="card-header bg-info bg-opacity-10">
+            <h5 class="mb-0"><i class="fas fa-university me-2"></i>OverDraft Loans (separate section)</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if overdraft_report_data %}
+            {% for entry in overdraft_report_data %}
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold">{{ entry.officer.Officer_Name }}</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-2">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Loan</th>
+                                <th>Client</th>
+                                <th>Interest</th>
+                                <th>Principal</th>
+                                <th>Credit Banked</th>
+                                <th>Amount Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in entry.rows %}
+                            <tr>
+                                <td>#{{ row.loan.pk }}</td>
+                                <td>{{ row.loan.Account.Client.Name }}</td>
+                                <td>₹{{ row.interest_collected_in_range|floatformat:2 }}</td>
+                                <td>₹{{ row.principal_collected_in_range|floatformat:2 }}</td>
+                                <td>₹{{ row.credit_banked_in_range|floatformat:2 }}</td>
+                                <td><strong>₹{{ row.amount_collected_in_range|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="2">Officer Total</th>
+                                <th>₹{{ entry.totals.interest|floatformat:2 }}</th>
+                                <th>₹{{ entry.totals.principal|floatformat:2 }}</th>
+                                <th>₹{{ entry.totals.credit|floatformat:2 }}</th>
+                                <th>₹{{ entry.totals.amount|floatformat:2 }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="p-3">
+                <strong>
+                    Grand Total &mdash; Interest: ₹{{ overdraft_grand_totals.interest|floatformat:2 }},
+                    Principal: ₹{{ overdraft_grand_totals.principal|floatformat:2 }},
+                    Credit Banked: ₹{{ overdraft_grand_totals.credit|floatformat:2 }},
+                    Amount Collected: ₹{{ overdraft_grand_totals.amount|floatformat:2 }}
+                </strong>
+            </div>
+            {% else %}
+            <p class="text-muted p-3 mb-0">No OverDraft loan activity on this date.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

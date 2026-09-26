@@ -66,11 +66,34 @@ class AddDocs(forms.ModelForm):
 class AddLoan(forms.ModelForm):
     class Meta:
         model=models.Loans
-        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','security_docs']
+        fields= ['AccNo','Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','Penalty_Rate','File_Charge_Percent','First_Due_Date','Loan_Date','Loan_Collector','security_docs']
         widgets = {
             'First_Due_Date': forms.DateInput(attrs={'type': 'date'}),
             'Loan_Date': forms.DateInput(attrs={'type': 'date'})
         }
+        help_texts = {
+            'Penalty_Rate': 'Optional. Daily late-payment penalty percent. Leave blank for the default (2%/day).',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['No_Of_Installments'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        frequency = cleaned_data.get('Frequency')
+        first_due = cleaned_data.get('First_Due_Date')
+        loan_date = cleaned_data.get('Loan_Date')
+        if frequency == 4 and first_due and loan_date and first_due <= loan_date:
+            raise forms.ValidationError(
+                'For OverDraft loans, First Due Date must be after Loan Date.'
+            )
+        no_of_installments = cleaned_data.get('No_Of_Installments')
+        if frequency == 4:
+            cleaned_data['No_Of_Installments'] = no_of_installments or 0
+        elif not no_of_installments:
+            self.add_error('No_Of_Installments', 'This field is required.')
+        return cleaned_data
 
 class AddGuarantor(forms.ModelForm):
     class Meta:
@@ -167,12 +190,12 @@ class ClientSearchForm(forms.Form):
 class EditLoanDetail(forms.ModelForm):
     class Meta:
         model=models.Loans
-        fields=['Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','File_Charge_Percent','Loan_Date','First_Due_Date','Loan_Collector']
+        fields=['Principle_Amount','Frequency','Purpose','No_Of_Installments','Intrest_Rate','Penalty_Rate','File_Charge_Percent','Loan_Date','First_Due_Date','Loan_Collector']
         widgets = {
             'Loan_Date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'First_Due_Date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Format dates for HTML5 date input (yyyy-MM-dd)
@@ -181,6 +204,29 @@ class EditLoanDetail(forms.ModelForm):
                 self.initial['Loan_Date'] = self.instance.Loan_Date.strftime('%Y-%m-%d')
             if self.instance.First_Due_Date:
                 self.initial['First_Due_Date'] = self.instance.First_Due_Date.strftime('%Y-%m-%d')
+            if self.instance.Frequency == 4:
+                self.fields['Principle_Amount'].disabled = True
+                self.fields['Principle_Amount'].help_text = (
+                    'Not editable for OverDraft loans — the outstanding balance '
+                    'is derived from the payment history.'
+                )
+        self.fields['No_Of_Installments'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        frequency = cleaned_data.get('Frequency')
+        first_due = cleaned_data.get('First_Due_Date')
+        loan_date = cleaned_data.get('Loan_Date')
+        if frequency == 4 and first_due and loan_date and first_due <= loan_date:
+            raise forms.ValidationError(
+                'For OverDraft loans, First Due Date must be after Loan Date.'
+            )
+        no_of_installments = cleaned_data.get('No_Of_Installments')
+        if frequency == 4:
+            cleaned_data['No_Of_Installments'] = no_of_installments or 0
+        elif not no_of_installments:
+            self.add_error('No_Of_Installments', 'This field is required.')
+        return cleaned_data
 
 class EditInstallmentDetail(forms.ModelForm):
     class Meta:

@@ -1,18 +1,8 @@
 {% extends 'base_layout.html' %}
 {% load static %}
 {% block content %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-    :root {
-        --blue-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-        --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --teal-gradient: linear-gradient(135deg, #009879 0%, #007b63 100%);
-        --cyan-gradient: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-        --yellow-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        --dark-gradient: linear-gradient(135deg, #2d3436 0%, #000000 100%);
-    }
-
-    .report-card {
+.report-card {
         border: none;
         border-radius: 20px;
         transition: all 0.3s ease;
@@ -57,12 +47,12 @@
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        color: #636e72;
+        color: var(--gray-600);
         margin-bottom: 0.4rem;
         letter-spacing: 0.5px;
     }
     .form-select, .form-control {
-        border: 1px solid #e1e8ee;
+        border: 1px solid var(--gray-300);
         border-radius: 10px;
         padding: 0.6rem 0.8rem;
         font-size: 0.9rem;
@@ -109,6 +99,7 @@
                             <option value="1">Daily</option>
                             <option value="2">Weekly</option>
                             <option value="3">Monthly</option>
+                            <option value="4">OverDraft</option>
                         </select>
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
@@ -144,6 +135,7 @@
                             <option value="1">Daily</option>
                             <option value="2">Weekly</option>
                             <option value="3">Monthly</option>
+                            <option value="4">OverDraft</option>
                         </select>
                         <div class="row g-2">
                             <div class="col-6">

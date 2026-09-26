@@ -6,15 +6,19 @@ from django.contrib.contenttypes.models import ContentType
 def create_users_for_clients(apps, schema_editor):
     Clients = apps.get_model('microfinance', 'Clients')
 
-    # Get ContentType for Clients model
-    content_type = ContentType.objects.get(app_label='microfinance', model='clients')
-
-    # Create the permission if it doesn't exist
-    permission, _ = Permission.objects.get_or_create(
-        codename='client_view',
-        name='Can view client details',
-        content_type=content_type,
-    )
+    # Get ContentType for Clients model - handle gracefully if it doesn't exist yet
+    try:
+        content_type = ContentType.objects.get(app_label='microfinance', model='clients')
+    except ContentType.DoesNotExist:
+        # ContentType hasn't been created yet, skip permission creation
+        permission = None
+    else:
+        # Create the permission if it doesn't exist
+        permission, _ = Permission.objects.get_or_create(
+            codename='client_view',
+            name='Can view client details',
+            content_type=content_type,
+        )
 
     for client in Clients.objects.all()[:4]:
         username = str(client.Phone_no1)[3:] if client.Phone_no1 else None
@@ -25,7 +29,8 @@ def create_users_for_clients(apps, schema_editor):
 
         if not User.objects.filter(username=username).exists():
             user = User.objects.create_user(username=username, password=password)
-            user.user_permissions.add(permission)
+            if permission:
+                user.user_permissions.add(permission)
             user.save()
 
             # Assign the user to the client (assumes ForeignKey `ClientUser`)
