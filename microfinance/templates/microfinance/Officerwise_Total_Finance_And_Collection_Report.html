@@ -85,12 +85,13 @@
         </div>
     </div>
 
+    {% if not overdraft_only %}
     <!-- Main Collections Table -->
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0 fw-bold text-dark">
                 <i class="fas fa-clipboard-list me-2 text-primary"></i>Finance and Collection Report
-                <small class="text-muted fs-6 ms-2">(Active Loans Only)</small>
+                <small class="text-muted fs-6 ms-2">(Active Loans Only &mdash; excludes OverDraft, see section below)</small>
             </h5>
         </div>
         <div class="card-body p-0">
@@ -314,6 +315,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
+    {% include 'microfinance/includes/overdraft_report_section.html' %}
 </div>
 
 <style>

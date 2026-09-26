@@ -7,15 +7,18 @@
           <h3 class="mb-4">Add Loan</h3>
           <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             {% csrf_token %}
+            {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
             {% for field in form %}
-            <div class="mb-3">
+            <div class="mb-3" {% if field.name == 'No_Of_Installments' %}id="installments-field-wrapper"{% endif %}>
               <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
               {% if field.field.widget.input_type == 'file' %}
                 <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" {% if field.field.required %}required{% endif %}>
               {% elif field.field.widget.input_type == 'select' %}
                 <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-select" {% if field.field.required %}required{% endif %}>
                   {% for value, text in field.field.choices %}
-                    <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ text }}</option>
+                    <option value="{{ value }}" {% if field.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
                   {% endfor %}
                 </select>
               {% elif field.field.widget.input_type == 'date' %}
@@ -53,6 +56,21 @@
             // submit once return true
             return true;
         });
+    });
+
+    jQuery(function() {
+        function toggleThresholdField() {
+            var freq = $('#id_Frequency').val();
+            if (freq === '4') {
+                $('#installments-field-wrapper').hide();
+                $('#id_No_Of_Installments').prop('required', false);
+            } else {
+                $('#installments-field-wrapper').show();
+                $('#id_No_Of_Installments').prop('required', true);
+            }
+        }
+        toggleThresholdField();
+        $('#id_Frequency').on('change', toggleThresholdField);
     });
 </script>
 {%endblock%}

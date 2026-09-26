@@ -418,13 +418,15 @@
                     <th class="bg-light">Interest Rate:</th>
                     <td>{{ Loan.Intrest_Rate }}%</td>
                   </tr>
+                  {% if Loan.Frequency != 4 %}
                   <tr>
                     <th class="bg-light">No of Installments:</th>
                     <td><strong>{{ Loan|noofinstallment }}</strong></td>
                   </tr>
+                  {% endif %}
                   <tr>
                     <th class="bg-light">Total Amount:</th>
-                    <td><strong class="text-success">₹{{ Total_Loan_Amount|floatformat:2 }}</strong></td>
+                    <td><strong class="text-success">₹{{ Total_Loan_Amount|floatformat:2 }}</strong>{% if Loan.Frequency == 4 %} <span class="text-muted small">(outstanding)</span>{% endif %}</td>
                   </tr>
                   <tr>
                     <th class="bg-light">Total Balance:</th>
@@ -681,6 +683,21 @@
                               </div>
                             </div>
 
+                            {% if Loan.Frequency == 4 %}
+                            <div class="form-check mb-3">
+                              <input type="checkbox" class="form-check-input" id="apply_to_principal" name="apply_to_principal">
+                              <label class="form-check-label small" for="apply_to_principal">
+                                Apply any amount beyond interest to principal
+                              </label>
+                              <div class="form-text">
+                                Unchecked (default): anything you pay beyond the interest due
+                                is banked as credit toward next month's interest. Checked:
+                                the excess reduces the outstanding principal instead &mdash;
+                                required even to pay the loan off in full.
+                              </div>
+                            </div>
+                            {% endif %}
+
                             <button type="submit" name="pay" class="btn btn-success w-100 shadow-sm submit-btn">
                               <i class="fas fa-check-circle me-2"></i>Record Payment
                             </button>
@@ -925,6 +942,15 @@
               </tr>
               {% endif %}
               {% endfor %}
+              {% if overdraft_upcoming %}
+              <tr class="table-light">
+                <td>{{ overdraft_upcoming.Date_Due }}</td>
+                <td colspan="4" class="text-center text-muted">
+                  <i class="fas fa-hourglass-half me-1"></i>Upcoming (estimate) &mdash; not yet billed
+                </td>
+                <td class="text-muted">~₹{{ overdraft_upcoming.Estimated_Interest|floatformat:2 }}</td>
+              </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>
@@ -1014,6 +1040,7 @@
                     <tr>
                       <th>Date Paid</th>
                       <th>Amount Paid</th>
+                      {% if Loan.Frequency == 4 %}<th>Applied</th>{% endif %}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -1023,13 +1050,24 @@
                     <tr>
                       <td>{{ payment.Date_Paid|date:"M d, Y" }}</td>
                       <td><strong class="text-success">₹{{ payment.Amount_Paid|floatformat:2 }}</strong></td>
+                      {% if Loan.Frequency == 4 %}
+                      <td class="small">
+                        {% if payment.Interest_Portion %}Interest: ₹{{ payment.Interest_Portion|floatformat:2 }}<br>{% endif %}
+                        {% if payment.Principal_Portion %}Principal: ₹{{ payment.Principal_Portion|floatformat:2 }}<br>{% endif %}
+                        {% if payment.Banked_As_Credit %}
+                        <span class="text-muted">&rarr; credit: ₹{{ payment.Banked_As_Credit|floatformat:2 }}</span>
+                        {% endif %}
+                      </td>
+                      {% endif %}
                       <td>
                         {% if request.user.is_staff %}
                         <button type="button" class="btn btn-sm btn-warning edit-payment-btn"
-                                data-payment-id="{{ payment.pk|default:0 }}" 
-                                data-date-paid="{{ payment.Date_Paid|date:'Y-m-d'|default:'' }}" 
+                                data-payment-id="{{ payment.pk|default:0 }}"
+                                data-date-paid="{{ payment.Date_Paid|date:'Y-m-d'|default:'' }}"
                                 data-amount-paid="{{ payment.Amount_Paid|default:0|floatformat:2 }}"
-                                data-payment-type="{{ payment.Payment_Type|default:1 }}">
+                                data-payment-type="{{ payment.Payment_Type|default:1 }}"
+                                data-apply-to-principal="{{ payment.Apply_To_Principal|yesno:'1,0' }}"
+                                data-loan-frequency="{{ Loan.Frequency }}">
                           <i class="fas fa-edit"></i> Edit
                         </button>
                         <button type="button" class="btn btn-sm btn-danger delete-payment-btn" data-payment-id="{{ payment.pk|default:0 }}">
@@ -1134,6 +1172,14 @@
               <option value="2">Penalty Payment</option>
             </select>
           </div>
+          {% if Loan.Frequency == 4 %}
+          <div class="mb-3 form-check" id="editApplyToPrincipalWrapper">
+            <input type="checkbox" class="form-check-input" id="editApplyToPrincipal" name="apply_to_principal">
+            <label class="form-check-label small" for="editApplyToPrincipal">
+              Apply any amount beyond interest to principal
+            </label>
+          </div>
+          {% endif %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1192,8 +1238,8 @@
 
 <script>
   // Edit Payment Functions
-  function editPayment(paymentId, datePaid, amountPaid, paymentType) {
-    console.log('Editing payment:', {paymentId, datePaid, amountPaid, paymentType});
+  function editPayment(paymentId, datePaid, amountPaid, paymentType, applyToPrincipal) {
+    console.log('Editing payment:', {paymentId, datePaid, amountPaid, paymentType, applyToPrincipal});
 
     // Safely handle the values
     const safePaymentId = paymentId || 0;
@@ -1201,25 +1247,21 @@
     const safeAmountPaid = amountPaid || 0;
     const safePaymentType = paymentType || 1;
 
-    console.log('Setting form values:', {
-      id: safePaymentId,
-      date: safeDatePaid,
-      amount: safeAmountPaid,
-      type: safePaymentType
-    });
-
     document.getElementById('editPaymentId').value = safePaymentId;
     document.getElementById('editPaymentDate').value = safeDatePaid;
     document.getElementById('editPaymentAmount').value = safeAmountPaid;
     document.getElementById('editPaymentType').value = safePaymentType;
 
-    // Debug: Check if values are set correctly
-    console.log('Form values after setting:', {
-      id: document.getElementById('editPaymentId').value,
-      date: document.getElementById('editPaymentDate').value,
-      amount: document.getElementById('editPaymentAmount').value,
-      type: document.getElementById('editPaymentType').value
-    });
+    var principalCheckbox = document.getElementById('editApplyToPrincipal');
+    var principalWrapper = document.getElementById('editApplyToPrincipalWrapper');
+    if (principalCheckbox) {
+      principalCheckbox.checked = (applyToPrincipal === '1');
+      // The checkbox only makes sense for installment payments (type 1),
+      // not penalty payments (type 2) -- hide it for the latter.
+      if (principalWrapper) {
+        principalWrapper.style.display = (String(safePaymentType) === '2') ? 'none' : '';
+      }
+    }
 
     var modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
     modal.show();
@@ -1271,8 +1313,9 @@
         const datePaid = this.getAttribute('data-date-paid');
         const amountPaid = this.getAttribute('data-amount-paid');
         const paymentType = this.getAttribute('data-payment-type');
+        const applyToPrincipal = this.getAttribute('data-apply-to-principal');
 
-        editPayment(paymentId, datePaid, amountPaid, paymentType);
+        editPayment(paymentId, datePaid, amountPaid, paymentType, applyToPrincipal);
       });
     });
 

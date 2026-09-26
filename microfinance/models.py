@@ -189,7 +189,6 @@ class Loans(models.Model):
     Intrest_Rate = models.FloatField(default=20)
     File_Charge_Percent =models.FloatField(default=5)
     Penalty_Rate = models.FloatField(null=True, blank=True)
-    Principal_Threshold_Percent = models.FloatField(null=True, blank=True)
     First_Due_Date =  models.DateField(default=timezone.now)
     Loan_Date = models.DateField(default=timezone.now)
     Loan_Collector = models.ForeignKey(Staff, on_delete=models.PROTECT,default= 1)
@@ -202,6 +201,9 @@ class Loans(models.Model):
     def __str__(self):
        return "Loan ID: "+str(self.pk)
     def _get_total_amnt_to_collect(self):
+        if self.Frequency == 4:
+            from .overdraft import overdraft_total_owed
+            return overdraft_total_owed(self)
         return self.Principle_Amount + (self.Principle_Amount * self.Intrest_Rate/100 )
     Total = property(_get_total_amnt_to_collect)
 
@@ -258,6 +260,7 @@ class Payments(models.Model):
     Payment_Type =models.IntegerField(choices=PAYMENT_TYPE,default=1)
     Principal_Portion = models.FloatField(default=0)
     Interest_Portion = models.FloatField(default=0)
+    Apply_To_Principal = models.BooleanField(default=False)
     def __str__(self):
        return str(self.Date_Paid) +" - "+str(self.Amount_Paid)+ " - "+str(self.Loan.pk)
     class Meta:

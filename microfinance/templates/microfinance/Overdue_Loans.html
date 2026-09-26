@@ -90,6 +90,74 @@
     </div>
   </div>
 
+  <div class="mb-4">
+    <h4 class="mb-2">By collection officer</h4>
+    {% for group in officer_groups %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>{{ group.officer.Officer_Name }}</strong>
+        <span class="text-danger fw-semibold">&#8377;{{ group.subtotal_overdue|floatformat:0 }} overdue</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table-modern mb-0">
+          <thead>
+            <tr>
+              <th>Loan</th>
+              <th>Client</th>
+              <th class="text-end">Overdue</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in group.rows %}
+            <tr>
+              <td><a href="{% url 'microfinance:loandetail' pk=r.loan.pk %}">#{{ r.loan.pk }}</a></td>
+              <td><a href="{% url 'microfinance:clientdetail' pk=r.loan.Account.Client.pk %}">{{ r.loan.Account.Client.Name }}</a></td>
+              <td class="text-end text-danger">&#8377;{{ r.overdue|floatformat:0 }}</td>
+              <td>{{ r.status.label }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-muted">No officers with overdue loans.</div>
+    {% endfor %}
+  </div>
+
+  <div class="mb-4">
+    <h4 class="mb-2">Defaulters</h4>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table-modern mb-0">
+          <thead>
+            <tr>
+              <th>Loan</th>
+              <th>Client</th>
+              <th>Officer</th>
+              <th class="text-end">Overdue</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in defaulter_rows %}
+            <tr>
+              <td><a href="{% url 'microfinance:loandetail' pk=r.loan.pk %}">#{{ r.loan.pk }}</a></td>
+              <td><a href="{% url 'microfinance:clientdetail' pk=r.loan.Account.Client.pk %}">{{ r.loan.Account.Client.Name }}</a></td>
+              <td class="small text-muted">{{ r.loan.Loan_Collector.Officer_Name }}</td>
+              <td class="text-end text-danger">&#8377;{{ r.overdue|floatformat:0 }}</td>
+              <td>{{ r.status.label }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No defaulters right now.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="card shadow-sm">
     <div class="table-responsive">
       <table class="table-modern">

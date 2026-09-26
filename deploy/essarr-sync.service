@@ -1,0 +1,18 @@
+[Unit]
+Description=Essarr Finance - nightly OverDraft loan sync
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/essarr-2026
+ExecStart=/root/essarr-2026/.venv/bin/python /root/essarr-2026/manage.py sync_overdraft_loans
+
+# Run-level retry: the command exits non-zero (via CommandError) if any
+# loan failed to sync. Restart on failure, but bounded -- three attempts
+# within an hour, then stop and wait for the next scheduled run (the
+# timer's next 4 AM firing is itself the ongoing retry for anything still
+# broken; a permanently-broken loan should not restart forever).
+Restart=on-failure
+RestartSec=600
+StartLimitIntervalSec=3600
+StartLimitBurst=3
