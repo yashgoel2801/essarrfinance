@@ -38,10 +38,12 @@
 <div class="loanees ">
 
     <div>
-        Officer: {%if Staff == 0 %}All{%else%}{{loans.last.Loan_Collector.Officer_Name}}{%endif%} &nbsp;&nbsp;Frequency:{% if Freq == 1 %} Daily {% elif Freq == 0 %}All{% elif Freq == 2 %} Weekly {% else %}Monthly{%endif%}<br> Total Amount Collected :
+        Officer: {%if Staff == 0 %}All{%else%}{{loans.last.Loan_Collector.Officer_Name}}{%endif%} &nbsp;&nbsp;Frequency:{% if Freq == 1 %} Daily {% elif Freq == 0 %}All{% elif Freq == 2 %} Weekly {% elif Freq == 3 %} Monthly {% elif Freq == 4 %} OverDraft {%endif%}<br> Amount To Be Collected : {{total_to_be_collected|floatformat:2}}
+        <br> Total Amount Collected :
         {{totalinst}}
         <br> Total Intrest Collected : {{intrestrec}}
         <br> Total Penalty Collected : {{penaltycollected|floatformat:2}}
+        <br> Penalty Waived : {{waived_penalty|floatformat:2}} &nbsp;&nbsp; Interest Waived : {{waived_interest|floatformat:2}}
     </div>
     <style>
         div #table-wrapper {
@@ -83,7 +85,7 @@
     </div>
 </div>
 
-{% include 'microfinance/includes/overdraft_report_section.html' %}
+{% include 'microfinance/includes/overdraft_report_section.html' with overdraft_in_totals=True %}
 
 </div>
 

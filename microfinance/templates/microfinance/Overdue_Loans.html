@@ -77,15 +77,15 @@
 
   <div class="od-figures mb-4">
     <div class="odf odf-bad">
-      <div class="odf-k">Loans behind</div>
+      <div class="odf-k">Loans behind <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Open loans (all types, including OverDraft and DEFAULTER / DEAD A/C accounts) with an overdue amount above 0 today, out of all open loans for the selected officer."></i></div>
       <div class="odf-v">{{ behind_count }}<span class="fs-6 fw-normal text-muted"> / {{ open_count }}</span></div>
     </div>
     <div class="odf odf-bad">
-      <div class="odf-k">Total overdue</div>
+      <div class="odf-k">Total overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sum of Overdue for the loans behind. Regular loans: installments due to date minus installment payments, capped at what is still owed after interest waivers. OverDraft: interest billed to date minus the interest part of payments."></i></div>
       <div class="odf-v">&#8377;{{ total_overdue|floatformat:0 }}</div>
     </div>
     <div class="odf odf-warn">
-      <div class="odf-k">Penalty pending</div>
+      <div class="odf-k">Penalty pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="For the loans behind only: penalty charged minus penalty paid minus penalty waived, per loan, never below 0."></i></div>
       <div class="odf-v">&#8377;{{ total_penalty|floatformat:0 }}</div>
     </div>
   </div>
@@ -104,7 +104,7 @@
             <tr>
               <th>Loan</th>
               <th>Client</th>
-              <th class="text-end">Overdue</th>
+              <th class="text-end">Overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installments due to date minus installment payments, capped at what is still owed after interest waivers. OverDraft: unpaid interest billed to date."></i></th>
               <th>Status</th>
             </tr>
           </thead>
@@ -136,7 +136,7 @@
               <th>Loan</th>
               <th>Client</th>
               <th>Officer</th>
-              <th class="text-end">Overdue</th>
+              <th class="text-end">Overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installments due to date minus installment payments, capped at what is still owed after interest waivers. OverDraft: unpaid interest billed to date."></i></th>
               <th>Status</th>
             </tr>
           </thead>
@@ -166,10 +166,10 @@
             <th>Loan</th>
             <th>Client</th>
             <th>Officer</th>
-            <th class="text-end">Overdue</th>
-            <th class="text-end">Penalty Pending</th>
-            <th>Last Paid</th>
-            <th class="text-end">Gap</th>
+            <th class="text-end">Overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installments due to date minus installment payments, capped at what is still owed after interest waivers. OverDraft: unpaid interest billed to date."></i></th>
+            <th class="text-end">Penalty Pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty charged minus penalty paid minus penalty waived, never below 0."></i></th>
+            <th>Last Paid <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Date of the latest installment payment received. Penalty payments are not counted."></i></th>
+            <th class="text-end">Gap <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Days since the last installment payment."></i></th>
           </tr>
         </thead>
         <tbody>
@@ -221,4 +221,9 @@
     </div>
   </div>
 </div>
+<script>
+window.addEventListener('load', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+});
+</script>
 {% endblock %}

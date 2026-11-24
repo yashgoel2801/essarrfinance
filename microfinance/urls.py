@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path,re_path as url
 from . import views
 from .views import ClientSearchList
-from microfinance.report_views.report_views import Officer_And_Frequency_Wise_Report,Officerwise_Total_Finance_And_Collection_Report
+from microfinance.report_views.report_views import Officer_And_Frequency_Wise_Report
 from microfinance.report_pdf_views.pdf_views import Officer_And_Frequency_Wise_pdf
 from django.conf import settings
 from django.conf.urls.static import static

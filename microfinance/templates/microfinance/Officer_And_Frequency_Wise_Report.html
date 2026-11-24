@@ -20,7 +20,7 @@
             <h4 class="mb-1 fw-bold text-dark">Officer & Frequency Report</h4>
             <div class="text-muted small">
                 <span class="me-3"><i class="fas fa-user-tie me-2"></i>Officer: {% if Staff == 0 %}All{% else %}{{loans.first.Loan_Collector.Officer_Name}}{% endif %}</span>
-                <span class="me-3"><i class="fas fa-clock me-2"></i>Frequency: {% if Frequency == 1 %}Daily{% elif Frequency == 2 %}Weekly{% elif Frequency == 3 %}Monthly{% elif Frequency == 0 %}All{% endif %}</span>
+                <span class="me-3"><i class="fas fa-clock me-2"></i>Frequency: {% if Frequency == 1 %}Daily{% elif Frequency == 2 %}Weekly{% elif Frequency == 3 %}Monthly{% elif Frequency == 4 %}OverDraft{% elif Frequency == 0 %}All{% endif %}</span>
                 <span><i class="far fa-calendar-alt me-2"></i>Date: {{Today}}</span>
             </div>
         </div>
@@ -48,7 +48,7 @@
         <div class="col-md-4">
             <div class="card metric-card" style="background: var(--success-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">Total To Be Collected</div>
+                    <div class="metric-label">Total To Be Collected <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sum of the To Be Coll column: every installment due from the start of each listed loan up to today. For OverDraft loans this is the interest billed to date. Waivers are not subtracted here. With All officers selected, DEFAULTER and DEAD A/C accounts are not listed."></i></div>
                     <div class="metric-value">₹{{Total_Amnt_to_be_Collected|floatformat:2}}</div>
                     <i class="fas fa-hand-holding-usd icon-bg"></i>
                 </div>
@@ -57,7 +57,7 @@
         <div class="col-md-4">
             <div class="card metric-card" style="background: var(--secondary-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">Total Amount Pending</div>
+                    <div class="metric-label">Total Amount Pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sum of the Pending column: how far behind the listed loans are today. Same figure as the Overdue Loans page."></i></div>
                     <div class="metric-value">₹{{Total_Amnt_Pending|floatformat:2}}</div>
                     <i class="fas fa-hourglass-half icon-bg"></i>
                 </div>
@@ -66,7 +66,7 @@
         <div class="col-md-4">
             <div class="card metric-card" style="background: var(--warning-gradient); color: #000;">
                 <div class="card-body p-3">
-                    <div class="metric-label">Total Balance</div>
+                    <div class="metric-label">Total Balance <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sum of the Balance column: what the listed loans still owe in total, whether due yet or not."></i></div>
                     <div class="metric-value">₹{{Total_Amnt_Balance|floatformat:2}}</div>
                     <i class="fas fa-balance-scale icon-bg"></i>
                 </div>
@@ -93,10 +93,10 @@
                             <th>No. Inst</th>
                             <th>First Due</th>
                             <th>End Date</th>
-                            <th>To Be Coll</th>
-                            <th>Collected</th>
-                            <th>Pending</th>
-                            <th>Balance</th>
+                            <th>To Be Coll <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installments due from the loan&#39;s start up to today. OverDraft: interest billed to date. Waivers not subtracted."></i></th>
+                            <th>Collected <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="All installment payments received on this loan since it started. Penalty payments are not included."></i></th>
+                            <th>Pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Overdue today. Regular loans: installments due to date minus installment payments, capped at what is still owed after interest waivers; never below 0. OverDraft: interest billed to date minus the interest part of payments."></i></th>
+                            <th>Balance <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Regular loans: principal plus flat interest, minus all installment payments and interest waivers. OverDraft: outstanding principal plus unpaid interest as of today."></i></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -107,7 +107,7 @@
                             <td>
                                 {% if loanee.Frequency == 1 %}D
                                 {% elif loanee.Frequency == 2 %}W
-                                {% elif loanee.Frequency == 3 %}M{% endif %}
+                                {% elif loanee.Frequency == 3 %}M{% elif loanee.Frequency == 4 %}OD{% endif %}
                             </td>
                             <td class="no-print">
                                 {% if loanee.Account.Client.Image %}
@@ -170,5 +170,10 @@
             checkbox.checked = this.checked;
         }
     }
+</script>
+<script>
+window.addEventListener('load', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+});
 </script>
 {% endblock %}
