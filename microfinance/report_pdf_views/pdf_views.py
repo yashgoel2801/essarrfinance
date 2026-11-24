@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 import pytz
 from microfinance.models import Loans,Installments,Payments,Waiver
+from microfinance.overdraft import overdraft_total_owed
+from microfinance.overdraft_sync import ensure_overdraft_installments
+from microfinance.views import bulk_overdue_map
 from django.db.models import Sum
 local_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -39,6 +42,12 @@ def Officer_And_Frequency_Wise_pdf(request):
         ).values('Loan_id').annotate(total=Sum('Amount'))
         waiver_totals = {item['Loan_id']: item['total'] for item in waiver_data}
 
+        # OverDraft dues are materialized lazily; bring them up to date before reading them.
+        for loan in Loan:
+            if loan.Frequency == 4:
+                ensure_overdraft_installments(loan)
+        overdue_by_loan = bulk_overdue_map(loan_ids, today_date)
+
         total_amnt_to_be_coll_dic = {}
         total_amnt_collected_dic = {}
         total_amnt_pending_dic = {}
@@ -56,10 +65,13 @@ def Officer_And_Frequency_Wise_pdf(request):
             # total_bal = loan.Total - total_amnt_collected - total_interest_waived
             loan_total_val = loan.Principle_Amount + (loan.Principle_Amount * loan.Intrest_Rate / 100)
             total_bal = loan_total_val - total_amnt_collected - total_interest_waived
+            if loan.Frequency == 4:
+                # OverDraft owes outstanding principal plus unpaid interest, not a flat P*(1+rate).
+                total_bal = overdraft_total_owed(loan, as_of=today_date)
 
             total_amnt_to_be_coll_dic[l_id] = round(total_amnt_to_be_coll, 1)
             total_amnt_collected_dic[l_id] = round(total_amnt_collected, 1)
-            total_amnt_pending_dic[l_id] = round(total_amnt_to_be_coll_dic[l_id] - total_amnt_collected_dic[l_id], 1)
+            total_amnt_pending_dic[l_id] = overdue_by_loan.get(l_id, 0)
             total_bal_dic[l_id] = round(total_bal, 1)
 
             total_amnt_pending_for_all_cases += total_amnt_pending_dic[l_id]

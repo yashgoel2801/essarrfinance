@@ -7,66 +7,71 @@ not a single flat Amount_Paid figure, so folding it into the flat totals
 would silently misstate both. Every row and the section subtotal satisfy
 interest + principal + credit == amount collected by construction.
 
+Pass overdraft_in_totals=True (via include ... with) when the including
+report's summary totals already add these figures in.
+
 Expects in context: overdraft_rows (list of dicts from
 overdraft_report_rows) and overdraft_totals (dict with interest_billed,
 interest_collected, principal_collected, credit_banked, amount_collected,
 penalty_collected).
 {% endcomment %}
-<div class="card mb-4 border-info">
-  <div class="card-header bg-info bg-opacity-10">
-    <h5 class="mb-0"><i class="fas fa-university me-2"></i>OverDraft Loans (separate section)</h5>
-    <small class="text-muted">Interest is daily-prorated per loan; shown split, not aggregated into the totals above.</small>
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="mb-0 fw-bold text-dark">
+      <i class="fas fa-university me-2 text-info"></i>OverDraft Loans
+      <small class="text-muted fs-6 ms-2">{% if overdraft_in_totals %}(included in the summary totals above; interest is daily-prorated, so shown split here){% else %}(not included in the totals above; interest is daily-prorated, so shown split here){% endif %}</small>
+    </h5>
   </div>
   <div class="card-body p-0">
     {% if overdraft_rows %}
     <div class="table-responsive">
-      <table class="table table-bordered table-striped mb-0">
-        <thead class="table-light">
+      <table class="table table-modern table-hover mb-0 small">
+        <thead>
           <tr>
-            <th>Loan</th>
-            <th>Client</th>
+            <th class="ps-3">Acc No</th>
+            <th>Customer</th>
             <th>Officer</th>
-            <th>Interest Billed</th>
-            <th>Interest Collected</th>
-            <th>Principal Collected</th>
-            <th>Credit Banked</th>
-            <th>Amount Collected</th>
-            <th>Penalty Collected</th>
-            <th>Owed as of period end</th>
+            <th class="text-end">Interest Billed</th>
+            <th class="text-end">Interest Coll.</th>
+            <th class="text-end">Principal Coll.</th>
+            <th class="text-end">Credit Banked</th>
+            <th class="text-end">Amount Coll.</th>
+            <th class="text-end">Penalty Coll.</th>
+            <th class="text-end pe-3">Owed at End</th>
           </tr>
         </thead>
         <tbody>
           {% for row in overdraft_rows %}
           <tr>
-            <td>#{{ row.loan.pk }}</td>
+            <td class="ps-3 fw-bold text-dark">{{ row.loan.AccNo }}</td>
             <td>{{ row.loan.Account.Client.Name }}</td>
-            <td>{{ row.loan.Loan_Collector }}</td>
-            <td>₹{{ row.interest_billed_in_range|floatformat:2 }}</td>
-            <td>₹{{ row.interest_collected_in_range|floatformat:2 }}</td>
-            <td>₹{{ row.principal_collected_in_range|floatformat:2 }}</td>
-            <td>₹{{ row.credit_banked_in_range|floatformat:2 }}</td>
-            <td><strong>₹{{ row.amount_collected_in_range|floatformat:2 }}</strong></td>
-            <td>₹{{ row.penalty_collected_in_range|floatformat:2 }}</td>
-            <td>₹{{ row.total_owed_as_of_end|floatformat:2 }}</td>
+            <td>{{ row.loan.Loan_Collector.Officer_Name }}</td>
+            <td class="text-end text-nowrap">₹{{ row.interest_billed_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ row.interest_collected_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ row.principal_collected_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ row.credit_banked_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap fw-bold text-success">₹{{ row.amount_collected_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ row.penalty_collected_in_range|floatformat:2 }}</td>
+            <td class="text-end text-nowrap pe-3 text-danger">₹{{ row.total_owed_as_of_end|floatformat:2 }}</td>
           </tr>
           {% endfor %}
         </tbody>
-        <tfoot class="table-light">
-          <tr>
-            <th colspan="3">Total</th>
-            <th>₹{{ overdraft_totals.interest_billed|floatformat:2 }}</th>
-            <th>₹{{ overdraft_totals.interest_collected|floatformat:2 }}</th>
-            <th>₹{{ overdraft_totals.principal_collected|floatformat:2 }}</th>
-            <th>₹{{ overdraft_totals.credit_banked|floatformat:2 }}</th>
-            <th>₹{{ overdraft_totals.amount_collected|floatformat:2 }}</th>
-            <th>₹{{ overdraft_totals.penalty_collected|floatformat:2 }}</th>
-            <th>&mdash;</th>
+        <tfoot class="table-light border-top">
+          <tr class="fw-bold">
+            <td colspan="3" class="text-end ps-3">TOTALS:</td>
+            <td class="text-end text-nowrap">₹{{ overdraft_totals.interest_billed|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ overdraft_totals.interest_collected|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ overdraft_totals.principal_collected|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ overdraft_totals.credit_banked|floatformat:2 }}</td>
+            <td class="text-end text-nowrap text-success">₹{{ overdraft_totals.amount_collected|floatformat:2 }}</td>
+            <td class="text-end text-nowrap">₹{{ overdraft_totals.penalty_collected|floatformat:2 }}</td>
+            <td class="pe-3 text-end">&mdash;</td>
           </tr>
         </tfoot>
       </table>
     </div>
     {% else %}
-    <p class="text-muted p-3 mb-0">No OverDraft loan activity in this period.</p>
+    <p class="text-muted text-center py-4 mb-0">No OverDraft loan activity in this period.</p>
     {% endif %}
   </div>
 </div>

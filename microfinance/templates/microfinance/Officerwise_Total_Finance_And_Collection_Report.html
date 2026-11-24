@@ -8,8 +8,8 @@
         <div class="col-12 col-md-3">
             <div class="card stat-card border-0 shadow-sm bg-primary text-white">
                 <div class="card-body position-relative">
-                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Collection</h6>
-                    <h3 class="mb-0 fw-bold">₹{{ amntcollected|floatformat:2 }}</h3>
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Collection <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installment payments received in the date range, for all loan types including OverDraft. Waivers are NOT included: a waiver is a write-off, not cash received. Penalty payments and file charges are shown in their own cards."></i></h6>
+                    <h3 class="mb-0 fw-bold">₹{{ total_collected|floatformat:2 }}</h3>
                     <i class="fas fa-money-bill-wave icon-bg"></i>
                 </div>
             </div>
@@ -17,7 +17,7 @@
         <div class="col-12 col-md-3">
             <div class="card stat-card border-0 shadow-sm bg-purple text-white">
                 <div class="card-body position-relative">
-                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Financed</h6>
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Total Financed <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Principal of all loans disbursed (Loan Date) in the date range, including loans that have since closed."></i></h6>
                     <h3 class="mb-0 fw-bold">₹{{ amntfinanced|floatformat:2 }}</h3>
                     <i class="fas fa-coins icon-bg"></i>
                 </div>
@@ -26,8 +26,8 @@
         <div class="col-12 col-md-3">
             <div class="card stat-card border-0 shadow-sm bg-success text-white">
                 <div class="card-body position-relative">
-                    <h6 class="text-white-50 text-uppercase mb-2 small">Amnt To Be Collec.</h6>
-                    <h3 class="mb-0 fw-bold">₹{{ amnttobecollected|floatformat:2 }}</h3>
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Amnt To Be Collec. <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installments falling due in the date range, for open loans and for closed loans that received a payment in the range, plus OverDraft installments due in the range. Interest waivers applied in the range are subtracted. Penalty waivers are not subtracted (penalties are not part of this figure)."></i></h6>
+                    <h3 class="mb-0 fw-bold">₹{{ total_to_be_collected|floatformat:2 }}</h3>
                     <i class="fas fa-hand-holding-usd icon-bg"></i>
                 </div>
             </div>
@@ -35,7 +35,7 @@
         <div class="col-12 col-md-3">
             <div class="card stat-card border-0 shadow-sm bg-info text-white">
                 <div class="card-body position-relative">
-                    <h6 class="text-white-50 text-uppercase mb-2 small">Penalty Collected</h6>
+                    <h6 class="text-white-50 text-uppercase mb-2 small">Penalty Collected <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty payments received in the date range. Penalty waivers are NOT included; see the Waivers Applied section."></i></h6>
                     <h3 class="mb-0 fw-bold">₹{{ penaltycollected|floatformat:2 }}</h3>
                     <i class="fas fa-exclamation-circle icon-bg"></i>
                 </div>
@@ -53,7 +53,7 @@
                             <i class="fas fa-file-invoice-dollar text-primary"></i>
                         </div>
                         <div>
-                            <p class="text-muted small mb-0">Total File Charges Collected</p>
+                            <p class="text-muted small mb-0">Total File Charges Collected <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Principal x file charge % for each loan disbursed in the date range."></i></p>
                             <h4 class="mb-0 fw-bold">₹{{ filecollected|floatformat:2 }}</h4>
                         </div>
                     </div>
@@ -91,7 +91,7 @@
         <div class="card-header bg-white py-3">
             <h5 class="mb-0 fw-bold text-dark">
                 <i class="fas fa-clipboard-list me-2 text-primary"></i>Finance and Collection Report
-                <small class="text-muted fs-6 ms-2">(Active Loans Only &mdash; excludes OverDraft, see section below)</small>
+                <small class="text-muted fs-6 ms-2">(Active Loans &mdash; OverDraft loans are listed in their own table below)</small>
             </h5>
         </div>
         <div class="card-body p-0">
@@ -156,7 +156,7 @@
                     {% if Collection_Data %}
                     <tfoot class="table-light border-top">
                         <tr class="fw-bold fs-6">
-                            <td colspan="3" class="text-end ps-3">TOTALS:</td>
+                            <td colspan="3" class="text-end ps-3">TOTALS <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Totals for the regular (non-OverDraft) loans listed in this table only, before interest waivers. The cards at the top add OverDraft and subtract interest waivers."></i>:</td>
                             <td class="text-success">₹{{ amntcollected|floatformat:2 }}</td>
                             <td>-</td>
                             <td>₹{{ amnttobecollected|floatformat:2 }}</td>
@@ -242,7 +242,7 @@
     </div>
 
     <!-- Secondary Tables Section -->
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
         <div class="col-lg-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-3">
@@ -317,7 +317,65 @@
     </div>
     {% endif %}
 
-    {% include 'microfinance/includes/overdraft_report_section.html' %}
+    {% include 'microfinance/includes/overdraft_report_section.html' with overdraft_in_totals=True %}
+
+    <!-- Waivers: written off, not collected -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-hand-holding-heart me-2 text-secondary"></i>Waivers Applied <span class="text-muted fw-normal small">(written off &mdash; not included in collections)</span> <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty and interest waivers applied (Date Applied) in the date range. Waivers are never counted as collected. Interest waivers are subtracted from Amnt To Be Collec.; penalty waivers reduce the customer's pending penalty."></i></h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 small">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Date</th>
+                            <th>Acc No</th>
+                            <th>Customer</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Officer</th>
+                            <th class="pe-3">Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in Waiver_Data %}
+                        <tr>
+                            <td class="ps-3">{{ w.Date_Applied|date:"M d, Y" }}</td>
+                            <td class="fw-bold text-dark">{{ w.Loan.AccNo }}</td>
+                            <td>{{ w.Loan.Account.Client.Name }}</td>
+                            <td>{{ w.get_Waiver_Type_display }}</td>
+                            <td class="fw-bold text-danger">₹{{ w.Amount|floatformat:2 }}</td>
+                            <td>{{ w.Loan.Loan_Collector.Officer_Name }}</td>
+                            <td class="pe-3 text-muted">{{ w.Reason|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-4 text-muted">No waivers applied in this period.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if Waiver_Data %}
+                    <tfoot class="table-light border-top">
+                        <tr class="fw-bold">
+                            <td colspan="4" class="text-end ps-3">TOTAL PENALTY WAIVED:</td>
+                            <td class="text-danger text-nowrap">₹{{ waived_penalty|floatformat:2 }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td colspan="4" class="text-end ps-3">TOTAL INTEREST WAIVED:</td>
+                            <td class="text-danger text-nowrap">₹{{ waived_interest|floatformat:2 }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr class="fw-bold fs-6">
+                            <td colspan="4" class="text-end ps-3">TOTAL WAIVED:</td>
+                            <td class="text-danger text-nowrap">₹{{ waived_total|floatformat:2 }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -331,4 +389,9 @@
     }
 </style>
 
+<script>
+window.addEventListener('load', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+});
+</script>
 {% endblock %}

@@ -44,7 +44,7 @@
             <div class="small text-muted">Aggregated data for all active collection officers</div>
         </div>
         <div class="text-end">
-            <div class="small text-uppercase fw-bold text-muted mb-1">Total Net Cash</div>
+            <div class="small text-uppercase fw-bold text-muted mb-1">Total Net Cash <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Total Coll. minus the day&#39;s expenses. Waivers are not cash and are not included."></i></div>
             <div class="h3 fw-bold mb-0 text-success">₹{{grand_totals.net_cash|floatformat:2}}</div>
         </div>
     </div>
@@ -54,7 +54,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card" style="background: var(--success-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">Installments</div>
+                    <div class="metric-label">Installments <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installment payments received on this date on regular (non-OverDraft) loans, all officers including DEFAULTER and DEAD A/C. OverDraft payments are listed in their own section below."></i></div>
                     <div class="metric-value">₹{{grand_totals.inst|floatformat:0}}</div>
                     <i class="fas fa-money-bill-wave icon-bg"></i>
                 </div>
@@ -63,7 +63,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card" style="background: var(--warning-gradient); color: #000;">
                 <div class="card-body p-3">
-                    <div class="metric-label">Penalties</div>
+                    <div class="metric-label">Penalties <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty payments received on this date, all loan types including OverDraft. Penalty waivers are not included."></i></div>
                     <div class="metric-value">₹{{grand_totals.pen|floatformat:0}}</div>
                     <i class="fas fa-exclamation-triangle icon-bg"></i>
                 </div>
@@ -72,7 +72,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card" style="background: var(--info-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">File Charges</div>
+                    <div class="metric-label">File Charges <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Principal x file charge % for each loan disbursed (Loan Date) on this date."></i></div>
                     <div class="metric-value">₹{{grand_totals.fc|floatformat:0}}</div>
                     <i class="fas fa-file-invoice-dollar icon-bg"></i>
                 </div>
@@ -81,7 +81,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card bg-white text-dark border shadow-sm">
                 <div class="card-body p-3">
-                    <div class="metric-label text-muted">Waivers</div>
+                    <div class="metric-label text-muted">Waivers <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty and interest waivers applied on this date. A waiver is a write-off, not cash, so it is not included in Total Coll. or Net Cash."></i></div>
                     <div class="metric-value text-success">₹{{grand_totals.waivers|floatformat:0}}</div>
                     <i class="fas fa-hand-holding-heart icon-bg text-success" style="opacity: 0.1;"></i>
                 </div>
@@ -90,7 +90,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card" style="background: var(--danger-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">Expenses</div>
+                    <div class="metric-label">Expenses <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Expenditures recorded on this date."></i></div>
                     <div class="metric-value">₹{{grand_totals.expenses|floatformat:0}}</div>
                     <i class="fas fa-wallet icon-bg"></i>
                 </div>
@@ -99,7 +99,7 @@
         <div class="col-md-4 col-lg-2">
             <div class="card metric-card" style="background: var(--dark-gradient);">
                 <div class="card-body p-3">
-                    <div class="metric-label">Total Coll.</div>
+                    <div class="metric-label">Total Coll. <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="All cash received on this date: installments (regular and OverDraft) + penalties + file charges, all officers including DEFAULTER and DEAD A/C. Waivers are not included."></i></div>
                     <div class="metric-value">₹{{grand_totals.total|floatformat:0}}</div>
                     <i class="fas fa-vault icon-bg"></i>
                 </div>
@@ -116,7 +116,7 @@
                 <small class="text-muted">Staff Performance Log</small>
             </div>
             <div class="text-end">
-                <div class="small text-muted text-uppercase mb-1">Total Sub-Collection</div>
+                <div class="small text-muted text-uppercase mb-1">Total Sub-Collection <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="This officer&#39;s installments + penalties + file charges on this date for regular loans. This officer&#39;s OverDraft payments are in the OverDraft section below. Waivers are not included."></i></div>
                 <div class="h5 fw-bold mb-0 text-primary">₹{{data.totals.total|floatformat:2}}</div>
             </div>
         </div>
@@ -140,11 +140,11 @@
                                 <tr>
                                     <th width="8%">Loan</th>
                                     <th>Client Name</th>
-                                    <th class="text-end" width="13%">Paid on {{Date}}</th>
-                                    <th class="text-end" width="12%">Penalty Paid</th>
+                                    <th class="text-end" width="13%">Paid on {{Date}} <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installment payment received on this date."></i></th>
+                                    <th class="text-end" width="12%">Penalty Paid <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Total penalty payments received on this loan on this date."></i></th>
                                     <th class="text-end" width="12%">Row Total</th>
-                                    <th class="text-end" width="11%">Overdue</th>
-                                    <th class="text-end" width="11%">Penalty Pending</th>
+                                    <th class="text-end" width="11%">Overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="How far behind the loan is today (not on the report date): installments due to date minus installment payments, capped at what is still owed after interest waivers."></i></th>
+                                    <th class="text-end" width="11%">Penalty Pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty charged on this loan minus penalty paid minus penalty waived, as of today."></i></th>
                                     <th width="14%">Status Today</th>
                                 </tr>
                             </thead>
@@ -325,12 +325,11 @@
     </div>
     {% endif %}
 
-    <!-- OverDraft Loans -- kept separate from the officer collection
-         totals above: interest is daily-prorated and split into
-         interest/principal/credit, not a single Amount_Paid figure. -->
+    <!-- OverDraft Loans -- listed separately because a payment is split into
+         interest/principal/credit, but the amounts are in Total Coll. above. -->
     <div class="card mb-4 border-info">
         <div class="card-header bg-info bg-opacity-10">
-            <h5 class="mb-0"><i class="fas fa-university me-2"></i>OverDraft Loans (separate section)</h5>
+            <h5 class="mb-0"><i class="fas fa-university me-2"></i>OverDraft Loans (included in Total Coll.) <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installment payments received on this date on OverDraft loans, split into interest, principal and banked credit. The Amount Collected total is added into Total Coll. and Net Cash above, but not into the Installments card or the officer sub-collections."></i></h5>
         </div>
         <div class="card-body p-0">
             {% if overdraft_report_data %}
@@ -388,4 +387,9 @@
         </div>
     </div>
 </div>
+<script>
+window.addEventListener('load', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+});
+</script>
 {% endblock %}

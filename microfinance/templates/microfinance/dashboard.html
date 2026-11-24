@@ -93,7 +93,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Collections (Period)</h6>
+                            <h6 class="text-muted mb-1">Collections (Period) <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Installment payments received in the selected period, for all loan types including OverDraft (same as the Officerwise report&#39;s Total Collection). Waivers are NOT included. Penalty payments and file charges are separate. Includes money recovered on DEFAULTER and DEAD A/C accounts."></i></h6>
                             <h4 class="mb-0">₹{{ amount_collected_period|floatformat:0|default:"0" }}</h4>
                             <small class="text-success">
                                 <i class="fas fa-arrow-up"></i> {{ period_collection_efficiency|floatformat:1|default:"0" }}% efficiency
@@ -115,7 +115,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Due (Period)</h6>
+                            <h6 class="text-muted mb-1">Due (Period) <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Same as the Officerwise report&#39;s Amnt To Be Collec.: installments due in the period on open loans, on closed loans that received a payment in the period, and on OverDraft loans, minus interest waivers applied in the period. Includes money recovered on DEFAULTER and DEAD A/C accounts."></i></h6>
                             <h4 class="mb-0">₹{{ amount_due_period|floatformat:0|default:"0" }}</h4>
                             <small class="text-muted">{{ clients_due_period_count|default:"0" }} client{% if clients_due_period_count != 1 %}s{% endif %}</small>
                         </div>
@@ -135,7 +135,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Total Overdue</h6>
+                            <h6 class="text-muted mb-1">Total Overdue <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="How much open loans are behind as of today, not limited to the selected period: for each loan, everything due up to and including today minus everything paid, capped at what is still owed after interest waivers. OverDraft: interest billed minus interest paid. Same figure as the Overdue Loans page. Penalties are not included."></i></h6>
                             <h4 class="mb-0">₹{{ total_overdue|floatformat:0|default:"0" }}</h4>
                             <small class="text-danger">{{ total_defaulters|default:"0" }} defaulter{% if total_defaulters != 1 %}s{% endif %}</small>
                         </div>
@@ -155,7 +155,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Net Performance</h6>
+                            <h6 class="text-muted mb-1">Net Performance <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Collections (Period) minus Due (Period)."></i></h6>
                             <h4 class="mb-0 {% if period_net_performance >= 0 %}text-success{% else %}text-danger{% endif %}">
                                 ₹{{ period_net_performance|floatformat:0|default:"0" }}
                             </h4>
@@ -174,15 +174,16 @@
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Penalties</h6>
+                    <h6 class="text-muted mb-1">Penalties <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty payments received in the selected period (same as the Officerwise report). Penalty waivers are NOT included; the amount waived in the period is shown underneath."></i></h6>
                     <h5 class="mb-0 text-warning">₹{{ penalty_collected_period|floatformat:0|default:"0" }}</h5>
+                    <small class="text-muted">₹{{ penalty_waived_period|floatformat:0|default:"0" }} waived <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Penalty waivers applied (Date Applied) in the selected period. A waiver writes the penalty off; it is not cash and is not counted in Penalties. Same figure as Total Penalty Waived on the Officerwise report."></i></small>
                 </div>
             </div>
         </div>
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">File Charges</h6>
+                    <h6 class="text-muted mb-1">File Charges <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Principal x file charge % for each loan disbursed in the selected period."></i></h6>
                     <h5 class="mb-0 text-info">₹{{ file_charges_period|floatformat:0|default:"0" }}</h5>
                 </div>
             </div>
@@ -190,7 +191,7 @@
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">New Loans</h6>
+                    <h6 class="text-muted mb-1">New Loans <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Loans disbursed (Loan Date) in the selected period, including ones that have since closed."></i></h6>
                     <h5 class="mb-0 text-primary">{{ loans_created_period|default:"0" }}</h5>
                     <small class="text-muted">₹{{ total_loan_amount_period|floatformat:0|default:"0" }} disbursed</small>
                 </div>
@@ -213,8 +214,9 @@
         <div class="col-xl-2 col-md-4">
             <div class="card border-0 shadow-sm text-center">
                 <div class="card-body py-3">
-                    <h6 class="text-muted mb-1">Interest Earned</h6>
+                    <h6 class="text-muted mb-1">Interest Earned <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Approximate interest share of installment payments in the period: payment minus payment / (1 + interest rate). OverDraft uses its recorded interest portion. Interest waivers are not subtracted; the amount waived in the period is shown underneath."></i></h6>
                     <h5 class="mb-0 text-success">₹{{ interest_earned_period|floatformat:0|default:"0" }}</h5>
+                    <small class="text-muted">₹{{ interest_waived_period|floatformat:0|default:"0" }} waived <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Interest/loyalty waivers applied (Date Applied) in the selected period. This amount is subtracted from Due (Period). Same figure as Total Interest Waived on the Officerwise report."></i></small>
                 </div>
             </div>
         </div>
@@ -242,7 +244,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Recovery Rate</h6>
+                            <h6 class="text-muted mb-1">Recovery Rate <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Share of open loans that are not behind as of today (same overdue rule as Total Overdue and the Overdue Loans page)."></i></h6>
                             <h4 class="mb-0 {% if recovery_rate >= 80 %}text-success{% elif recovery_rate >= 60 %}text-warning{% else %}text-danger{% endif %}">
                                 {{ recovery_rate|floatformat:1|default:"0" }}%
                             </h4>
@@ -263,7 +265,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-1">Default Rate</h6>
+                            <h6 class="text-muted mb-1">Default Rate <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Share of open loans that are behind as of today (same overdue rule as Total Overdue). The count underneath is the number of clients with at least one loan behind."></i></h6>
                             <h4 class="mb-0 {% if default_rate <= 5 %}text-success{% elif default_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
                                 {{ default_rate|floatformat:1|default:"0" }}%
                             </h4>
@@ -288,7 +290,7 @@
                                 PAR 30+
                                 <i class="fas fa-info-circle text-muted ms-1" 
                                    data-bs-toggle="tooltip" 
-                                   title="Portfolio at Risk - loans overdue by 30+ days"></i>
+                                   title="Portfolio at Risk: full outstanding balance of open loans whose oldest unpaid installment is more than 30 days overdue, as a share of the principal of all open loans. Regular loans: principal + interest minus payments and interest waivers. OverDraft: outstanding principal + unpaid interest."></i>
                             </h6>
                             <h4 class="mb-0 {% if par_30_plus_rate <= 5 %}text-success{% elif par_30_plus_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
                                 {{ par_30_plus_rate|floatformat:1|default:"0" }}%
@@ -314,7 +316,7 @@
                                 Write-off Rate
                                 <i class="fas fa-info-circle text-muted ms-1" 
                                    data-bs-toggle="tooltip" 
-                                   title="Percentage of completed loans that were not fully recovered"></i>
+                                   title="Share of closed loans that still had more than Rs 10 unrecovered when closed. Regular loans: principal + interest minus payments and interest waivers. OverDraft: outstanding principal + unpaid interest."></i>
                             </h6>
                             <h4 class="mb-0 {% if write_off_rate <= 5 %}text-success{% elif write_off_rate <= 15 %}text-warning{% else %}text-danger{% endif %}">
                                 {{ write_off_rate|floatformat:1|default:"0" }}%

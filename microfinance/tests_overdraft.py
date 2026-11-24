@@ -1474,21 +1474,21 @@ class OverdraftExcludedFromFlatReportsTest(TestCase):
             {'pay': '1', 'amount': '35000', 'date_paid': self.report_date.isoformat()},
         )
 
-    def test_total_finance_and_collection_report_excludes_overdraft_from_totals(self):
+    def test_total_finance_and_collection_report_includes_overdraft_in_totals(self):
         response = self.client.post(
             reverse('microfinance:report2'),
             {'from': (self.report_date - timedelta(days=1)).isoformat(),
              'to': (self.report_date + timedelta(days=1)).isoformat()},
         )
         self.assertEqual(response.status_code, 200)
-        # Flat loan's 10000 payment counted; overdraft's 35000 must NOT be
-        # folded into the same total.
-        self.assertEqual(response.context['totalinst'], 10000.0)
+        # Overdraft cash is real collection: flat 10000 + overdraft 35000,
+        # matching the Officerwise report's Total Collection.
+        self.assertEqual(response.context['totalinst'], 45000.0)
         overdraft_rows = response.context['overdraft_rows']
         self.assertEqual(len(overdraft_rows), 1)
         self.assertEqual(overdraft_rows[0]['loan'].pk, self.od_loan.pk)
         self.assertAlmostEqual(overdraft_rows[0]['amount_collected_in_range'], 35000.0, places=2)
-        self.assertContains(response, 'OverDraft Loans (separate section)')
+        self.assertContains(response, 'included in the summary totals above')
 
     def test_officerwise_report_excludes_overdraft_from_collection_data(self):
         response = self.client.post(
@@ -1539,7 +1539,8 @@ class OverdraftExcludedFromFlatReportsTest(TestCase):
         overdraft_data = response.context['overdraft_report_data']
         self.assertEqual(len(overdraft_data), 1)
         self.assertAlmostEqual(overdraft_data[0]['totals']['amount'], 35000.0, places=2)
-        self.assertContains(response, 'OverDraft Loans (separate section)')
+        self.assertEqual(response.context['grand_totals']['total'], 45000.0)
+        self.assertContains(response, 'OverDraft Loans (included in Total Coll.)')
 
     def test_home_reminders_never_surface_overdraft_loans(self):
         # Give the overdraft loan a stale reminder from before this feature

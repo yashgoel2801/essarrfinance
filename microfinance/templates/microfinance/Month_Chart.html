@@ -24,7 +24,7 @@
         <div class="col-md-4">
             <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid var(--accent-color) !important;">
                 <div class="card-body py-3">
-                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">{% if DueDate and DueDate != 0 %}Day {{ DueDate }}{% else %}Monthly{% endif %} Target</h6>
+                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">{% if DueDate and DueDate != 0 %}Day {{ DueDate }}{% else %}Monthly{% endif %} Target <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sum of one installment (the first installment amount) for each open monthly loan scheduled on this day of the month, all officers including DEFAULTER and DEAD A/C when All is selected. Arrears are not included."></i></h6>
                     <h4 class="mb-0 fw-bold text-primary">₹{% if DayTarget %}{{DayTarget|floatformat:0}}{% else %}{{MonthlyTarget|floatformat:0}}{% endif %}</h4>
                     <small class="text-muted">Amount to be collected</small>
                 </div>
@@ -35,9 +35,9 @@
         <div class="col-md-4">
             <div class="card stat-card border-0 shadow-sm h-100" style="background: white; border-left: 4px solid var(--secondary-color) !important;">
                 <div class="card-body py-3">
-                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">Total Pending (This List)</h6>
+                    <h6 class="text-muted text-uppercase mb-2 small fw-bold">Total Pending (This List) <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Overdue today for the loans in the collection list: installments due to date minus installment payments, capped at what is still owed after interest waivers. Same figure as the Overdue Loans page."></i></h6>
                     <h4 class="mb-0 fw-bold" style="color: var(--secondary-color);">₹{{TotalPendingSum|floatformat:0}}</h4>
-                    <small class="text-muted">Total balance of scheduled clients</small>
+                    <small class="text-muted">Overdue amount of the listed loans</small>
                 </div>
             </div>
         </div>
@@ -46,7 +46,7 @@
         <div class="col-md-4">
             <div class="card stat-card border-0 shadow-sm h-100 bg-danger text-white">
                 <div class="card-body py-3">
-                    <h6 class="text-white-50 text-uppercase mb-2 small fw-bold">Defaulters Pending</h6>
+                    <h6 class="text-white-50 text-uppercase mb-2 small fw-bold">Defaulters Pending <i class="fas fa-info-circle ms-1 small" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Overdue today for the Defaulters list: open monthly loans scheduled on a different day of the month whose due day fell in the last 59 days with no installment payment received since that day, and which are behind. Only shown when a single day is selected. Waiver-aware like Total Pending."></i></h6>
                     <h4 class="mb-0 fw-bold">₹{{Def2|floatformat:0}}</h4>
                     <small class="text-white-50">Balance of other clients</small>
                 </div>
@@ -86,4 +86,9 @@
     .stat-card:hover { transform: translateY(-5px); }
 </style>
 
+<script>
+window.addEventListener('load', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+});
+</script>
 {% endblock %}
